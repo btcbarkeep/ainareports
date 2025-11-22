@@ -563,7 +563,7 @@ export default async function BuildingPage({ params, searchParams }) {
                     (events || []).map((e) => {
                       // Get document URL if event references a document (same logic as documents tab)
                       let downloadLink = null;
-                      if (e.document_id && documentsById[e.document_id]) {
+                      if (e.document_id && documentsById && documentsById[e.document_id]) {
                         const doc = documentsById[e.document_id];
                         const documentUrl = doc.download_url || doc.document_url;
                         
@@ -598,22 +598,22 @@ export default async function BuildingPage({ params, searchParams }) {
                               <div className="truncate" title={e.title}>{e.title}</div>
                             )}
                           </div>
-                        <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                          <div className="truncate" title={e.severity || "—"}>
-                            {e.severity || "—"}
+                          <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                            <div className="truncate" title={e.severity || "—"}>
+                              {e.severity || "—"}
+                            </div>
+                          </div>
+                          <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                            <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
+                              {userDisplayNames[e.created_by]?.role || "—"}
+                            </div>
+                          </div>
+                          <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
+                            <div className="truncate" title={formatDate(e.occurred_at)}>
+                              {formatDate(e.occurred_at)}
+                            </div>
                           </div>
                         </div>
-                        <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                          <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
-                            {userDisplayNames[e.created_by]?.role || "—"}
-                          </div>
-                        </div>
-                        <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
-                          <div className="truncate" title={formatDate(e.occurred_at)}>
-                            {formatDate(e.occurred_at)}
-                          </div>
-                        </div>
-                      </div>
                       );
                     })
                   )}
