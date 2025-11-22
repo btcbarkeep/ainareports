@@ -76,20 +76,22 @@ async function fetchBuildingData(slug) {
   const events = eventsData || [];
 
   // Fetch documents for events that reference them
+  let documentsById = {};
   const eventDocumentIds = events
     .map((e) => e.document_id)
     .filter(Boolean);
   
-  let documentsById = {};
   if (eventDocumentIds.length > 0) {
     const { data: eventDocuments } = await supabase
       .from("documents")
       .select("id, download_url, document_url, s3_key")
       .in("id", eventDocumentIds);
 
-    (eventDocuments || []).forEach((doc) => {
-      documentsById[doc.id] = doc;
-    });
+    if (eventDocuments) {
+      eventDocuments.forEach((doc) => {
+        documentsById[doc.id] = doc;
+      });
+    }
   }
 
   // UNIT RESOLUTION FOR EVENTS
@@ -561,37 +563,16 @@ export default async function BuildingPage({ params, searchParams }) {
                     </div>
                   ) : (
                     (events || []).map((e) => {
-                      // Get document URL if event references a document (same logic as documents tab)
-                      let downloadLink = null;
-                      if (e.document_id && documentsById && documentsById[e.document_id]) {
-                        const doc = documentsById[e.document_id];
-                        const documentUrl = doc.download_url || doc.document_url;
-                        
-                        const isValidUrl =
-                          documentUrl &&
-                          typeof documentUrl === "string" &&
-                          documentUrl.trim() !== "" &&
-                          (documentUrl.startsWith("http://") ||
-                            documentUrl.startsWith("https://"));
-                        
-                        if (isValidUrl) {
-                          downloadLink = documentUrl;
-                        } else if (doc.s3_key) {
-                          downloadLink = `/api/documents/${doc.id}/download`;
-                        }
-                      }
+                      const doc = e.document_id && documentsById?.[e.document_id] ? documentsById[e.document_id] : null;
+                      const documentUrl = doc?.download_url || doc?.document_url;
+                      const isValidUrl = documentUrl && typeof documentUrl === "string" && documentUrl.trim() !== "" && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"));
+                      const downloadLink = isValidUrl ? documentUrl : (doc?.s3_key ? `/api/documents/${doc.id}/download` : null);
 
                       return (
                         <div key={e.id} className="flex px-3 py-2">
                           <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
                             {downloadLink ? (
-                              <a
-                                href={downloadLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="truncate block text-blue-600 underline hover:text-gray-600 cursor-pointer"
-                                title={e.title}
-                              >
+                              <a href={downloadLink} target="_blank" rel="noopener noreferrer" className="truncate block text-blue-600 underline hover:text-gray-600 cursor-pointer" title={e.title}>
                                 {e.title}
                               </a>
                             ) : (
@@ -599,19 +580,13 @@ export default async function BuildingPage({ params, searchParams }) {
                             )}
                           </div>
                           <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                            <div className="truncate" title={e.severity || "—"}>
-                              {e.severity || "—"}
-                            </div>
+                            <div className="truncate" title={e.severity || "—"}>{e.severity || "—"}</div>
                           </div>
                           <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                            <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
-                              {userDisplayNames[e.created_by]?.role || "—"}
-                            </div>
+                            <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>{userDisplayNames[e.created_by]?.role || "—"}</div>
                           </div>
                           <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
-                            <div className="truncate" title={formatDate(e.occurred_at)}>
-                              {formatDate(e.occurred_at)}
-                            </div>
+                            <div className="truncate" title={formatDate(e.occurred_at)}>{formatDate(e.occurred_at)}</div>
                           </div>
                         </div>
                       );
