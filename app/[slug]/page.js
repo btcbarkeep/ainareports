@@ -26,7 +26,7 @@ const TABS = [
 ];
 
 // -------------------------------------------------------------
-function formatAddress(building: any) {
+function formatAddress(building) {
   const parts = [
     building.address,
     building.city,
@@ -37,7 +37,7 @@ function formatAddress(building: any) {
   return parts.join(", ");
 }
 
-function formatDate(dateStr?: string | null) {
+function formatDate(dateStr) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "";
@@ -47,7 +47,7 @@ function formatDate(dateStr?: string | null) {
 // -------------------------------------------------------------
 // FETCH BUILDING + ALL RELATED DATA
 // -------------------------------------------------------------
-async function fetchBuildingData(slug: string) {
+async function fetchBuildingData(slug) {
   const supabase = getSupabaseClient();
 
   // CASE-INSENSITIVE MATCH
@@ -76,8 +76,8 @@ async function fetchBuildingData(slug: string) {
   const events = eventsData || [];
 
   // UNIT RESOLUTION FOR EVENTS
-  const unitIds = [...new Set(events.map((e: any) => e.unit_id).filter(Boolean))];
-  let unitsByIdFromEvents: Record<string, any> = {};
+  const unitIds = [...new Set(events.map((e) => e.unit_id).filter(Boolean))];
+  let unitsByIdFromEvents = {};
 
   if (unitIds.length > 0) {
     const { data: unitsForEvents } = await supabase
@@ -85,22 +85,22 @@ async function fetchBuildingData(slug: string) {
       .select("id, unit_number")
       .in("id", unitIds);
 
-    (unitsForEvents || []).forEach((u: any) => {
+    (unitsForEvents || []).forEach((u) => {
       unitsByIdFromEvents[u.id] = u;
     });
   }
 
-  const eventsWithUnits = events.map((e: any) => ({
+  const eventsWithUnits = events.map((e) => ({
     ...e,
     unitNumber: e.unit_number || unitsByIdFromEvents[e.unit_id]?.unit_number,
   }));
 
   // CONTRACTORS
   const contractorIds = [
-    ...new Set(events.map((e: any) => e.contractor_id).filter(Boolean)),
+    ...new Set(events.map((e) => e.contractor_id).filter(Boolean)),
   ];
 
-  let contractorsById: Record<string, any> = {};
+  let contractorsById = {};
 
   if (contractorIds.length > 0) {
     const { data: contractors } = await supabase
@@ -108,19 +108,19 @@ async function fetchBuildingData(slug: string) {
       .select("id, company_name, phone")
       .in("id", contractorIds);
 
-    (contractors || []).forEach((c: any) => {
+    (contractors || []).forEach((c) => {
       contractorsById[c.id] = c;
     });
   }
 
-  const counts: Record<string, number> = {};
-  eventsWithUnits.forEach((e: any) => {
+  const counts = {};
+  eventsWithUnits.forEach((e) => {
     if (!e.contractor_id) return;
     counts[e.contractor_id] = (counts[e.contractor_id] || 0) + 1;
   });
 
   const mostActiveContractors = Object.entries(counts)
-    .sort((a, b) => (b[1] as number) - (a[1] as number))
+    .sort((a, b) => b[1] - a[1])
     .map(([id, count]) => ({
       id,
       name: contractorsById[id]?.company_name || "Contractor",
@@ -150,23 +150,17 @@ async function fetchBuildingData(slug: string) {
   const documents = documentsData || [];
 
   // USER DISPLAY NAMES
-  let userDisplayNames: Record<
-    string,
-    {
-      name: string;
-      role: string;
-    }
-  > = {};
+  let userDisplayNames = {};
   try {
     const admin = getSupabaseAdminClient();
     const { data: userList } = await admin.auth.admin.listUsers();
 
-    (userList?.users || []).forEach((u: any) => {
+    (userList?.users || []).forEach((u) => {
       const meta = u.user_metadata || u.raw_user_meta_data || {};
 
       userDisplayNames[u.id] = {
         name: meta.full_name || u.email || "Unknown User",
-        role: ROLE_LABELS[meta.role as keyof typeof ROLE_LABELS] || meta.role || "—",
+        role: ROLE_LABELS[meta.role] || meta.role || "—",
       };
     });
   } catch (err) {
@@ -199,13 +193,7 @@ async function fetchBuildingData(slug: string) {
 // -------------------------------------------------------------
 // PAGE
 // -------------------------------------------------------------
-export default async function BuildingPage({
-  params,
-  searchParams,
-}: {
-  params: { slug: string };
-  searchParams?: Record<string, string | string[] | undefined>;
-}) {
+export default async function BuildingPage({ params, searchParams }) {
   const data = await fetchBuildingData(params.slug);
 
   if (!data) {
@@ -228,13 +216,11 @@ export default async function BuildingPage({
   } = data;
 
   // Get unit search query from URL params
-  const unitSearchQuery = (searchParams?.unitSearch as string || "")
-    .trim()
-    .toLowerCase();
+  const unitSearchQuery = (searchParams?.unitSearch || "").trim().toLowerCase();
 
   // Filter units based on search query
   const filteredUnits = unitSearchQuery
-    ? units.filter((u: any) => {
+    ? units.filter((u) => {
         const unitNum = (u.unit_number || "").toLowerCase();
         const ownerName = (u.owner_name || "").toLowerCase();
         const floor = (u.floor || "").toString().toLowerCase();
@@ -249,7 +235,7 @@ export default async function BuildingPage({
   const activeTab =
     typeof searchParams?.tab === "string" &&
     TABS.some((t) => t.id === searchParams.tab)
-      ? (searchParams.tab as string)
+      ? searchParams.tab
       : "overview";
 
   // Description
@@ -318,12 +304,16 @@ export default async function BuildingPage({
           </div>
 
           <div className="text-center">
-            <div className="font-semibold">{building.year_built ?? "—"}</div>
+            <div className="font-semibold">
+              {building.year_built ?? "—"}
+            </div>
             <div className="text-gray-700 text-xs">Year Built</div>
           </div>
 
           <div className="text-center">
-            <div className="font-semibold">{building.zoning ?? "—"}</div>
+            <div className="font-semibold">
+              {building.zoning ?? "—"}
+            </div>
             <div className="text-gray-700 text-xs">Zoning</div>
           </div>
         </div>
@@ -368,9 +358,9 @@ export default async function BuildingPage({
                 <h2 className="font-semibold mb-3">Units</h2>
                 <div className="border rounded-md divide-y text-sm">
                   <div className="flex px-3 py-2 font-medium text-gray-700">
-                    <div className="w-1/4 truncate">Unit</div>
-                    <div className="w-1/4 truncate">Floor</div>
-                    <div className="w-2/4 truncate">Owner</div>
+                    <div className="w-1/4">Unit</div>
+                    <div className="w-1/4">Floor</div>
+                    <div className="w-2/4">Owner</div>
                   </div>
 
                   {filteredUnits.length === 0 ? (
@@ -380,25 +370,18 @@ export default async function BuildingPage({
                         : "No units found."}
                     </div>
                   ) : (
-                    filteredUnits.map((u: any) => (
-                      <div
-                        key={u.id}
-                        className="flex px-3 py-2 items-center"
-                      >
-                        <div className="w-1/4 truncate">
+                    filteredUnits.map((u) => (
+                      <div key={u.id} className="flex px-3 py-2">
+                        <div className="w-1/4">
                           <Link
                             href={`/${building.slug}/${u.unit_number}`}
-                            className="underline hover:text-gray-600 block truncate"
+                            className="underline hover:text-gray-600"
                           >
                             {u.unit_number}
                           </Link>
                         </div>
-                        <div className="w-1/4 truncate">
-                          {u.floor ?? "—"}
-                        </div>
-                        <div className="w-2/4 truncate">
-                          {u.owner_name || "—"}
-                        </div>
+                        <div className="w-1/4">{u.floor ?? "—"}</div>
+                        <div className="w-2/4">{u.owner_name || "—"}</div>
                       </div>
                     ))
                   )}
@@ -445,15 +428,12 @@ export default async function BuildingPage({
                 ) : (
                   <div className="border rounded-md divide-y text-sm">
                     <div className="flex px-3 py-2 font-semibold text-gray-700">
-                      <div className="w-2/5 truncate">Filename</div>
-                      <div className="w-1/5 truncate">Type</div>
-                      <div className="w-2/5 text-right truncate">
-                        Uploaded By
-                      </div>
+                      <div className="w-2/5">Filename</div>
+                      <div className="w-1/5">Type</div>
+                      <div className="w-2/5 text-right">Uploaded By</div>
                     </div>
-                    {documents.map((doc: any) => {
-                      const documentUrl =
-                        doc.download_url || doc.document_url;
+                    {documents.map((doc) => {
+                      const documentUrl = doc.download_url || doc.document_url;
                       const filename =
                         doc.filename || doc.document_type || "—";
 
@@ -471,37 +451,27 @@ export default async function BuildingPage({
                         : null;
 
                       return (
-                        <div
-                          key={doc.id}
-                          className="flex px-3 py-2 items-center"
-                        >
-                          {/* Filename */}
-                          <div className="w-2/5 overflow-hidden">
+                        <div key={doc.id} className="flex px-3 py-2">
+                          <div className="w-2/5">
                             {downloadLink ? (
                               <a
                                 href={downloadLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="font-medium text-blue-600 underline hover:text-gray-600 block truncate"
+                                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600"
                               >
                                 {filename}
                               </a>
                             ) : (
-                              <span className="font-medium block truncate">
-                                {filename}
-                              </span>
+                              <div className="font-medium">{filename}</div>
                             )}
                           </div>
-
-                          {/* Type */}
-                          <div className="w-1/5 text-xs truncate">
+                          <div className="w-1/5 text-xs">
                             {doc.content_type ||
                               doc.document_type ||
                               "—"}
                           </div>
-
-                          {/* Uploaded By */}
-                          <div className="w-2/5 text-right text-xs truncate">
+                          <div className="w-2/5 text-right text-xs">
                             {doc.uploaded_by &&
                             userDisplayNames[doc.uploaded_by]
                               ? userDisplayNames[doc.uploaded_by].role
@@ -529,22 +499,15 @@ export default async function BuildingPage({
                 ) : (
                   <div className="border rounded-md divide-y text-sm">
                     <div className="flex px-3 py-2 font-semibold text-gray-700">
-                      <div className="w-2/5 truncate">Name</div>
-                      <div className="w-2/5 truncate">Phone</div>
-                      <div className="w-1/5 text-right truncate">
-                        Events
-                      </div>
+                      <div className="w-2/5">Name</div>
+                      <div className="w-2/5">Phone</div>
+                      <div className="w-1/5 text-right">Events</div>
                     </div>
-                    {mostActiveContractors.slice(0, 5).map((c: any) => (
-                      <div
-                        key={c.id}
-                        className="flex px-3 py-2 items-center"
-                      >
-                        <div className="w-2/5 truncate">{c.name}</div>
-                        <div className="w-2/5 text-xs truncate">
-                          {c.phone}
-                        </div>
-                        <div className="w-1/5 text-right text-xs truncate">
+                    {mostActiveContractors.slice(0, 5).map((c) => (
+                      <div key={c.id} className="flex px-3 py-2">
+                        <div className="w-2/5">{c.name}</div>
+                        <div className="w-2/5 text-xs">{c.phone}</div>
+                        <div className="w-1/5 text-right text-xs">
                           {c.count}
                         </div>
                       </div>
@@ -560,12 +523,10 @@ export default async function BuildingPage({
                 <h2 className="font-semibold mb-3">Events</h2>
                 <div className="border rounded-md divide-y text-sm">
                   <div className="flex px-3 py-2 font-semibold text-gray-700">
-                    <div className="w-2/5 truncate">Event</div>
-                    <div className="w-1/5 truncate">Severity</div>
-                    <div className="w-1/5 truncate">Created By</div>
-                    <div className="w-1/5 text-right truncate">
-                      Date
-                    </div>
+                    <div className="w-2/5">Event</div>
+                    <div className="w-1/5">Severity</div>
+                    <div className="w-1/5">Created By</div>
+                    <div className="w-1/5 text-right">Date</div>
                   </div>
 
                   {events.length === 0 ? (
@@ -573,22 +534,16 @@ export default async function BuildingPage({
                       No events recorded for this building yet.
                     </div>
                   ) : (
-                    events.map((e: any) => (
-                      <div
-                        key={e.id}
-                        className="flex px-3 py-2 items-center"
-                      >
-                        <div className="w-2/5 truncate">
-                          {e.title}
-                        </div>
-                        <div className="w-1/5 truncate">
+                    events.map((e) => (
+                      <div key={e.id} className="flex px-3 py-2">
+                        <div className="w-2/5">{e.title}</div>
+                        <div className="w-1/5">
                           {e.severity || "—"}
                         </div>
-                        <div className="w-1/5 truncate">
-                          {userDisplayNames[e.created_by]?.role ||
-                            "—"}
+                        <div className="w-1/5">
+                          {userDisplayNames[e.created_by]?.role || "—"}
                         </div>
-                        <div className="w-1/5 text-right truncate">
+                        <div className="w-1/5 text-right">
                           {formatDate(e.occurred_at)}
                         </div>
                       </div>
