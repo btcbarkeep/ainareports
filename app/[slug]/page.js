@@ -231,7 +231,7 @@ export default async function BuildingPage({ params, searchParams }) {
     totalUnits,
     floors,
     userDisplayNames,
-    documentsById,
+    documentsById = {},
   } = data;
 
   // Get unit search query from URL params
@@ -572,7 +572,7 @@ export default async function BuildingPage({ params, searchParams }) {
                         if (isValidUrl) {
                           documentLink = e.document_url;
                         }
-                      } else if (e.document_id && documentsById && documentsById[e.document_id]) {
+                      } else if (e.document_id && documentsById[e.document_id]) {
                         const doc = documentsById[e.document_id];
                         const documentUrl = doc.download_url || doc.document_url;
                         const isValidUrl =
