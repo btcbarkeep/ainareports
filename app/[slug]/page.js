@@ -539,21 +539,22 @@ export default async function BuildingPage({ params, searchParams }) {
           {/* RIGHT SIDEBAR */}
           <div>
             {/* PREMIUM CTA */}
+            <div>
+            {/* PDF CTA - TODO: Implement PDF download API route */}
             <div className="border rounded-md p-4 bg-gray-50 text-sm mb-8 text-center">
-              <h3 className="font-semibold mb-1">
-                Premium Building Report (PDF)
-              </h3>
+              <h3 className="font-semibold mb-1">Premium Building Report (PDF)</h3>
               <p className="text-gray-700 text-xs mb-3">
-                Download a full report with complete event history, all
-                documents, contractor activity, and unit details for{" "}
+                Download a full report with complete event history, all documents,
+                contractor activity, and unit details for{" "}
                 <span className="font-medium">{building.name}</span>.
               </p>
-              <a
-                href={`/api/reports/${building.slug}/download`}
-                className="block text-center border border-black rounded-md py-2 text-xs font-medium"
+              <button
+                disabled
+                className="block w-full text-center border border-gray-400 rounded-md py-2 text-xs font-medium text-gray-500 cursor-not-allowed"
+                title="PDF download coming soon"
               >
-                Download Full Report (PDF)
-              </a>
+                Download Full Report (PDF) - Coming Soon
+              </button>
             </div>
 
             {/* MOST ACTIVE CONTRACTOR */}
