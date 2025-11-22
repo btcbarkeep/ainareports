@@ -21,8 +21,8 @@ const TABS = [
   { id: "overview", label: "Overview" },
   { id: "units", label: "Units" },
   { id: "documents", label: "Documents" },
-  { id: "contractors", label: "Contractors" },
   { id: "events", label: "Events" },
+  { id: "contractors", label: "Contractors" },
 ];
 
 // -------------------------------------------------------------
