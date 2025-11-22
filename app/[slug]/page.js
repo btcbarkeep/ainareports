@@ -320,15 +320,15 @@ export default async function BuildingPage({ params, searchParams }) {
 
         {/* TABS */}
         <nav className="border-b mb-6">
-          <ul className="flex gap-6 text-sm">
+          <ul className="flex gap-6 text-sm overflow-x-auto">
             {TABS.map((t) => (
-              <li key={t.id}>
+              <li key={t.id} className="flex-shrink-0">
                 <Link
                   href={`/${building.slug}?tab=${t.id}`}
                   className={
                     activeTab === t.id
-                      ? "pb-2 border-b-2 border-black"
-                      : "pb-2 text-gray-500 hover:text-black"
+                      ? "pb-2 border-b-2 border-black whitespace-nowrap block"
+                      : "pb-2 text-gray-500 hover:text-black whitespace-nowrap block"
                   }
                 >
                   {t.label}
