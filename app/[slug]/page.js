@@ -68,31 +68,12 @@ async function fetchBuildingData(slug) {
   const { data: eventsData } = await supabase
     .from("events")
     .select(
-      "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by, document_id"
+      "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by"
     )
     .eq("building_id", buildingId)
     .order("occurred_at", { ascending: false });
 
   const events = eventsData || [];
-
-  // Fetch documents for events that reference them
-  let documentsById = {};
-  const eventDocumentIds = events
-    .map((e) => e.document_id)
-    .filter(Boolean);
-  
-  if (eventDocumentIds.length > 0) {
-    const { data: eventDocuments } = await supabase
-      .from("documents")
-      .select("id, download_url, document_url, s3_key")
-      .in("id", eventDocumentIds);
-
-    if (eventDocuments) {
-      eventDocuments.forEach((doc) => {
-        documentsById[doc.id] = doc;
-      });
-    }
-  }
 
   // UNIT RESOLUTION FOR EVENTS
   const unitIds = [...new Set(events.map((e) => e.unit_id).filter(Boolean))];
@@ -206,7 +187,6 @@ async function fetchBuildingData(slug) {
     totalUnits,
     floors: building.floors ?? null,
     userDisplayNames,
-    documentsById,
   };
 }
 
@@ -233,7 +213,6 @@ export default async function BuildingPage({ params, searchParams }) {
     totalUnits,
     floors,
     userDisplayNames,
-    documentsById = {},
   } = data;
 
   // Get unit search query from URL params
@@ -557,60 +536,33 @@ export default async function BuildingPage({ params, searchParams }) {
                     <div className="w-1/5 text-right min-w-0 pl-4">Date</div>
                   </div>
 
-                  {events.length === 0 ? (
+                  {!events || events.length === 0 ? (
                     <div className="px-3 py-3 text-gray-500">
                       No events recorded for this building yet.
                     </div>
                   ) : (
-                    events.map((e) => {
-                      // Get document link if event references a document
-                      let downloadLink = null;
-                      try {
-                        if (e.document_id && documentsById && typeof documentsById === 'object') {
-                          const doc = documentsById[e.document_id];
-                          if (doc) {
-                            const documentUrl = doc.download_url || doc.document_url;
-                            if (documentUrl && typeof documentUrl === "string" && documentUrl.trim() !== "" && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"))) {
-                              downloadLink = documentUrl;
-                            } else if (doc.s3_key) {
-                              downloadLink = `/api/documents/${doc.id}/download`;
-                            }
-                          }
-                        }
-                      } catch (err) {
-                        // Silently fail if there's any error getting document link
-                        console.error("Error getting document link:", err);
-                      }
-
-                      return (
-                        <div key={e.id} className="flex px-3 py-2">
-                          <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-                            {downloadLink ? (
-                              <a
-                                href={downloadLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="truncate block text-blue-600 underline hover:text-gray-600 cursor-pointer"
-                                title={e.title || ""}
-                              >
-                                {e.title || "—"}
-                              </a>
-                            ) : (
-                              <div className="truncate" title={e.title || ""}>{e.title || "—"}</div>
-                            )}
-                          </div>
-                          <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                            <div className="truncate" title={e.severity || "—"}>{e.severity || "—"}</div>
-                          </div>
-                          <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                            <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>{userDisplayNames[e.created_by]?.role || "—"}</div>
-                          </div>
-                          <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
-                            <div className="truncate" title={formatDate(e.occurred_at)}>{formatDate(e.occurred_at)}</div>
+                    (events || []).map((e) => (
+                      <div key={e.id} className="flex px-3 py-2">
+                        <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
+                          <div className="truncate" title={e.title}>{e.title}</div>
+                        </div>
+                        <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                          <div className="truncate" title={e.severity || "—"}>
+                            {e.severity || "—"}
                           </div>
                         </div>
-                      );
-                    })
+                        <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                          <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
+                            {userDisplayNames[e.created_by]?.role || "—"}
+                          </div>
+                        </div>
+                        <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
+                          <div className="truncate" title={formatDate(e.occurred_at)}>
+                            {formatDate(e.occurred_at)}
+                          </div>
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
               </>
