@@ -358,7 +358,7 @@ export default async function UnitPage({ params, searchParams }) {
                   <div className="border rounded-md divide-y text-sm">
                     <div className="flex px-3 py-2 font-semibold text-gray-700">
                       <div className="w-2/5 min-w-0">Filename</div>
-                      <div className="w-1/5 min-w-0 pl-4">Type</div>
+                      <div className="w-1/5 min-w-0 pl-4">Category</div>
                       <div className="w-2/5 text-right min-w-0 pl-4">Uploaded By</div>
                     </div>
                     {documents.map((doc) => {
@@ -395,8 +395,8 @@ export default async function UnitPage({ params, searchParams }) {
                             )}
                           </div>
                           <div className="w-1/5 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
-                            <div className="truncate" title={doc.content_type || doc.document_type || "—"}>
-                              {doc.content_type || doc.document_type || "—"}
+                            <div className="truncate" title={doc.category || "—"}>
+                              {doc.category || "—"}
                             </div>
                           </div>
                           <div className="w-2/5 text-right text-xs min-w-0 pl-4 overflow-hidden">
