@@ -512,15 +512,17 @@ export default async function UnitPage({ params, searchParams }) {
             </div>
 
             {/* CTA */}
-            <div className="mt-10">
-              <p className="text-sm mb-3 text-center">Owner or manager of this unit?</p>
-              <button
-                type="button"
-                className="w-full border border-black rounded-md py-2 text-sm"
-              >
-                Register with Aina Protocol
-              </button>
-            </div>
+            <div className="mt-8">
+                <p className="text-sm text-center mb-3">Owner or manager of this unit?</p>
+                <a
+                  href="https://www.ainaprotocol.com/signup/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-center border border-black rounded-md py-2 text-sm"
+                >
+                  Register with Aina Protocol
+                </a>
+              </div>
           </div>
         </div>
 
