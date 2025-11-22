@@ -557,26 +557,46 @@ export default async function BuildingPage({ params, searchParams }) {
                     <div className="w-1/5 text-right min-w-0 pl-4">Date</div>
                   </div>
 
-                  {!events || events.length === 0 ? (
+                  {events.length === 0 ? (
                     <div className="px-3 py-3 text-gray-500">
                       No events recorded for this building yet.
                     </div>
                   ) : (
-                    (events || []).map((e) => {
-                      const doc = e.document_id && documentsById?.[e.document_id] ? documentsById[e.document_id] : null;
-                      const documentUrl = doc?.download_url || doc?.document_url;
-                      const isValidUrl = documentUrl && typeof documentUrl === "string" && documentUrl.trim() !== "" && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"));
-                      const downloadLink = isValidUrl ? documentUrl : (doc?.s3_key ? `/api/documents/${doc.id}/download` : null);
+                    events.map((e) => {
+                      // Get document link if event references a document
+                      let downloadLink = null;
+                      try {
+                        if (e.document_id && documentsById && typeof documentsById === 'object') {
+                          const doc = documentsById[e.document_id];
+                          if (doc) {
+                            const documentUrl = doc.download_url || doc.document_url;
+                            if (documentUrl && typeof documentUrl === "string" && documentUrl.trim() !== "" && (documentUrl.startsWith("http://") || documentUrl.startsWith("https://"))) {
+                              downloadLink = documentUrl;
+                            } else if (doc.s3_key) {
+                              downloadLink = `/api/documents/${doc.id}/download`;
+                            }
+                          }
+                        }
+                      } catch (err) {
+                        // Silently fail if there's any error getting document link
+                        console.error("Error getting document link:", err);
+                      }
 
                       return (
                         <div key={e.id} className="flex px-3 py-2">
                           <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
                             {downloadLink ? (
-                              <a href={downloadLink} target="_blank" rel="noopener noreferrer" className="truncate block text-blue-600 underline hover:text-gray-600 cursor-pointer" title={e.title}>
-                                {e.title}
+                              <a
+                                href={downloadLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="truncate block text-blue-600 underline hover:text-gray-600 cursor-pointer"
+                                title={e.title || ""}
+                              >
+                                {e.title || "—"}
                               </a>
                             ) : (
-                              <div className="truncate" title={e.title}>{e.title}</div>
+                              <div className="truncate" title={e.title || ""}>{e.title || "—"}</div>
                             )}
                           </div>
                           <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
