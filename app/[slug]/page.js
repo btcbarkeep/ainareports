@@ -429,8 +429,8 @@ export default async function BuildingPage({ params, searchParams }) {
                   <div className="border rounded-md divide-y text-sm">
                     <div className="flex px-3 py-2 font-semibold text-gray-700">
                       <div className="w-2/5 min-w-0">Filename</div>
-                      <div className="w-1/5 min-w-0">Type</div>
-                      <div className="w-2/5 text-right min-w-0">Uploaded By</div>
+                      <div className="w-1/5 min-w-0 pl-4">Type</div>
+                      <div className="w-2/5 text-right min-w-0 pl-4">Uploaded By</div>
                     </div>
                     {documents.map((doc) => {
                       const documentUrl = doc.download_url || doc.document_url;
@@ -452,7 +452,7 @@ export default async function BuildingPage({ params, searchParams }) {
 
                       return (
                         <div key={doc.id} className="flex px-3 py-2">
-                          <div className="w-2/5 min-w-0 pr-2 overflow-hidden">
+                          <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
                             {downloadLink ? (
                               <a
                                 href={downloadLink}
@@ -467,14 +467,14 @@ export default async function BuildingPage({ params, searchParams }) {
                               <div className="font-medium truncate" title={filename}>{filename}</div>
                             )}
                           </div>
-                          <div className="w-1/5 text-xs min-w-0 pr-2 overflow-hidden">
+                          <div className="w-1/5 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
                             <div className="truncate" title={doc.content_type || doc.document_type || "—"}>
                               {doc.content_type ||
                                 doc.document_type ||
                                 "—"}
                             </div>
                           </div>
-                          <div className="w-2/5 text-right text-xs min-w-0 overflow-hidden">
+                          <div className="w-2/5 text-right text-xs min-w-0 pl-4 overflow-hidden">
                             <div className="truncate" title={
                               (doc.uploaded_by && userDisplayNames[doc.uploaded_by]
                                 ? userDisplayNames[doc.uploaded_by].role
@@ -532,10 +532,10 @@ export default async function BuildingPage({ params, searchParams }) {
                 <h2 className="font-semibold mb-3">Events</h2>
                 <div className="border rounded-md divide-y text-sm">
                   <div className="flex px-3 py-2 font-semibold text-gray-700">
-                    <div className="w-2/5">Event</div>
-                    <div className="w-1/5">Severity</div>
-                    <div className="w-1/5">Created By</div>
-                    <div className="w-1/5 text-right">Date</div>
+                    <div className="w-2/5 min-w-0">Event</div>
+                    <div className="w-1/5 min-w-0 pl-4">Severity</div>
+                    <div className="w-1/5 min-w-0 pl-4">Created By</div>
+                    <div className="w-1/5 text-right min-w-0 pl-4">Date</div>
                   </div>
 
                   {events.length === 0 ? (
@@ -545,15 +545,23 @@ export default async function BuildingPage({ params, searchParams }) {
                   ) : (
                     events.map((e) => (
                       <div key={e.id} className="flex px-3 py-2">
-                        <div className="w-2/5">{e.title}</div>
-                        <div className="w-1/5">
-                          {e.severity || "—"}
+                        <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
+                          <div className="truncate" title={e.title}>{e.title}</div>
                         </div>
-                        <div className="w-1/5">
-                          {userDisplayNames[e.created_by]?.role || "—"}
+                        <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                          <div className="truncate" title={e.severity || "—"}>
+                            {e.severity || "—"}
+                          </div>
                         </div>
-                        <div className="w-1/5 text-right">
-                          {formatDate(e.occurred_at)}
+                        <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                          <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
+                            {userDisplayNames[e.created_by]?.role || "—"}
+                          </div>
+                        </div>
+                        <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
+                          <div className="truncate" title={formatDate(e.occurred_at)}>
+                            {formatDate(e.occurred_at)}
+                          </div>
                         </div>
                       </div>
                     ))
