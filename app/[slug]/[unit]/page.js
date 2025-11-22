@@ -357,9 +357,9 @@ export default async function UnitPage({ params, searchParams }) {
                 ) : (
                   <div className="border rounded-md divide-y text-sm">
                     <div className="flex px-3 py-2 font-semibold text-gray-700">
-                      <div className="w-2/5">Filename</div>
-                      <div className="w-1/5">Type</div>
-                      <div className="w-2/5 text-right">Uploaded By</div>
+                      <div className="w-2/5 min-w-0">Filename</div>
+                      <div className="w-1/5 min-w-0">Type</div>
+                      <div className="w-2/5 text-right min-w-0">Uploaded By</div>
                     </div>
                     {documents.map((doc) => {
                       // Use download_url/document_url if available, otherwise use Next.js API route
@@ -379,28 +379,39 @@ export default async function UnitPage({ params, searchParams }) {
                       
                       return (
                         <div key={doc.id} className="flex px-3 py-2">
-                          <div className="w-2/5">
+                          <div className="w-2/5 min-w-0 pr-2 overflow-hidden">
                             {downloadLink ? (
                               <a
                                 href={downloadLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600"
+                                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block"
+                                title={filename}
                               >
                                 {filename}
                               </a>
                             ) : (
-                              <div className="font-medium">{filename}</div>
+                              <div className="font-medium truncate" title={filename}>{filename}</div>
                             )}
                           </div>
-                          <div className="w-1/5 text-xs">{doc.content_type || doc.document_type || "—"}</div>
-                          <div className="w-2/5 text-right text-xs">
-                            {doc.uploaded_by && userDisplayNames[doc.uploaded_by]
-                              ? userDisplayNames[doc.uploaded_by].role
-                              : "—"}
-                            <span className="ml-2 text-gray-500">
-                              {formatDate(doc.created_at)}
-                            </span>
+                          <div className="w-1/5 text-xs min-w-0 pr-2 overflow-hidden">
+                            <div className="truncate" title={doc.content_type || doc.document_type || "—"}>
+                              {doc.content_type || doc.document_type || "—"}
+                            </div>
+                          </div>
+                          <div className="w-2/5 text-right text-xs min-w-0 overflow-hidden">
+                            <div className="truncate" title={
+                              (doc.uploaded_by && userDisplayNames[doc.uploaded_by]
+                                ? userDisplayNames[doc.uploaded_by].role
+                                : "—") + " " + formatDate(doc.created_at)
+                            }>
+                              {doc.uploaded_by && userDisplayNames[doc.uploaded_by]
+                                ? userDisplayNames[doc.uploaded_by].role
+                                : "—"}
+                              <span className="ml-2 text-gray-500">
+                                {formatDate(doc.created_at)}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       );
