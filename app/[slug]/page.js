@@ -428,9 +428,9 @@ export default async function BuildingPage({ params, searchParams }) {
                 ) : (
                   <div className="border rounded-md divide-y text-sm">
                     <div className="flex px-3 py-2 font-semibold text-gray-700">
-                      <div className="w-2/5">Filename</div>
-                      <div className="w-1/5">Type</div>
-                      <div className="w-2/5 text-right">Uploaded By</div>
+                      <div className="w-2/5 min-w-0">Filename</div>
+                      <div className="w-1/5 min-w-0">Category</div>
+                      <div className="w-2/5 text-right min-w-0">Uploaded By</div>
                     </div>
                     {documents.map((doc) => {
                       const documentUrl = doc.download_url || doc.document_url;
@@ -452,26 +452,27 @@ export default async function BuildingPage({ params, searchParams }) {
 
                       return (
                         <div key={doc.id} className="flex px-3 py-2">
-                          <div className="w-2/5">
+                          <div className="w-2/5 min-w-0 pr-2">
                             {downloadLink ? (
                               <a
                                 href={downloadLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600"
+                                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block"
+                                title={filename}
                               >
                                 {filename}
                               </a>
                             ) : (
-                              <div className="font-medium">{filename}</div>
+                              <div className="font-medium truncate" title={filename}>{filename}</div>
                             )}
                           </div>
-                          <div className="w-1/5 text-xs">
+                          <div className="w-1/5 text-xs min-w-0 pr-2 truncate">
                             {doc.content_type ||
                               doc.document_type ||
                               "—"}
                           </div>
-                          <div className="w-2/5 text-right text-xs">
+                          <div className="w-2/5 text-right text-xs min-w-0">
                             {doc.uploaded_by &&
                             userDisplayNames[doc.uploaded_by]
                               ? userDisplayNames[doc.uploaded_by].role
