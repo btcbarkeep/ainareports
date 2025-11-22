@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { getSupabaseClient, getSupabaseAdminClient } from "@/lib/supabaseClient";
+import {
+  getSupabaseClient,
+  getSupabaseAdminClient,
+} from "@/lib/supabaseClient";
 
 const ROLE_LABELS = {
   super_admin: "Admin",
@@ -214,7 +217,7 @@ export default async function BuildingPage({ params, searchParams }) {
 
   // Get unit search query from URL params
   const unitSearchQuery = (searchParams?.unitSearch || "").trim().toLowerCase();
-  
+
   // Filter units based on search query
   const filteredUnits = unitSearchQuery
     ? units.filter((u) => {
@@ -259,9 +262,15 @@ export default async function BuildingPage({ params, searchParams }) {
           </Link>
           <div className="text-center">
             <Link href="/" className="inline-block cursor-pointer">
-              <img src="/aina-logo-dark.png" className="w-14 mx-auto mb-4" alt="Aina Logo" />
+              <img
+                src="/aina-logo-dark.png"
+                className="w-14 mx-auto mb-4"
+                alt="Aina Logo"
+              />
             </Link>
-            <div className="text-xs tracking-[0.25em] uppercase">AINAREPORTS</div>
+            <div className="text-xs tracking-[0.25em] uppercase">
+              AINAREPORTS
+            </div>
           </div>
         </header>
 
@@ -356,7 +365,9 @@ export default async function BuildingPage({ params, searchParams }) {
 
                   {filteredUnits.length === 0 ? (
                     <div className="px-3 py-3 text-gray-500">
-                      {unitSearchQuery ? "No units found matching your search." : "No units found."}
+                      {unitSearchQuery
+                        ? "No units found matching your search."
+                        : "No units found."}
                     </div>
                   ) : (
                     filteredUnits.map((u) => (
@@ -379,11 +390,7 @@ export default async function BuildingPage({ params, searchParams }) {
                 {/* Search Units Bar */}
                 <div className="mt-4">
                   <form method="GET" className="flex gap-2">
-                    <input
-                      type="hidden"
-                      name="tab"
-                      value="units"
-                    />
+                    <input type="hidden" name="tab" value="units" />
                     <input
                       type="text"
                       name="unitSearch"
@@ -426,21 +433,23 @@ export default async function BuildingPage({ params, searchParams }) {
                       <div className="w-2/5 text-right">Uploaded By</div>
                     </div>
                     {documents.map((doc) => {
-                      // Use download_url/document_url if available, otherwise use Next.js API route
                       const documentUrl = doc.download_url || doc.document_url;
-                      const filename = doc.filename || doc.document_type || "—";
-                      
-                      // Check if it's a valid URL (starts with http:// or https://)
-                      const isValidUrl = documentUrl && 
-                        typeof documentUrl === 'string' && 
-                        documentUrl.trim() !== '' &&
-                        (documentUrl.startsWith('http://') || documentUrl.startsWith('https://'));
-                      
-                      // If no direct URL but we have s3_key, use Next.js API route (which proxies to FastAPI)
-                      const downloadLink = isValidUrl 
-                        ? documentUrl 
-                        : (doc.s3_key ? `/api/documents/${doc.id}/download` : null);
-                      
+                      const filename =
+                        doc.filename || doc.document_type || "—";
+
+                      const isValidUrl =
+                        documentUrl &&
+                        typeof documentUrl === "string" &&
+                        documentUrl.trim() !== "" &&
+                        (documentUrl.startsWith("http://") ||
+                          documentUrl.startsWith("https://"));
+
+                      const downloadLink = isValidUrl
+                        ? documentUrl
+                        : doc.s3_key
+                        ? `/api/documents/${doc.id}/download`
+                        : null;
+
                       return (
                         <div key={doc.id} className="flex px-3 py-2">
                           <div className="w-2/5">
@@ -457,9 +466,14 @@ export default async function BuildingPage({ params, searchParams }) {
                               <div className="font-medium">{filename}</div>
                             )}
                           </div>
-                          <div className="w-1/5 text-xs">{doc.content_type || doc.document_type || "—"}</div>
+                          <div className="w-1/5 text-xs">
+                            {doc.content_type ||
+                              doc.document_type ||
+                              "—"}
+                          </div>
                           <div className="w-2/5 text-right text-xs">
-                            {doc.uploaded_by && userDisplayNames[doc.uploaded_by]
+                            {doc.uploaded_by &&
+                            userDisplayNames[doc.uploaded_by]
                               ? userDisplayNames[doc.uploaded_by].role
                               : "—"}
                             <span className="ml-2 text-gray-500">
@@ -493,7 +507,9 @@ export default async function BuildingPage({ params, searchParams }) {
                       <div key={c.id} className="flex px-3 py-2">
                         <div className="w-2/5">{c.name}</div>
                         <div className="w-2/5 text-xs">{c.phone}</div>
-                        <div className="w-1/5 text-right text-xs">{c.count}</div>
+                        <div className="w-1/5 text-right text-xs">
+                          {c.count}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -521,7 +537,9 @@ export default async function BuildingPage({ params, searchParams }) {
                     events.map((e) => (
                       <div key={e.id} className="flex px-3 py-2">
                         <div className="w-2/5">{e.title}</div>
-                        <div className="w-1/5">{e.severity || "—"}</div>
+                        <div className="w-1/5">
+                          {e.severity || "—"}
+                        </div>
                         <div className="w-1/5">
                           {userDisplayNames[e.created_by]?.role || "—"}
                         </div>
@@ -540,62 +558,74 @@ export default async function BuildingPage({ params, searchParams }) {
           <div>
             {/* PREMIUM CTA */}
             <div>
-            {/* PDF CTA - TODO: Implement PDF download API route */}
-            <div className="border rounded-md p-4 bg-gray-50 text-sm mb-8 text-center">
-              <h3 className="font-semibold mb-1">Premium Building Report (PDF)</h3>
-              <p className="text-gray-700 text-xs mb-3">
-                Download a full report with complete event history, all documents,
-                contractor activity, and unit details for{" "}
-                <span className="font-medium">{building.name}</span>.
-              </p>
-              <button
-                disabled
-                className="block w-full text-center border border-gray-400 rounded-md py-2 text-xs font-medium text-gray-500 cursor-not-allowed"
-                title="PDF download coming soon"
-              >
-                Download Full Report (PDF) - Coming Soon
-              </button>
-            </div>
+              {/* PDF CTA - TODO: Implement PDF download API route */}
+              <div className="border rounded-md p-4 bg-gray-50 text-sm mb-8 text-center">
+                <h3 className="font-semibold mb-1">
+                  Premium Building Report (PDF)
+                </h3>
+                <p className="text-gray-700 text-xs mb-3">
+                  Download a full report with complete event history, all
+                  documents, contractor activity, and unit details for{" "}
+                  <span className="font-medium">
+                    {building.name}
+                  </span>
+                  .
+                </p>
+                <button
+                  disabled
+                  className="block w-full text-center border border-gray-400 rounded-md py-2 text-xs font-medium text-gray-500 cursor-not-allowed"
+                  title="PDF download coming soon"
+                >
+                  Download Full Report (PDF) - Coming Soon
+                </button>
+              </div>
 
-            {/* MOST ACTIVE CONTRACTOR */}
-            <h2 className="font-semibold text-center mb-3">Most Active Contractor</h2>
-            <div className="border rounded-md text-sm p-3">
-              {!singleMostActive ? (
-                <div className="text-gray-500 text-center text-xs">
-                  No contractor activity recorded for this building yet.
-                </div>
-              ) : (
-                <div className="text-center">
-                  <div className="font-medium">{singleMostActive.name}</div>
-                  {singleMostActive.phone && (
-                    <div className="text-xs text-gray-600 mb-1">
-                      {singleMostActive.phone}
-                    </div>
-                  )}
-                  <div className="text-xs text-gray-500">
-                    {singleMostActive.count} recent event
-                    {singleMostActive.count > 1 ? "s" : ""}
+              {/* MOST ACTIVE CONTRACTOR */}
+              <h2 className="font-semibold text-center mb-3">
+                Most Active Contractor
+              </h2>
+              <div className="border rounded-md text-sm p-3">
+                {!singleMostActive ? (
+                  <div className="text-gray-500 text-center text-xs">
+                    No contractor activity recorded for this building yet.
                   </div>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="font-medium">
+                      {singleMostActive.name}
+                    </div>
+                    {singleMostActive.phone && (
+                      <div className="text-xs text-gray-600 mb-1">
+                        {singleMostActive.phone}
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-500">
+                      {singleMostActive.count} recent event
+                      {singleMostActive.count > 1 ? "s" : ""}
+                    </div>
+                  </div>
+                )}
+              </div>
 
-            {/* MANAGE CTA */}
-            <div className="mt-8">
-              <p className="text-sm text-center mb-3">
-                Manage this building?
-              </p>
-              <a
-                href="https://ainaprotocol.com"
-                target="_blank"
-                className="block text-center border border-black rounded-md py-2 text-sm"
-              >
-                Register with Aina Protocol
-              </a>
+              {/* MANAGE CTA */}
+              <div className="mt-8">
+                <p className="text-sm text-center mb-3">
+                  Manage this building?
+                </p>
+                <a
+                  href="https://ainaprotocol.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-center border border-black rounded-md py-2 text-sm"
+                >
+                  Register with Aina Protocol
+                </a>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
       {/* FOOTER MESSAGE */}
       <div className="mt-20 pb-10 text-center text-xs text-gray-400">
         This building is connected to live data through{" "}
