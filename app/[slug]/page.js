@@ -68,29 +68,12 @@ async function fetchBuildingData(slug) {
   const { data: eventsData } = await supabase
     .from("events")
     .select(
-      "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by, document_id, document_url"
+      "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by"
     )
     .eq("building_id", buildingId)
     .order("occurred_at", { ascending: false });
 
   const events = eventsData || [];
-
-  // Fetch documents for events that reference them
-  const eventDocumentIds = events
-    .map((e) => e.document_id)
-    .filter(Boolean);
-  
-  let documentsById = {};
-  if (eventDocumentIds.length > 0) {
-    const { data: eventDocuments } = await supabase
-      .from("documents")
-      .select("id, download_url, document_url, s3_key")
-      .in("id", eventDocumentIds);
-
-    (eventDocuments || []).forEach((doc) => {
-      documentsById[doc.id] = doc;
-    });
-  }
 
   // UNIT RESOLUTION FOR EVENTS
   const unitIds = [...new Set(events.map((e) => e.unit_id).filter(Boolean))];
@@ -204,7 +187,6 @@ async function fetchBuildingData(slug) {
     totalUnits,
     floors: building.floors ?? null,
     userDisplayNames,
-    documentsById,
   };
 }
 
@@ -231,7 +213,6 @@ export default async function BuildingPage({ params, searchParams }) {
     totalUnits,
     floors,
     userDisplayNames,
-    documentsById,
   } = data;
 
   // Get unit search query from URL params
@@ -541,6 +522,11 @@ export default async function BuildingPage({ params, searchParams }) {
                   </div>
                 )}
               </>
+                    events.map((e) => (
+                      <div key={e.id} className="flex px-3 py-2">
+                        <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
+                          <div className="truncate" title={e.title}>{e.title}</div>
+                        </div>
             )}
 
             {/* EVENTS */}
@@ -560,50 +546,6 @@ export default async function BuildingPage({ params, searchParams }) {
                       No events recorded for this building yet.
                     </div>
                   ) : (
-                    events.map((e) => {
-                      // Get document URL if event references a document
-                      let documentLink = null;
-                      if (e.document_url) {
-                        const isValidUrl =
-                          typeof e.document_url === "string" &&
-                          e.document_url.trim() !== "" &&
-                          (e.document_url.startsWith("http://") ||
-                            e.document_url.startsWith("https://"));
-                        if (isValidUrl) {
-                          documentLink = e.document_url;
-                        }
-                      } else if (e.document_id && documentsById[e.document_id]) {
-                        const doc = documentsById[e.document_id];
-                        const documentUrl = doc.download_url || doc.document_url;
-                        const isValidUrl =
-                          documentUrl &&
-                          typeof documentUrl === "string" &&
-                          documentUrl.trim() !== "" &&
-                          (documentUrl.startsWith("http://") ||
-                            documentUrl.startsWith("https://"));
-                        if (isValidUrl) {
-                          documentLink = documentUrl;
-                        } else if (doc.s3_key) {
-                          documentLink = `/api/documents/${doc.id}/download`;
-                        }
-                      }
-
-                      return (
-                        <div key={e.id} className="flex px-3 py-2">
-                          <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-                            {documentLink ? (
-                              <a
-                                href={documentLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="truncate block text-blue-600 underline hover:text-gray-600 cursor-pointer"
-                                title={e.title}
-                              >
-                                {e.title}
-                              </a>
-                            ) : (
-                              <div className="truncate" title={e.title}>{e.title}</div>
-                            )}
                           </div>
                         <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
                           <div className="truncate" title={e.severity || "—"}>
@@ -621,8 +563,6 @@ export default async function BuildingPage({ params, searchParams }) {
                           </div>
                         </div>
                       </div>
-                      );
-                    })
                   )}
                 </div>
               </>
