@@ -320,15 +320,15 @@ export default async function BuildingPage({ params, searchParams }) {
 
         {/* TABS */}
         <nav className="border-b mb-6">
-          <ul className="flex gap-6 text-sm overflow-x-auto">
+          <ul className="flex gap-6 text-sm">
             {TABS.map((t) => (
-              <li key={t.id} className="flex-shrink-0">
+              <li key={t.id}>
                 <Link
                   href={`/${building.slug}?tab=${t.id}`}
                   className={
                     activeTab === t.id
-                      ? "pb-2 border-b-2 border-black whitespace-nowrap block"
-                      : "pb-2 text-gray-500 hover:text-black whitespace-nowrap block"
+                      ? "pb-2 border-b-2 border-black"
+                      : "pb-2 text-gray-500 hover:text-black"
                   }
                 >
                   {t.label}
@@ -428,9 +428,9 @@ export default async function BuildingPage({ params, searchParams }) {
                 ) : (
                   <div className="border rounded-md divide-y text-sm">
                     <div className="flex px-3 py-2 font-semibold text-gray-700">
-                      <div className="w-2/5">Filename</div>
-                      <div className="w-1/5">Type</div>
-                      <div className="w-2/5 text-right">Uploaded By</div>
+                      <div className="w-2/5 min-w-0">Filename</div>
+                      <div className="w-1/5 min-w-0">Type</div>
+                      <div className="w-2/5 text-right min-w-0">Uploaded By</div>
                     </div>
                     {documents.map((doc) => {
                       const documentUrl = doc.download_url || doc.document_url;
@@ -452,33 +452,42 @@ export default async function BuildingPage({ params, searchParams }) {
 
                       return (
                         <div key={doc.id} className="flex px-3 py-2">
-                          <div className="w-2/5">
+                          <div className="w-2/5 min-w-0 pr-2 overflow-hidden">
                             {downloadLink ? (
                               <a
                                 href={downloadLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600"
+                                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block"
+                                title={filename}
                               >
                                 {filename}
                               </a>
                             ) : (
-                              <div className="font-medium">{filename}</div>
+                              <div className="font-medium truncate" title={filename}>{filename}</div>
                             )}
                           </div>
-                          <div className="w-1/5 text-xs">
-                            {doc.content_type ||
-                              doc.document_type ||
-                              "—"}
+                          <div className="w-1/5 text-xs min-w-0 pr-2 overflow-hidden">
+                            <div className="truncate" title={doc.content_type || doc.document_type || "—"}>
+                              {doc.content_type ||
+                                doc.document_type ||
+                                "—"}
+                            </div>
                           </div>
-                          <div className="w-2/5 text-right text-xs">
-                            {doc.uploaded_by &&
-                            userDisplayNames[doc.uploaded_by]
-                              ? userDisplayNames[doc.uploaded_by].role
-                              : "—"}
-                            <span className="ml-2 text-gray-500">
-                              {formatDate(doc.created_at)}
-                            </span>
+                          <div className="w-2/5 text-right text-xs min-w-0 overflow-hidden">
+                            <div className="truncate" title={
+                              (doc.uploaded_by && userDisplayNames[doc.uploaded_by]
+                                ? userDisplayNames[doc.uploaded_by].role
+                                : "—") + " " + formatDate(doc.created_at)
+                            }>
+                              {doc.uploaded_by &&
+                              userDisplayNames[doc.uploaded_by]
+                                ? userDisplayNames[doc.uploaded_by].role
+                                : "—"}
+                              <span className="ml-2 text-gray-500">
+                                {formatDate(doc.created_at)}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       );
