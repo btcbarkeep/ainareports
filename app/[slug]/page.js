@@ -613,7 +613,7 @@ export default async function BuildingPage({ params, searchParams }) {
                   Manage this building?
                 </p>
                 <a
-                  href="https://ainaprotocol.com"
+                  href="https://www.ainaprotocol.com/signup/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-center border border-black rounded-md py-2 text-sm"
