@@ -510,7 +510,7 @@ export default async function BuildingPage({ params, searchParams }) {
                         );
                       })}
                     </div>
-                    {totalDocumentsCount > documents.length && (
+                    {documents.length >= 5 && totalDocumentsCount > 5 && (
                       <>
                         <p className="text-gray-600 text-sm mt-3">
                           Showing {documents.length} of {totalDocumentsCount} documents
@@ -555,7 +555,7 @@ export default async function BuildingPage({ params, searchParams }) {
                         </div>
                       ))}
                     </div>
-                    {totalContractorsCount > 5 && (
+                    {mostActiveContractors.length >= 5 && totalContractorsCount > 5 && (
                       <>
                         <p className="text-gray-600 text-sm mt-3">
                           Showing 5 of {totalContractorsCount} contractors
@@ -597,7 +597,7 @@ export default async function BuildingPage({ params, searchParams }) {
                         userDisplayNames={userDisplayNames}
                       />
                     </div>
-                    {totalEventsCount > 5 && (
+                    {events.length >= 5 && totalEventsCount > 5 && (
                       <>
                         <p className="text-gray-600 text-sm mt-3">
                           Showing 5 of {totalEventsCount} events
