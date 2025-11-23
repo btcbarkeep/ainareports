@@ -64,48 +64,26 @@ async function fetchBuildingData(slug) {
 
   const buildingId = building.id;
 
-  // Get all unit IDs for this building first
-  const { data: buildingUnits } = await supabase
-    .from("units")
-    .select("id")
-    .eq("building_id", buildingId);
-
-  const unitIds = buildingUnits ? buildingUnits.map((u) => u.id) : [];
-
-  // EVENTS - fetch by unit_id if we have units, or try building_id as fallback
-  let eventsData = [];
-  if (unitIds.length > 0) {
-    const { data: eventsByUnit } = await supabase
-      .from("events")
-      .select(
-        "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by, document_id, s3_key"
-      )
-      .in("unit_id", unitIds)
-      .order("occurred_at", { ascending: false });
-    eventsData = eventsByUnit || [];
-  } else {
-    // Fallback: try building_id if events table has it
-    const { data: eventsByBuilding } = await supabase
-      .from("events")
-      .select(
-        "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by, document_id, s3_key"
-      )
-      .eq("building_id", buildingId)
-      .order("occurred_at", { ascending: false });
-    eventsData = eventsByBuilding || [];
-  }
+  // EVENTS
+  const { data: eventsData } = await supabase
+    .from("events")
+    .select(
+      "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by"
+    )
+    .eq("building_id", buildingId)
+    .order("occurred_at", { ascending: false });
 
   const events = eventsData || [];
 
   // UNIT RESOLUTION FOR EVENTS
-  const eventUnitIds = [...new Set(events.map((e) => e.unit_id).filter(Boolean))];
+  const unitIds = [...new Set(events.map((e) => e.unit_id).filter(Boolean))];
   let unitsByIdFromEvents = {};
 
-  if (eventUnitIds.length > 0) {
+  if (unitIds.length > 0) {
     const { data: unitsForEvents } = await supabase
       .from("units")
       .select("id, unit_number")
-      .in("id", eventUnitIds);
+      .in("id", unitIds);
 
     (unitsForEvents || []).forEach((u) => {
       unitsByIdFromEvents[u.id] = u;
@@ -563,40 +541,28 @@ export default async function BuildingPage({ params, searchParams }) {
                       No events recorded for this building yet.
                     </div>
                   ) : (
-                    events.map((e) => {
-                      // Get document link if event has s3_key (document_id should be present when s3_key exists)
-                      const downloadLink = e.s3_key && e.document_id ? `/api/documents/${e.document_id}/download` : null;
-                      const eventTitle = e.title || "Untitled Event";
-
-                      return (
-                        <div key={e.id} className="flex px-3 py-2">
-                          <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-                            {downloadLink ? (
-                              <a
-                                href={downloadLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="truncate block text-blue-600 underline hover:text-gray-600 cursor-pointer"
-                                title={eventTitle}
-                              >
-                                {eventTitle}
-                              </a>
-                            ) : (
-                              <div className="truncate" title={eventTitle}>{eventTitle}</div>
-                            )}
-                          </div>
-                          <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                            <div className="truncate" title={e.severity || "—"}>{e.severity || "—"}</div>
-                          </div>
-                          <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                            <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>{userDisplayNames[e.created_by]?.role || "—"}</div>
-                          </div>
-                          <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
-                            <div className="truncate" title={formatDate(e.occurred_at)}>{formatDate(e.occurred_at)}</div>
+                    (events || []).map((e) => (
+                      <div key={e.id} className="flex px-3 py-2">
+                        <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
+                          <div className="truncate" title={e.title}>{e.title}</div>
+                        </div>
+                        <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                          <div className="truncate" title={e.severity || "—"}>
+                            {e.severity || "—"}
                           </div>
                         </div>
-                      );
-                    })
+                        <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                          <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
+                            {userDisplayNames[e.created_by]?.role || "—"}
+                          </div>
+                        </div>
+                        <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
+                          <div className="truncate" title={formatDate(e.occurred_at)}>
+                            {formatDate(e.occurred_at)}
+                          </div>
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
               </>
