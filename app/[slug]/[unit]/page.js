@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getSupabaseClient, getSupabaseAdminClient } from "@/lib/supabaseClient";
+import EventsList from "@/components/EventsList";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -434,63 +435,11 @@ export default async function UnitPage({ params, searchParams }) {
                     <div className="w-1/5 text-right min-w-0 pl-4">Date</div>
                   </div>
 
-                  {!events || events.length === 0 ? (
-                    <div className="px-3 py-3 text-gray-500">
-                      No events recorded for this unit yet.
-                    </div>
-                  ) : (
-                    (events || []).map((e) => {
-                      // Use download_url/document_url if available, otherwise use Next.js API route
-                      const eventUrl = e.download_url || e.document_url;
-                      const eventTitle = e.title || "—";
-                      
-                      // Check if it's a valid URL (starts with http:// or https://)
-                      const isValidUrl = eventUrl && 
-                        typeof eventUrl === 'string' && 
-                        eventUrl.trim() !== '' &&
-                        (eventUrl.startsWith('http://') || eventUrl.startsWith('https://'));
-                      
-                      // If no direct URL but we have s3_key, use Next.js API route (which proxies to FastAPI)
-                      const downloadLink = isValidUrl 
-                        ? eventUrl 
-                        : (e.s3_key ? `/api/events/${e.id}/download` : null);
-                      
-                      return (
-                        <div key={e.id} className="flex px-3 py-2">
-                          <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-                            {downloadLink ? (
-                              <a
-                                href={downloadLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block"
-                                title={eventTitle}
-                              >
-                                {eventTitle}
-                              </a>
-                            ) : (
-                              <div className="truncate" title={eventTitle}>{eventTitle}</div>
-                            )}
-                          </div>
-                          <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                            <div className="truncate" title={e.severity || "—"}>
-                              {e.severity || "—"}
-                            </div>
-                          </div>
-                          <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                            <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
-                              {userDisplayNames[e.created_by]?.role || "—"}
-                            </div>
-                          </div>
-                          <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
-                            <div className="truncate" title={formatDate(e.occurred_at)}>
-                              {formatDate(e.occurred_at)}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+                  <EventsList
+                    events={events}
+                    userDisplayNames={userDisplayNames}
+                    formatDate={formatDate}
+                  />
                 </div>
               </>
             )}
