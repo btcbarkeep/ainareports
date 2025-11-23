@@ -42,29 +42,47 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
 
   if (!isOpen) return null;
 
+  // Check if there's a document attached (s3_key, download_url, document_url, or document_id)
+  const hasDocument = document && (
+    document.s3_key || 
+    document.download_url || 
+    document.document_url || 
+    document.document_id
+  );
+
   const documentUrl = document?.download_url || document?.document_url;
   const isValidUrl = documentUrl && 
     typeof documentUrl === 'string' && 
     documentUrl.trim() !== '' &&
     (documentUrl.startsWith('http://') || documentUrl.startsWith('https://'));
   
-  // If document has s3_key, determine if it's from a document or event
-  // If document has a document_id field, it's a real document from the documents table
-  // Otherwise, it's event data and we should use the eventId for the download
+  // Determine download link
   let downloadLink = null;
-  if (isValidUrl) {
-    downloadLink = documentUrl;
-  } else if (document?.s3_key) {
-    // Check if this is a real document (has document_id) or event data
-    // If document_id exists, it means it came from the documents table
-    // Otherwise, it's event data and we use the eventId
-    if (document.document_id !== undefined && document.document_id !== null) {
-      downloadLink = `/api/documents/${document.id}/download`;
-    } else {
-      // This is event data, use the eventId
-      downloadLink = `/api/events/${eventId}/download`;
+  if (hasDocument) {
+    if (isValidUrl) {
+      downloadLink = documentUrl;
+    } else if (document?.s3_key) {
+      // Check if this is a real document (has document_id) or event data
+      if (document.document_id !== undefined && document.document_id !== null) {
+        downloadLink = `/api/documents/${document.id}/download`;
+      } else {
+        // This is event data, use the eventId
+        downloadLink = `/api/events/${eventId}/download`;
+      }
+    } else if (document?.document_id) {
+      downloadLink = `/api/documents/${document.document_id}/download`;
     }
   }
+
+  // Format occurred_at date
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "—";
+    try {
+      return new Date(dateStr).toLocaleString();
+    } catch {
+      return dateStr;
+    }
+  };
 
   return (
     <div 
@@ -76,8 +94,8 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Document Details</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold">Event Details</h2>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
@@ -89,7 +107,7 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
 
           {loading && (
             <div className="text-center py-8 text-gray-500">
-              Loading document details...
+              Loading event details...
             </div>
           )}
 
@@ -100,59 +118,47 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
           )}
 
           {document && !loading && !error && (
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Title */}
               <div>
-                <label className="text-sm font-medium text-gray-700">Filename</label>
-                <div className="mt-1">
-                  {downloadLink ? (
-                    <a
-                      href={downloadLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 underline"
-                    >
-                      {document.filename || document.document_type || "—"}
-                    </a>
-                  ) : (
-                    <div className="text-gray-900">
-                      {document.filename || document.document_type || "—"}
-                    </div>
-                  )}
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {document.title || "—"}
+                </h3>
               </div>
 
-              {document.category && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Category</label>
-                  <div className="mt-1 text-gray-900">{document.category}</div>
-                </div>
-              )}
+              {/* Event Type and Occurred At */}
+              <div className="flex gap-4 text-sm text-gray-600">
+                {document.event_type && (
+                  <div>
+                    <span className="font-medium">Type:</span> {document.event_type}
+                  </div>
+                )}
+                {document.occurred_at && (
+                  <div>
+                    <span className="font-medium">Occurred:</span> {formatDate(document.occurred_at)}
+                  </div>
+                )}
+              </div>
 
-              {document.created_at && (
+              {/* Body */}
+              {document.body && (
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Created At</label>
-                  <div className="mt-1 text-gray-900">
-                    {new Date(document.created_at).toLocaleString()}
+                  <div className="text-gray-700 whitespace-pre-wrap">
+                    {document.body}
                   </div>
                 </div>
               )}
 
-              {document.description && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Description</label>
-                  <div className="mt-1 text-gray-900">{document.description}</div>
-                </div>
-              )}
-
-              {downloadLink && (
+              {/* View Document Button - only if document exists */}
+              {hasDocument && downloadLink && (
                 <div className="pt-4 border-t">
                   <a
                     href={downloadLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="inline-block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                   >
-                    Download Document
+                    View Document
                   </a>
                 </div>
               )}
