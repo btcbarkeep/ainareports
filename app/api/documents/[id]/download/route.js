@@ -25,7 +25,8 @@ export async function GET(req, { params }) {
     }
 
     // Call FastAPI backend to get presigned URL
-    const backendUrl = `${apiUrl}/uploads/events/${eventId}/download`;
+    // Events use the same documents endpoint since they both use s3_key
+    const backendUrl = `${apiUrl}/uploads/documents/${eventId}/download`;
     
     try {
       // Forward the request to FastAPI backend
