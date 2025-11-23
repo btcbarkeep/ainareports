@@ -75,24 +75,6 @@ async function fetchBuildingData(slug) {
 
   const events = eventsData || [];
 
-  // Fetch document IDs for events that have s3_key (to get document id for download link)
-  const eventsWithS3Key = events.filter((e) => e.s3_key);
-  let documentIdsByS3Key = {};
-  
-  if (eventsWithS3Key.length > 0) {
-    const s3Keys = eventsWithS3Key.map((e) => e.s3_key).filter(Boolean);
-    const { data: documentsByS3Key } = await supabase
-      .from("documents")
-      .select("id, s3_key")
-      .in("s3_key", s3Keys);
-
-    if (documentsByS3Key) {
-      documentsByS3Key.forEach((doc) => {
-        documentIdsByS3Key[doc.s3_key] = doc.id;
-      });
-    }
-  }
-
   // UNIT RESOLUTION FOR EVENTS
   const unitIds = [...new Set(events.map((e) => e.unit_id).filter(Boolean))];
   let unitsByIdFromEvents = {};
@@ -205,7 +187,6 @@ async function fetchBuildingData(slug) {
     totalUnits,
     floors: building.floors ?? null,
     userDisplayNames,
-    documentIdsByS3Key,
   };
 }
 
@@ -232,7 +213,6 @@ export default async function BuildingPage({ params, searchParams }) {
     totalUnits,
     floors,
     userDisplayNames,
-    documentIdsByS3Key = {},
   } = data;
 
   // Get unit search query from URL params
@@ -562,15 +542,8 @@ export default async function BuildingPage({ params, searchParams }) {
                     </div>
                   ) : (
                     events.map((e) => {
-                      // Get document link if event has s3_key
-                      let downloadLink = null;
-                      if (e.s3_key) {
-                        // Find document ID by matching s3_key, or use document_id if available
-                        const docId = e.document_id || documentIdsByS3Key[e.s3_key];
-                        if (docId) {
-                          downloadLink = `/api/documents/${docId}/download`;
-                        }
-                      }
+                      // Get document link if event has s3_key (document_id should be present when s3_key exists)
+                      const downloadLink = e.s3_key && e.document_id ? `/api/documents/${e.document_id}/download` : null;
 
                       return (
                         <div key={e.id} className="flex px-3 py-2">
