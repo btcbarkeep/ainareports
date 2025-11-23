@@ -78,7 +78,12 @@ export async function GET(req, { params }) {
     }
 
     // Try events endpoint first (this handles events with s3_key)
+    // If we have an s3_key, pass it as a query parameter
     let backendUrl = `${apiUrl}/uploads/events/${eventId}/download`;
+    if (event && event.s3_key) {
+      const s3KeyParam = encodeURIComponent(event.s3_key);
+      backendUrl += `?s3_key=${s3KeyParam}`;
+    }
     
     try {
       let response = await fetch(backendUrl, {
@@ -91,19 +96,39 @@ export async function GET(req, { params }) {
         },
       });
 
-      // If events endpoint returns 404 and we have an s3_key, try documents endpoint with eventId
-      // (some events with s3_key may be stored the same way as documents)
-      if (response.status === 404 && event && event.s3_key) {
-        backendUrl = `${apiUrl}/uploads/documents/${eventId}/download`;
-        response = await fetch(backendUrl, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            ...(req.headers.get("authorization") && {
-              authorization: req.headers.get("authorization"),
-            }),
-          },
-        });
+      // If events endpoint returns 404, try alternative approaches
+      if (response.status === 404) {
+        // Try documents endpoint with eventId (some events with s3_key may be stored as documents)
+        if (event && event.s3_key) {
+          let altBackendUrl = `${apiUrl}/uploads/documents/${eventId}/download`;
+          if (event.s3_key) {
+            const s3KeyParam = encodeURIComponent(event.s3_key);
+            altBackendUrl += `?s3_key=${s3KeyParam}`;
+          }
+          response = await fetch(altBackendUrl, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              ...(req.headers.get("authorization") && {
+                authorization: req.headers.get("authorization"),
+              }),
+            },
+          });
+        }
+        
+        // If still 404, try without s3_key parameter (maybe backend doesn't need it)
+        if (response.status === 404) {
+          backendUrl = `${apiUrl}/uploads/events/${eventId}/download`;
+          response = await fetch(backendUrl, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              ...(req.headers.get("authorization") && {
+                authorization: req.headers.get("authorization"),
+              }),
+            },
+          });
+        }
       }
 
       if (!response.ok) {
