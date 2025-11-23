@@ -6,6 +6,7 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [documentId, setDocumentId] = useState(null);
 
   useEffect(() => {
     if (isOpen && eventId) {
@@ -13,6 +14,7 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
     } else {
       setDocument(null);
       setError(null);
+      setDocumentId(null);
     }
   }, [isOpen, eventId]);
 
@@ -32,6 +34,11 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
       }
       const data = await response.json();
       setDocument(data);
+      
+      // Set document ID if available (the API route now looks it up for us)
+      if (data.document_id) {
+        setDocumentId(data.document_id);
+      }
     } catch (err) {
       setError("Failed to load document details");
       console.error(err);
@@ -61,16 +68,13 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
   if (hasDocument) {
     if (isValidUrl) {
       downloadLink = documentUrl;
+    } else if (documentId || document?.document_id) {
+      // Use the document ID (either from lookup or from event)
+      const docId = documentId || document.document_id;
+      downloadLink = `/api/documents/${docId}/download`;
     } else if (document?.s3_key) {
-      // Check if this is a real document (has document_id) or event data
-      if (document.document_id !== undefined && document.document_id !== null) {
-        downloadLink = `/api/documents/${document.id}/download`;
-      } else {
-        // This is event data, use the eventId
-        downloadLink = `/api/events/${eventId}/download`;
-      }
-    } else if (document?.document_id) {
-      downloadLink = `/api/documents/${document.document_id}/download`;
+      // Fallback: try events endpoint (though this may not work)
+      downloadLink = `/api/events/${eventId}/download`;
     }
   }
 
@@ -126,8 +130,8 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
                 </h3>
               </div>
 
-              {/* Event Type and Occurred At */}
-              <div className="flex gap-4 text-sm text-gray-600">
+              {/* Event Type, Occurred At, and Status */}
+              <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                 {document.event_type && (
                   <div>
                     <span className="font-medium">Type:</span> {document.event_type}
@@ -136,6 +140,11 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
                 {document.occurred_at && (
                   <div>
                     <span className="font-medium">Occurred:</span> {formatDate(document.occurred_at)}
+                  </div>
+                )}
+                {document.status && (
+                  <div>
+                    <span className="font-medium">Status:</span> {document.status}
                   </div>
                 )}
               </div>
