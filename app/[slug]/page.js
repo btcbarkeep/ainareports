@@ -98,14 +98,14 @@ async function fetchBuildingData(slug) {
   const events = eventsData || [];
 
   // UNIT RESOLUTION FOR EVENTS
-  const unitIds = [...new Set(events.map((e) => e.unit_id).filter(Boolean))];
+  const eventUnitIds = [...new Set(events.map((e) => e.unit_id).filter(Boolean))];
   let unitsByIdFromEvents = {};
 
-  if (unitIds.length > 0) {
+  if (eventUnitIds.length > 0) {
     const { data: unitsForEvents } = await supabase
       .from("units")
       .select("id, unit_number")
-      .in("id", unitIds);
+      .in("id", eventUnitIds);
 
     (unitsForEvents || []).forEach((u) => {
       unitsByIdFromEvents[u.id] = u;
