@@ -514,7 +514,7 @@ export default async function BuildingPage({ params, searchParams }) {
                         );
                       })}
                     </div>
-                    {documents.length >= 5 && totalDocumentsCount > documents.length && (
+                    {documents.length >= 5 && totalDocumentsCount > 5 && (
                       <>
                         <p className="text-gray-600 text-sm mt-3">
                           Showing {documents.length} of {totalDocumentsCount} documents
