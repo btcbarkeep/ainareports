@@ -68,12 +68,30 @@ async function fetchBuildingData(slug) {
   const { data: eventsData } = await supabase
     .from("events")
     .select(
-      "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by"
+      "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by, document_id, s3_key"
     )
     .eq("building_id", buildingId)
     .order("occurred_at", { ascending: false });
 
   const events = eventsData || [];
+
+  // Fetch document IDs for events that have s3_key (to get document id for download link)
+  const eventsWithS3Key = events.filter((e) => e.s3_key);
+  let documentIdsByS3Key = {};
+  
+  if (eventsWithS3Key.length > 0) {
+    const s3Keys = eventsWithS3Key.map((e) => e.s3_key).filter(Boolean);
+    const { data: documentsByS3Key } = await supabase
+      .from("documents")
+      .select("id, s3_key")
+      .in("s3_key", s3Keys);
+
+    if (documentsByS3Key) {
+      documentsByS3Key.forEach((doc) => {
+        documentIdsByS3Key[doc.s3_key] = doc.id;
+      });
+    }
+  }
 
   // UNIT RESOLUTION FOR EVENTS
   const unitIds = [...new Set(events.map((e) => e.unit_id).filter(Boolean))];
@@ -187,6 +205,7 @@ async function fetchBuildingData(slug) {
     totalUnits,
     floors: building.floors ?? null,
     userDisplayNames,
+    documentIdsByS3Key,
   };
 }
 
@@ -213,6 +232,7 @@ export default async function BuildingPage({ params, searchParams }) {
     totalUnits,
     floors,
     userDisplayNames,
+    documentIdsByS3Key = {},
   } = data;
 
   // Get unit search query from URL params
@@ -536,33 +556,51 @@ export default async function BuildingPage({ params, searchParams }) {
                     <div className="w-1/5 text-right min-w-0 pl-4">Date</div>
                   </div>
 
-                  {!events || events.length === 0 ? (
+                  {events.length === 0 ? (
                     <div className="px-3 py-3 text-gray-500">
                       No events recorded for this building yet.
                     </div>
                   ) : (
-                    (events || []).map((e) => (
-                      <div key={e.id} className="flex px-3 py-2">
-                        <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-                          <div className="truncate" title={e.title}>{e.title}</div>
-                        </div>
-                        <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                          <div className="truncate" title={e.severity || "—"}>
-                            {e.severity || "—"}
+                    events.map((e) => {
+                      // Get document link if event has s3_key
+                      let downloadLink = null;
+                      if (e.s3_key) {
+                        // Find document ID by matching s3_key, or use document_id if available
+                        const docId = e.document_id || documentIdsByS3Key[e.s3_key];
+                        if (docId) {
+                          downloadLink = `/api/documents/${docId}/download`;
+                        }
+                      }
+
+                      return (
+                        <div key={e.id} className="flex px-3 py-2">
+                          <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
+                            {downloadLink ? (
+                              <a
+                                href={downloadLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="truncate block text-blue-600 underline hover:text-gray-600 cursor-pointer"
+                                title={e.title || ""}
+                              >
+                                {e.title || "—"}
+                              </a>
+                            ) : (
+                              <div className="truncate" title={e.title || ""}>{e.title || "—"}</div>
+                            )}
+                          </div>
+                          <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                            <div className="truncate" title={e.severity || "—"}>{e.severity || "—"}</div>
+                          </div>
+                          <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                            <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>{userDisplayNames[e.created_by]?.role || "—"}</div>
+                          </div>
+                          <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
+                            <div className="truncate" title={formatDate(e.occurred_at)}>{formatDate(e.occurred_at)}</div>
                           </div>
                         </div>
-                        <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                          <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
-                            {userDisplayNames[e.created_by]?.role || "—"}
-                          </div>
-                        </div>
-                        <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
-                          <div className="truncate" title={formatDate(e.occurred_at)}>
-                            {formatDate(e.occurred_at)}
-                          </div>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </>
