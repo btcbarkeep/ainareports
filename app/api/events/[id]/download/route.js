@@ -76,8 +76,42 @@ export async function GET(req, { params }) {
       }
     }
 
-    // Since documents endpoint works with s3_key, try using documents endpoint with eventId
-    // The FastAPI backend likely handles events the same way as documents when they share s3_key
+    // If event has s3_key, find the document with the same s3_key and use its ID
+    // Since documents endpoint works, we need to use the document's ID, not the event's ID
+    if (event && event.s3_key) {
+      const { data: document, error: docError } = await supabase
+        .from("documents")
+        .select("id")
+        .eq("s3_key", event.s3_key)
+        .limit(1)
+        .single();
+
+      if (!docError && document && document.id) {
+        const backendUrl = `${apiUrl}/uploads/documents/${document.id}/download`;
+        try {
+          const response = await fetch(backendUrl, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              ...(req.headers.get("authorization") && {
+                authorization: req.headers.get("authorization"),
+              }),
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.download_url) {
+              return NextResponse.redirect(data.download_url);
+            }
+          }
+        } catch (fetchError) {
+          console.error("Error fetching document download by s3_key:", fetchError);
+        }
+      }
+    }
+
+    // Fallback: try documents endpoint with eventId (in case backend handles it)
     const backendUrl = `${apiUrl}/uploads/documents/${eventId}/download`;
     
     try {
