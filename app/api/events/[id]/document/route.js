@@ -1,77 +1,77 @@
-import { NextResponse } from "next/server";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+"use client";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+import { useState } from "react";
+import EventDocumentModal from "./EventDocumentModal";
 
-export async function GET(req, { params }) {
-  try {
-    const eventId = params.id;
-
-    if (!eventId) {
-      return NextResponse.json(
-        { error: "Event ID is required" },
-        { status: 400 }
-      );
-    }
-
-    const supabase = getSupabaseClient();
-
-    // First, get the event to check if it has a document_id or s3_key
-    const { data: event, error: eventError } = await supabase
-      .from("events")
-      .select("*")
-      .eq("id", eventId)
-      .single();
-
-    if (eventError || !event) {
-      return NextResponse.json(
-        { error: "Event not found" },
-        { status: 404 }
-      );
-    }
-
-    // If event has s3_key but no document_id, try to find the document with that s3_key
-    let foundDocumentId = event.document_id || null;
-    if (event.s3_key && !event.document_id) {
-      const { data: document, error: docError } = await supabase
-        .from("documents")
-        .select("id")
-        .eq("s3_key", event.s3_key)
-        .limit(1)
-        .maybeSingle();
-      
-      if (!docError && document && document.id) {
-        foundDocumentId = document.id;
-      }
-    }
-
-    // Return event data with all event fields
-    return NextResponse.json({
-      id: event.id,
-      title: event.title || null,
-      event_type: event.event_type || null,
-      occurred_at: event.occurred_at || null,
-      status: event.status || null,
-      body: event.body || null,
-      // Document-related fields
-      s3_key: event.s3_key || null,
-      download_url: event.download_url || null,
-      document_url: event.document_url || null,
-      document_id: foundDocumentId, // Use found document ID if available
-      // Legacy fields for backward compatibility
-      filename: event.title || "Event Document",
-      document_type: event.title,
-      category: event.category || null,
-      created_at: event.occurred_at || event.created_at,
-      description: event.description || null,
-    });
-
-  } catch (error) {
-    console.error("Error fetching event document:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch document details", details: error.message },
-      { status: 500 }
-    );
-  }
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit" });
 }
+
+export default function EventsList({ events, userDisplayNames }) {
+  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleEventClick = (event) => {
+    // Open modal for all events, regardless of document status
+    setSelectedEventId(event.id);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedEventId(null);
+  };
+
+  return (
+    <>
+      {(!events || events.length === 0) ? (
+        <div className="px-3 py-3 text-gray-500">
+          No events recorded yet.
+        </div>
+      ) : (
+        events.map((e) => {
+        const eventTitle = e.title || "—";
+        
+        return (
+          <div key={e.id} className="flex px-3 py-2">
+            <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
+              <button
+                onClick={() => handleEventClick(e)}
+                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block text-left"
+                title={eventTitle}
+              >
+                {eventTitle}
+              </button>
+            </div>
+            <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+              <div className="truncate" title={e.severity || "—"}>
+                {e.severity || "—"}
+              </div>
+            </div>
+            <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+              <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
+                {userDisplayNames[e.created_by]?.role || "—"}
+              </div>
+            </div>
+            <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
+              <div className="truncate" title={formatDate(e.occurred_at)}>
+                {formatDate(e.occurred_at)}
+              </div>
+            </div>
+          </div>
+        );
+        })
+      )}
+      
+      <EventDocumentModal
+        eventId={selectedEventId}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
+    </>
+  );
+}
+
