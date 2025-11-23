@@ -48,9 +48,23 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
     documentUrl.trim() !== '' &&
     (documentUrl.startsWith('http://') || documentUrl.startsWith('https://'));
   
-  const downloadLink = isValidUrl 
-    ? documentUrl 
-    : (document?.s3_key ? `/api/documents/${document.id}/download` : null);
+  // If document has s3_key, determine if it's from a document or event
+  // If document has a document_id field, it's a real document from the documents table
+  // Otherwise, it's event data and we should use the eventId for the download
+  let downloadLink = null;
+  if (isValidUrl) {
+    downloadLink = documentUrl;
+  } else if (document?.s3_key) {
+    // Check if this is a real document (has document_id) or event data
+    // If document_id exists, it means it came from the documents table
+    // Otherwise, it's event data and we use the eventId
+    if (document.document_id !== undefined && document.document_id !== null) {
+      downloadLink = `/api/documents/${document.id}/download`;
+    } else {
+      // This is event data, use the eventId
+      downloadLink = `/api/events/${eventId}/download`;
+    }
+  }
 
   return (
     <div 
