@@ -67,9 +67,7 @@ async function fetchBuildingData(slug) {
   // EVENTS
   const { data: eventsData } = await supabase
     .from("events")
-    .select(
-      "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by, s3_key, download_url, document_url"
-    )
+    .select("*")
     .eq("building_id", buildingId)
     .order("occurred_at", { ascending: false });
 
