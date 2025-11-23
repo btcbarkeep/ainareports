@@ -4,6 +4,7 @@ import {
   getSupabaseAdminClient,
 } from "@/lib/supabaseClient";
 import EventsList from "@/components/EventsList";
+import PremiumUnlockSection from "@/components/PremiumUnlockSection";
 
 const ROLE_LABELS = {
   super_admin: "Admin",
@@ -148,6 +149,18 @@ async function fetchBuildingData(slug) {
 
   const documents = documentsData || [];
 
+  // TOTAL DOCUMENTS COUNT
+  const { count: totalDocumentsCount } = await supabase
+    .from("documents")
+    .select("id", { count: "exact", head: true })
+    .eq("building_id", buildingId);
+
+  // TOTAL EVENTS COUNT
+  const { count: totalEventsCount } = await supabase
+    .from("events")
+    .select("id", { count: "exact", head: true })
+    .eq("building_id", buildingId);
+
   // USER DISPLAY NAMES
   let userDisplayNames = {};
   try {
@@ -186,6 +199,9 @@ async function fetchBuildingData(slug) {
     totalUnits,
     floors: building.floors ?? null,
     userDisplayNames,
+    totalDocumentsCount: totalDocumentsCount ?? 0,
+    totalEventsCount: totalEventsCount ?? 0,
+    totalContractorsCount: mostActiveContractors.length,
   };
 }
 
@@ -212,6 +228,9 @@ export default async function BuildingPage({ params, searchParams }) {
     totalUnits,
     floors,
     userDisplayNames,
+    totalDocumentsCount,
+    totalEventsCount,
+    totalContractorsCount,
   } = data;
 
   // Get unit search query from URL params
@@ -425,71 +444,87 @@ export default async function BuildingPage({ params, searchParams }) {
                     No documents uploaded for this building yet.
                   </div>
                 ) : (
-                  <div className="border rounded-md divide-y text-sm">
-                    <div className="flex px-3 py-2 font-semibold text-gray-700">
-                      <div className="w-2/5 min-w-0">Name</div>
-                      <div className="w-1/5 min-w-0 pl-4">Category</div>
-                      <div className="w-2/5 text-right min-w-0 pl-4">Uploaded By</div>
+                  <>
+                    <div className="border rounded-md divide-y text-sm">
+                      <div className="flex px-3 py-2 font-semibold text-gray-700">
+                        <div className="w-2/5 min-w-0">Name</div>
+                        <div className="w-1/5 min-w-0 pl-4">Category</div>
+                        <div className="w-2/5 text-right min-w-0 pl-4">Uploaded By</div>
+                      </div>
+                      {documents.map((doc) => {
+                        const documentUrl = doc.download_url || doc.document_url;
+                        const filename =
+                          doc.filename || doc.document_type || "—";
+
+                        const isValidUrl =
+                          documentUrl &&
+                          typeof documentUrl === "string" &&
+                          documentUrl.trim() !== "" &&
+                          (documentUrl.startsWith("http://") ||
+                            documentUrl.startsWith("https://"));
+
+                        const downloadLink = isValidUrl
+                          ? documentUrl
+                          : doc.s3_key
+                          ? `/api/documents/${doc.id}/download`
+                          : null;
+
+                        return (
+                          <div key={doc.id} className="flex px-3 py-2">
+                            <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
+                              {downloadLink ? (
+                                <a
+                                  href={downloadLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block"
+                                  title={filename}
+                                >
+                                  {filename}
+                                </a>
+                              ) : (
+                                <div className="font-medium truncate" title={filename}>{filename}</div>
+                              )}
+                            </div>
+                            <div className="w-1/5 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
+                              <div className="truncate" title={doc.category || "—"}>
+                                {doc.category || "—"}
+                              </div>
+                            </div>
+                            <div className="w-2/5 text-right text-xs min-w-0 pl-4 overflow-hidden">
+                              <div className="truncate" title={
+                                (doc.uploaded_by && userDisplayNames[doc.uploaded_by]
+                                  ? userDisplayNames[doc.uploaded_by].role
+                                  : "—") + " " + formatDate(doc.created_at)
+                              }>
+                                {doc.uploaded_by &&
+                                userDisplayNames[doc.uploaded_by]
+                                  ? userDisplayNames[doc.uploaded_by].role
+                                  : "—"}
+                                <span className="ml-2 text-gray-500">
+                                  {formatDate(doc.created_at)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    {documents.map((doc) => {
-                      const documentUrl = doc.download_url || doc.document_url;
-                      const filename =
-                        doc.filename || doc.document_type || "—";
-
-                      const isValidUrl =
-                        documentUrl &&
-                        typeof documentUrl === "string" &&
-                        documentUrl.trim() !== "" &&
-                        (documentUrl.startsWith("http://") ||
-                          documentUrl.startsWith("https://"));
-
-                      const downloadLink = isValidUrl
-                        ? documentUrl
-                        : doc.s3_key
-                        ? `/api/documents/${doc.id}/download`
-                        : null;
-
-                      return (
-                        <div key={doc.id} className="flex px-3 py-2">
-                          <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-                            {downloadLink ? (
-                              <a
-                                href={downloadLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block"
-                                title={filename}
-                              >
-                                {filename}
-                              </a>
-                            ) : (
-                              <div className="font-medium truncate" title={filename}>{filename}</div>
-                            )}
-                          </div>
-                          <div className="w-1/5 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
-                            <div className="truncate" title={doc.category || "—"}>
-                              {doc.category || "—"}
-                            </div>
-                          </div>
-                          <div className="w-2/5 text-right text-xs min-w-0 pl-4 overflow-hidden">
-                            <div className="truncate" title={
-                              (doc.uploaded_by && userDisplayNames[doc.uploaded_by]
-                                ? userDisplayNames[doc.uploaded_by].role
-                                : "—") + " " + formatDate(doc.created_at)
-                            }>
-                              {doc.uploaded_by &&
-                              userDisplayNames[doc.uploaded_by]
-                                ? userDisplayNames[doc.uploaded_by].role
-                                : "—"}
-                              <span className="ml-2 text-gray-500">
-                                {formatDate(doc.created_at)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                    {totalDocumentsCount > documents.length && (
+                      <>
+                        <p className="text-gray-600 text-sm mt-3">
+                          Showing {documents.length} of {totalDocumentsCount} documents
+                        </p>
+                        <PremiumUnlockSection 
+                          itemType="Documents" 
+                          buildingName={building.name}
+                          totalDocumentsCount={totalDocumentsCount}
+                          totalEventsCount={totalEventsCount}
+                          totalContractorsCount={totalContractorsCount}
+                        />
+                      </>
+                    )}
+                  </>
                 )}
               </>
             )}
@@ -503,22 +538,38 @@ export default async function BuildingPage({ params, searchParams }) {
                     No contractors have posted events for this building yet.
                   </div>
                 ) : (
-                  <div className="border rounded-md divide-y text-sm">
-                    <div className="flex px-3 py-2 font-semibold text-gray-700">
-                      <div className="w-2/5">Name</div>
-                      <div className="w-2/5">Phone</div>
-                      <div className="w-1/5 text-right">Events</div>
-                    </div>
-                    {mostActiveContractors.slice(0, 5).map((c) => (
-                      <div key={c.id} className="flex px-3 py-2">
-                        <div className="w-2/5">{c.name}</div>
-                        <div className="w-2/5 text-xs">{c.phone}</div>
-                        <div className="w-1/5 text-right text-xs">
-                          {c.count}
-                        </div>
+                  <>
+                    <div className="border rounded-md divide-y text-sm">
+                      <div className="flex px-3 py-2 font-semibold text-gray-700">
+                        <div className="w-2/5">Name</div>
+                        <div className="w-2/5">Phone</div>
+                        <div className="w-1/5 text-right">Events</div>
                       </div>
-                    ))}
-                  </div>
+                      {mostActiveContractors.slice(0, 5).map((c) => (
+                        <div key={c.id} className="flex px-3 py-2">
+                          <div className="w-2/5">{c.name}</div>
+                          <div className="w-2/5 text-xs">{c.phone}</div>
+                          <div className="w-1/5 text-right text-xs">
+                            {c.count}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {totalContractorsCount > 5 && (
+                      <>
+                        <p className="text-gray-600 text-sm mt-3">
+                          Showing 5 of {totalContractorsCount} contractors
+                        </p>
+                        <PremiumUnlockSection 
+                          itemType="Contractors" 
+                          buildingName={building.name}
+                          totalDocumentsCount={totalDocumentsCount}
+                          totalEventsCount={totalEventsCount}
+                          totalContractorsCount={totalContractorsCount}
+                        />
+                      </>
+                    )}
+                  </>
                 )}
               </>
             )}
@@ -527,19 +578,41 @@ export default async function BuildingPage({ params, searchParams }) {
             {activeTab === "events" && (
               <>
                 <h2 className="font-semibold mb-3">Events</h2>
-                <div className="border rounded-md divide-y text-sm">
-                  <div className="flex px-3 py-2 font-semibold text-gray-700">
-                    <div className="w-2/5 min-w-0">Event</div>
-                    <div className="w-1/5 min-w-0 pl-4">Severity</div>
-                    <div className="w-1/5 min-w-0 pl-4">Created By</div>
-                    <div className="w-1/5 text-right min-w-0 pl-4">Date</div>
+                {events.length === 0 ? (
+                  <div className="border rounded-md px-3 py-3 text-gray-500 text-sm">
+                    No events recorded yet.
                   </div>
+                ) : (
+                  <>
+                    <div className="border rounded-md divide-y text-sm">
+                      <div className="flex px-3 py-2 font-semibold text-gray-700">
+                        <div className="w-2/5 min-w-0">Event</div>
+                        <div className="w-1/5 min-w-0 pl-4">Severity</div>
+                        <div className="w-1/5 min-w-0 pl-4">Created By</div>
+                        <div className="w-1/5 text-right min-w-0 pl-4">Date</div>
+                      </div>
 
-                  <EventsList
-                    events={events}
-                    userDisplayNames={userDisplayNames}
-                  />
-                </div>
+                      <EventsList
+                        events={events.slice(0, 5)}
+                        userDisplayNames={userDisplayNames}
+                      />
+                    </div>
+                    {totalEventsCount > 5 && (
+                      <>
+                        <p className="text-gray-600 text-sm mt-3">
+                          Showing 5 of {totalEventsCount} events
+                        </p>
+                        <PremiumUnlockSection 
+                          itemType="Events" 
+                          buildingName={building.name}
+                          totalDocumentsCount={totalDocumentsCount}
+                          totalEventsCount={totalEventsCount}
+                          totalContractorsCount={totalContractorsCount}
+                        />
+                      </>
+                    )}
+                  </>
+                )}
               </>
             )}
           </div>
