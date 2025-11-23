@@ -64,14 +64,36 @@ async function fetchBuildingData(slug) {
 
   const buildingId = building.id;
 
-  // EVENTS
-  const { data: eventsData } = await supabase
-    .from("events")
-    .select(
-      "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by, document_id, s3_key"
-    )
-    .eq("building_id", buildingId)
-    .order("occurred_at", { ascending: false });
+  // Get all unit IDs for this building first
+  const { data: buildingUnits } = await supabase
+    .from("units")
+    .select("id")
+    .eq("building_id", buildingId);
+
+  const unitIds = buildingUnits ? buildingUnits.map((u) => u.id) : [];
+
+  // EVENTS - fetch by unit_id if we have units, or try building_id as fallback
+  let eventsData = [];
+  if (unitIds.length > 0) {
+    const { data: eventsByUnit } = await supabase
+      .from("events")
+      .select(
+        "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by, document_id, s3_key"
+      )
+      .in("unit_id", unitIds)
+      .order("occurred_at", { ascending: false });
+    eventsData = eventsByUnit || [];
+  } else {
+    // Fallback: try building_id if events table has it
+    const { data: eventsByBuilding } = await supabase
+      .from("events")
+      .select(
+        "id, title, status, severity, occurred_at, unit_id, unit_number, contractor_id, created_by, document_id, s3_key"
+      )
+      .eq("building_id", buildingId)
+      .order("occurred_at", { ascending: false });
+    eventsData = eventsByBuilding || [];
+  }
 
   const events = eventsData || [];
 
@@ -536,7 +558,7 @@ export default async function BuildingPage({ params, searchParams }) {
                     <div className="w-1/5 text-right min-w-0 pl-4">Date</div>
                   </div>
 
-                  {events.length === 0 ? (
+                  {!events || events.length === 0 ? (
                     <div className="px-3 py-3 text-gray-500">
                       No events recorded for this building yet.
                     </div>
@@ -544,6 +566,7 @@ export default async function BuildingPage({ params, searchParams }) {
                     events.map((e) => {
                       // Get document link if event has s3_key (document_id should be present when s3_key exists)
                       const downloadLink = e.s3_key && e.document_id ? `/api/documents/${e.document_id}/download` : null;
+                      const eventTitle = e.title || "Untitled Event";
 
                       return (
                         <div key={e.id} className="flex px-3 py-2">
@@ -554,12 +577,12 @@ export default async function BuildingPage({ params, searchParams }) {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="truncate block text-blue-600 underline hover:text-gray-600 cursor-pointer"
-                                title={e.title || ""}
+                                title={eventTitle}
                               >
-                                {e.title || "—"}
+                                {eventTitle}
                               </a>
                             ) : (
-                              <div className="truncate" title={e.title || ""}>{e.title || "—"}</div>
+                              <div className="truncate" title={eventTitle}>{eventTitle}</div>
                             )}
                           </div>
                           <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
