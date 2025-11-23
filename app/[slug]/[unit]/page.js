@@ -451,10 +451,9 @@ export default async function UnitPage({ params, searchParams }) {
                         (eventUrl.startsWith('http://') || eventUrl.startsWith('https://'));
                       
                       // If no direct URL but we have s3_key, use Next.js API route (which proxies to FastAPI)
-                      // Events use the same documents endpoint since they both use s3_key
                       const downloadLink = isValidUrl 
                         ? eventUrl 
-                        : (e.s3_key ? `/api/documents/${e.id}/download` : null);
+                        : (e.s3_key ? `/api/events/${e.id}/download` : null);
                       
                       return (
                         <div key={e.id} className="flex px-3 py-2">
