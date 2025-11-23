@@ -15,13 +15,9 @@ export default function EventsList({ events, userDisplayNames }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleEventClick = (event) => {
-    // Check if event has a document (s3_key, download_url, document_url, or document_id)
-    const hasDocument = event.s3_key || event.download_url || event.document_url || event.document_id;
-    
-    if (hasDocument) {
-      setSelectedEventId(event.id);
-      setIsModalOpen(true);
-    }
+    // Open modal for all events, regardless of document status
+    setSelectedEventId(event.id);
+    setIsModalOpen(true);
   };
 
   const closeModal = () => {
@@ -38,22 +34,17 @@ export default function EventsList({ events, userDisplayNames }) {
       ) : (
         events.map((e) => {
         const eventTitle = e.title || "—";
-        const hasDocument = e.s3_key || e.download_url || e.document_url || e.document_id;
         
         return (
           <div key={e.id} className="flex px-3 py-2">
             <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-              {hasDocument ? (
-                <button
-                  onClick={() => handleEventClick(e)}
-                  className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block text-left"
-                  title={eventTitle}
-                >
-                  {eventTitle}
-                </button>
-              ) : (
-                <div className="truncate" title={eventTitle}>{eventTitle}</div>
-              )}
+              <button
+                onClick={() => handleEventClick(e)}
+                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block text-left"
+                title={eventTitle}
+              >
+                {eventTitle}
+              </button>
             </div>
             <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
               <div className="truncate" title={e.severity || "—"}>
