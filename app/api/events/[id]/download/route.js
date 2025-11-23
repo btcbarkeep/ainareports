@@ -77,87 +77,113 @@ export async function GET(req, { params }) {
       }
     }
 
-    // Try events endpoint first (this handles events with s3_key)
-    // If we have an s3_key, pass it as a query parameter
-    let backendUrl = `${apiUrl}/uploads/events/${eventId}/download`;
+    // Try multiple approaches to get the download URL
+    let response = null;
+    let lastError = null;
+    
+    // Strategy 1: If we have s3_key, try a generic download endpoint with s3_key
     if (event && event.s3_key) {
-      const s3KeyParam = encodeURIComponent(event.s3_key);
-      backendUrl += `?s3_key=${s3KeyParam}`;
+      try {
+        const s3KeyParam = encodeURIComponent(event.s3_key);
+        // Try generic download endpoint with s3_key
+        let backendUrl = `${apiUrl}/uploads/download?s3_key=${s3KeyParam}`;
+        response = await fetch(backendUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(req.headers.get("authorization") && {
+              authorization: req.headers.get("authorization"),
+            }),
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.download_url) {
+            return NextResponse.redirect(data.download_url);
+          }
+        }
+      } catch (err) {
+        console.error("Error trying generic download endpoint:", err);
+      }
     }
     
-    try {
-      let response = await fetch(backendUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(req.headers.get("authorization") && {
-            authorization: req.headers.get("authorization"),
-          }),
-        },
-      });
-
-      // If events endpoint returns 404, try alternative approaches
-      if (response.status === 404) {
-        // Try documents endpoint with eventId (some events with s3_key may be stored as documents)
+    // Strategy 2: Try documents endpoint with eventId (events might be stored as documents)
+    if (!response || response.status === 404) {
+      try {
+        let backendUrl = `${apiUrl}/uploads/documents/${eventId}/download`;
         if (event && event.s3_key) {
-          let altBackendUrl = `${apiUrl}/uploads/documents/${eventId}/download`;
-          if (event.s3_key) {
-            const s3KeyParam = encodeURIComponent(event.s3_key);
-            altBackendUrl += `?s3_key=${s3KeyParam}`;
-          }
-          response = await fetch(altBackendUrl, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              ...(req.headers.get("authorization") && {
-                authorization: req.headers.get("authorization"),
-              }),
-            },
-          });
+          const s3KeyParam = encodeURIComponent(event.s3_key);
+          backendUrl += `?s3_key=${s3KeyParam}`;
         }
+        response = await fetch(backendUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(req.headers.get("authorization") && {
+              authorization: req.headers.get("authorization"),
+            }),
+          },
+        });
         
-        // If still 404, try without s3_key parameter (maybe backend doesn't need it)
-        if (response.status === 404) {
-          backendUrl = `${apiUrl}/uploads/events/${eventId}/download`;
-          response = await fetch(backendUrl, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              ...(req.headers.get("authorization") && {
-                authorization: req.headers.get("authorization"),
-              }),
-            },
-          });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.download_url) {
+            return NextResponse.redirect(data.download_url);
+          }
         }
+      } catch (err) {
+        console.error("Error trying documents endpoint:", err);
+        lastError = err;
       }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("FastAPI error:", response.status, errorText);
-        return NextResponse.json(
-          { error: "Failed to get event URL", details: errorText, status: response.status },
-          { status: response.status }
-        );
+    }
+    
+    // Strategy 3: Try events endpoint (if it exists)
+    if (!response || response.status === 404) {
+      try {
+        let backendUrl = `${apiUrl}/uploads/events/${eventId}/download`;
+        if (event && event.s3_key) {
+          const s3KeyParam = encodeURIComponent(event.s3_key);
+          backendUrl += `?s3_key=${s3KeyParam}`;
+        }
+        response = await fetch(backendUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(req.headers.get("authorization") && {
+              authorization: req.headers.get("authorization"),
+            }),
+          },
+        });
+      } catch (err) {
+        console.error("Error trying events endpoint:", err);
+        lastError = err;
       }
-
-      const data = await response.json();
-      
-      // Redirect to the presigned URL
-      if (data.download_url) {
-        return NextResponse.redirect(data.download_url);
-      }
-
+    }
+    
+    // If we still don't have a successful response, return error
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : (lastError?.message || "No response from backend");
+      const statusCode = response?.status || 404;
+      console.error("FastAPI error:", statusCode, errorText);
       return NextResponse.json(
-        { error: "No download URL in response", data },
-        { status: 500 }
-      );
-    } catch (fetchError) {
-      console.error("Fetch error:", fetchError);
-      return NextResponse.json(
-        { error: "Failed to connect to backend", details: fetchError.message, url: backendUrl },
-        { status: 500 }
+        { error: "Failed to get event URL", details: errorText, status: statusCode },
+        { status: statusCode }
       );
     }
+
+    // If we have a successful response, get the download URL
+    const data = await response.json();
+    
+    // Redirect to the presigned URL
+    if (data.download_url) {
+      return NextResponse.redirect(data.download_url);
+    }
+
+    return NextResponse.json(
+      { error: "No download URL in response", data },
+      { status: 500 }
+    );
   } catch (error) {
     console.error("Error fetching event download URL:", error);
     return NextResponse.json(
