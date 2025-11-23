@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET(req, { params }) {
   try {
-    const documentId = params.id;
+    const eventId = params.id;
 
-    if (!documentId) {
+    if (!eventId) {
       return NextResponse.json(
-        { error: "Document ID is required" },
+        { error: "Event ID is required" },
         { status: 400 }
       );
     }
@@ -24,27 +25,89 @@ export async function GET(req, { params }) {
       );
     }
 
-    // Call FastAPI backend to get presigned URL for documents
-    const backendUrl = `${apiUrl}/uploads/documents/${documentId}/download`;
+    // Fetch the event to check if it has a document_id or s3_key
+    const supabase = getSupabaseClient();
+    const { data: event, error: eventError } = await supabase
+      .from("events")
+      .select("id, document_id, s3_key, download_url, document_url")
+      .eq("id", eventId)
+      .single();
+
+    if (eventError || !event) {
+      return NextResponse.json(
+        { error: "Event not found" },
+        { status: 404 }
+      );
+    }
+
+    // If event has a direct download_url or document_url, redirect to it
+    if (event.download_url || event.document_url) {
+      const directUrl = event.download_url || event.document_url;
+      if (directUrl && (directUrl.startsWith('http://') || directUrl.startsWith('https://'))) {
+        return NextResponse.redirect(directUrl);
+      }
+    }
+
+    // If event has a document_id but NO s3_key, try documents endpoint
+    // (document_id without s3_key means it's a reference to a separate document)
+    if (event.document_id && !event.s3_key) {
+      const backendUrl = `${apiUrl}/uploads/documents/${event.document_id}/download`;
+      try {
+        const response = await fetch(backendUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(req.headers.get("authorization") && {
+              authorization: req.headers.get("authorization"),
+            }),
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.download_url) {
+            return NextResponse.redirect(data.download_url);
+          }
+        }
+      } catch (fetchError) {
+        console.error("Error fetching document download:", fetchError);
+      }
+    }
+
+    // Try events endpoint first (this handles events with s3_key)
+    let backendUrl = `${apiUrl}/uploads/events/${eventId}/download`;
     
     try {
-      // Forward the request to FastAPI backend
-      const response = await fetch(backendUrl, {
+      let response = await fetch(backendUrl, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          // Forward authorization if present
           ...(req.headers.get("authorization") && {
             authorization: req.headers.get("authorization"),
           }),
         },
       });
 
+      // If events endpoint returns 404 and we have an s3_key, try documents endpoint with eventId
+      // (some events with s3_key may be stored the same way as documents)
+      if (response.status === 404 && event.s3_key) {
+        backendUrl = `${apiUrl}/uploads/documents/${eventId}/download`;
+        response = await fetch(backendUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(req.headers.get("authorization") && {
+              authorization: req.headers.get("authorization"),
+            }),
+          },
+        });
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error("FastAPI error:", response.status, errorText);
         return NextResponse.json(
-          { error: "Failed to get document URL", details: errorText, status: response.status },
+          { error: "Failed to get event URL", details: errorText, status: response.status },
           { status: response.status }
         );
       }
@@ -68,11 +131,10 @@ export async function GET(req, { params }) {
       );
     }
   } catch (error) {
-    console.error("Error fetching document download URL:", error);
+    console.error("Error fetching event download URL:", error);
     return NextResponse.json(
       { error: "Failed to generate download URL", details: error.message },
       { status: 500 }
     );
   }
 }
-
