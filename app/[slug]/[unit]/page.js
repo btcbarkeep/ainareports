@@ -438,7 +438,6 @@ export default async function UnitPage({ params, searchParams }) {
                   <EventsList
                     events={events}
                     userDisplayNames={userDisplayNames}
-                    formatDate={formatDate}
                   />
                 </div>
               </>
