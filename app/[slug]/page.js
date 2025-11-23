@@ -150,16 +150,20 @@ async function fetchBuildingData(slug) {
   const documents = documentsData || [];
 
   // TOTAL DOCUMENTS COUNT
-  const { count: totalDocumentsCount } = await supabase
+  const { count: totalDocumentsCountRaw } = await supabase
     .from("documents")
     .select("id", { count: "exact", head: true })
     .eq("building_id", buildingId);
 
+  const totalDocumentsCount = totalDocumentsCountRaw ?? 0;
+
   // TOTAL EVENTS COUNT
-  const { count: totalEventsCount } = await supabase
+  const { count: totalEventsCountRaw } = await supabase
     .from("events")
     .select("id", { count: "exact", head: true })
     .eq("building_id", buildingId);
+
+  const totalEventsCount = totalEventsCountRaw ?? 0;
 
   // USER DISPLAY NAMES
   let userDisplayNames = {};
@@ -199,8 +203,8 @@ async function fetchBuildingData(slug) {
     totalUnits,
     floors: building.floors ?? null,
     userDisplayNames,
-    totalDocumentsCount: totalDocumentsCount ?? 0,
-    totalEventsCount: totalEventsCount ?? 0,
+    totalDocumentsCount: totalDocumentsCount,
+    totalEventsCount: totalEventsCount,
     totalContractorsCount: mostActiveContractors.length,
   };
 }
@@ -510,7 +514,7 @@ export default async function BuildingPage({ params, searchParams }) {
                         );
                       })}
                     </div>
-                    {documents.length >= 5 && totalDocumentsCount > 5 && (
+                    {documents.length >= 5 && totalDocumentsCount > documents.length && (
                       <>
                         <p className="text-gray-600 text-sm mt-3">
                           Showing {documents.length} of {totalDocumentsCount} documents
@@ -555,7 +559,7 @@ export default async function BuildingPage({ params, searchParams }) {
                         </div>
                       ))}
                     </div>
-                    {mostActiveContractors.length >= 5 && totalContractorsCount > 5 && (
+                    {mostActiveContractors.length >= 5 && (
                       <>
                         <p className="text-gray-600 text-sm mt-3">
                           Showing 5 of {totalContractorsCount} contractors
@@ -597,7 +601,7 @@ export default async function BuildingPage({ params, searchParams }) {
                         userDisplayNames={userDisplayNames}
                       />
                     </div>
-                    {events.length >= 5 && totalEventsCount > 5 && (
+                    {events.length >= 5 && totalEventsCount > Math.min(5, events.length) && (
                       <>
                         <p className="text-gray-600 text-sm mt-3">
                           Showing 5 of {totalEventsCount} events
