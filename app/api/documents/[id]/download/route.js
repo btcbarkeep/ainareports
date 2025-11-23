@@ -5,11 +5,11 @@ export const revalidate = 0;
 
 export async function GET(req, { params }) {
   try {
-    const documentId = params.id;
+    const eventId = params.id;
 
-    if (!documentId) {
+    if (!eventId) {
       return NextResponse.json(
-        { error: "Document ID is required" },
+        { error: "Event ID is required" },
         { status: 400 }
       );
     }
@@ -24,8 +24,8 @@ export async function GET(req, { params }) {
       );
     }
 
-    // Call FastAPI backend to get presigned URL
-    const backendUrl = `${apiUrl}/uploads/documents/${documentId}/download`;
+    // Call FastAPI backend to get presigned URL for events
+    const backendUrl = `${apiUrl}/uploads/events/${eventId}/download`;
     
     try {
       // Forward the request to FastAPI backend
@@ -44,7 +44,7 @@ export async function GET(req, { params }) {
         const errorText = await response.text();
         console.error("FastAPI error:", response.status, errorText);
         return NextResponse.json(
-          { error: "Failed to get document URL", details: errorText, status: response.status },
+          { error: "Failed to get event URL", details: errorText, status: response.status },
           { status: response.status }
         );
       }
@@ -68,10 +68,11 @@ export async function GET(req, { params }) {
       );
     }
   } catch (error) {
-    console.error("Error fetching document download URL:", error);
+    console.error("Error fetching event download URL:", error);
     return NextResponse.json(
       { error: "Failed to generate download URL", details: error.message },
       { status: 500 }
     );
   }
 }
+
