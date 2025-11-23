@@ -427,7 +427,7 @@ export default async function BuildingPage({ params, searchParams }) {
                 ) : (
                   <div className="border rounded-md divide-y text-sm">
                     <div className="flex px-3 py-2 font-semibold text-gray-700">
-                      <div className="w-2/5 min-w-0">Filename</div>
+                      <div className="w-2/5 min-w-0">Name</div>
                       <div className="w-1/5 min-w-0 pl-4">Category</div>
                       <div className="w-2/5 text-right min-w-0 pl-4">Uploaded By</div>
                     </div>
