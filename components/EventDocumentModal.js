@@ -130,13 +130,16 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
                 </h3>
               </div>
 
-              {/* Event Type, Occurred At, and Status */}
+              {/* Event Type, Unit Number, Occurred At, and Status */}
               <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                 {document.event_type && (
                   <div>
                     <span className="font-medium">Type:</span> {document.event_type}
                   </div>
                 )}
+                <div>
+                  <span className="font-medium">Unit:</span> {document.unit_number || "Building"}
+                </div>
                 {document.occurred_at && (
                   <div>
                     <span className="font-medium">Occurred:</span> {formatDate(document.occurred_at)}
