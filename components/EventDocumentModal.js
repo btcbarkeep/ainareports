@@ -25,9 +25,10 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
       const response = await fetch(`/api/events/${eventId}/document`);
       if (!response.ok) {
         if (response.status === 404) {
-          setError("No document found for this event");
+          setError("Event not found");
         } else {
-          setError("Failed to load document details");
+          const errorData = await response.json().catch(() => ({}));
+          setError(errorData.error || "Failed to load event details");
         }
         setLoading(false);
         return;
