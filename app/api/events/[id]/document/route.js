@@ -31,18 +31,34 @@ export async function GET(req, { params }) {
       );
     }
 
+    // If event has s3_key but no document_id, try to find the document with that s3_key
+    let foundDocumentId = event.document_id || null;
+    if (event.s3_key && !event.document_id) {
+      const { data: document, error: docError } = await supabase
+        .from("documents")
+        .select("id")
+        .eq("s3_key", event.s3_key)
+        .limit(1)
+        .maybeSingle();
+      
+      if (!docError && document && document.id) {
+        foundDocumentId = document.id;
+      }
+    }
+
     // Return event data with all event fields
     return NextResponse.json({
       id: event.id,
       title: event.title || null,
       event_type: event.event_type || null,
       occurred_at: event.occurred_at || null,
+      status: event.status || null,
       body: event.body || null,
       // Document-related fields
       s3_key: event.s3_key || null,
       download_url: event.download_url || null,
       document_url: event.document_url || null,
-      document_id: event.document_id || null,
+      document_id: foundDocumentId, // Use found document ID if available
       // Legacy fields for backward compatibility
       filename: event.title || "Event Document",
       document_type: event.title,
