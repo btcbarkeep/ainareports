@@ -538,7 +538,6 @@ export default async function BuildingPage({ params, searchParams }) {
                   <EventsList
                     events={events}
                     userDisplayNames={userDisplayNames}
-                    formatDate={formatDate}
                   />
                 </div>
               </>
