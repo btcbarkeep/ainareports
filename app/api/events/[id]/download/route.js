@@ -26,22 +26,25 @@ export async function GET(req, { params }) {
     }
 
     // Fetch the event to check if it has a document_id or s3_key
+    // If this fails, we'll still try the FastAPI endpoints as fallback
+    let event = null;
     const supabase = getSupabaseClient();
-    const { data: event, error: eventError } = await supabase
+    const { data: eventData, error: eventError } = await supabase
       .from("events")
       .select("id, document_id, s3_key, download_url, document_url")
       .eq("id", eventId)
       .single();
 
-    if (eventError || !event) {
-      return NextResponse.json(
-        { error: "Event not found" },
-        { status: 404 }
-      );
+    if (eventError) {
+      console.error("Error fetching event from Supabase:", eventError);
+      // Don't fail here - continue to try FastAPI endpoints
+      // The event might exist in the backend even if not in Supabase
+    } else {
+      event = eventData;
     }
 
-    // If event has a direct download_url or document_url, redirect to it
-    if (event.download_url || event.document_url) {
+    // If we successfully fetched the event and it has a direct download_url or document_url, redirect to it
+    if (event && (event.download_url || event.document_url)) {
       const directUrl = event.download_url || event.document_url;
       if (directUrl && (directUrl.startsWith('http://') || directUrl.startsWith('https://'))) {
         return NextResponse.redirect(directUrl);
@@ -50,7 +53,7 @@ export async function GET(req, { params }) {
 
     // If event has a document_id but NO s3_key, try documents endpoint
     // (document_id without s3_key means it's a reference to a separate document)
-    if (event.document_id && !event.s3_key) {
+    if (event && event.document_id && !event.s3_key) {
       const backendUrl = `${apiUrl}/uploads/documents/${event.document_id}/download`;
       try {
         const response = await fetch(backendUrl, {
@@ -90,7 +93,7 @@ export async function GET(req, { params }) {
 
       // If events endpoint returns 404 and we have an s3_key, try documents endpoint with eventId
       // (some events with s3_key may be stored the same way as documents)
-      if (response.status === 404 && event.s3_key) {
+      if (response.status === 404 && event && event.s3_key) {
         backendUrl = `${apiUrl}/uploads/documents/${eventId}/download`;
         response = await fetch(backendUrl, {
           method: "GET",
