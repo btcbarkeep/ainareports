@@ -457,8 +457,8 @@ export default async function BuildingPage({ params, searchParams }) {
                       </div>
                       {documents.map((doc) => {
                         const documentUrl = doc.download_url || doc.document_url;
-                        const filename =
-                          doc.filename || doc.document_type || "—";
+                        const title =
+                          doc.title || doc.document_type || "—";
 
                         const isValidUrl =
                           documentUrl &&
