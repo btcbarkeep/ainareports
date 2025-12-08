@@ -21,35 +21,66 @@ export default async function Home({ searchParams }) {
       const hasBuildingName = buildingNameWords.length > 0;
       
       // ⭐ BUILDINGS - Search for any word matching
-      // If we have building name words, prioritize those (don't match numbers in addresses)
-      let buildingQuery = supabase
-        .from("buildings")
-        .select("id, name, address, city, state, zip, slug");
+      // Prioritize building name matches over address matches
+      let bData = [];
+      let bError = null;
       
-      // Build OR conditions for each word
-      const buildingConditions = [];
       if (hasBuildingName && hasUnitNumber) {
         // When we have BOTH building name AND unit number:
         // Only match buildings on building name words (ignore numbers in addresses/zip)
-        // The numeric part is exclusively for unit number matching
+        const buildingConditions = [];
         buildingNameWords.forEach(word => {
           buildingConditions.push(`name.ilike.%${word}%`);
-          // Only match addresses/cities/states on non-numeric words
           buildingConditions.push(`address.ilike.%${word}%`);
           buildingConditions.push(`city.ilike.%${word}%`);
           buildingConditions.push(`state.ilike.%${word}%`);
         });
+        
+        const result = await supabase
+          .from("buildings")
+          .select("id, name, address, city, state, zip, slug")
+          .or(buildingConditions.join(","))
+          .limit(10);
+        bData = result.data || [];
+        bError = result.error;
       } else if (hasBuildingName) {
-        // Only building name words, no unit numbers - match on all fields
-        buildingNameWords.forEach(word => {
-          buildingConditions.push(`name.ilike.%${word}%`);
-          buildingConditions.push(`address.ilike.%${word}%`);
-          buildingConditions.push(`city.ilike.%${word}%`);
-          buildingConditions.push(`state.ilike.%${word}%`);
-          buildingConditions.push(`zip.ilike.%${word}%`);
-        });
+        // Only building name words - prioritize building name matches
+        // First, try matching building names only
+        const nameConditions = buildingNameWords.map(word => `name.ilike.%${word}%`);
+        const nameResult = await supabase
+          .from("buildings")
+          .select("id, name, address, city, state, zip, slug")
+          .or(nameConditions.join(","))
+          .limit(10);
+        
+        bData = nameResult.data || [];
+        bError = nameResult.error;
+        
+        // If we got fewer than 5 results, also search addresses to get more results
+        if (bData.length < 5 && !bError) {
+          const addressConditions = [];
+          buildingNameWords.forEach(word => {
+            addressConditions.push(`address.ilike.%${word}%`);
+            addressConditions.push(`city.ilike.%${word}%`);
+            addressConditions.push(`state.ilike.%${word}%`);
+          });
+          
+          const addressResult = await supabase
+            .from("buildings")
+            .select("id, name, address, city, state, zip, slug")
+            .or(addressConditions.join(","))
+            .limit(10);
+          
+          if (!addressResult.error && addressResult.data) {
+            // Merge results, avoiding duplicates
+            const existingIds = new Set(bData.map(b => b.id));
+            const additionalBuildings = addressResult.data.filter(b => !existingIds.has(b.id));
+            bData = [...bData, ...additionalBuildings].slice(0, 10);
+          }
+        }
       } else {
         // No building name words, match all words (including numbers)
+        const buildingConditions = [];
         queryWords.forEach(word => {
           buildingConditions.push(`name.ilike.%${word}%`);
           buildingConditions.push(`address.ilike.%${word}%`);
@@ -57,11 +88,15 @@ export default async function Home({ searchParams }) {
           buildingConditions.push(`state.ilike.%${word}%`);
           buildingConditions.push(`zip.ilike.%${word}%`);
         });
+        
+        const result = await supabase
+          .from("buildings")
+          .select("id, name, address, city, state, zip, slug")
+          .or(buildingConditions.join(","))
+          .limit(10);
+        bData = result.data || [];
+        bError = result.error;
       }
-      
-      const { data: bData, error: bError } = await buildingQuery
-        .or(buildingConditions.join(","))
-        .limit(10);
 
       if (bError) {
         console.error("Error fetching buildings:", bError);
