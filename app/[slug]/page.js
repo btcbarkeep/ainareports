@@ -107,23 +107,30 @@ async function fetchBuildingData(slug) {
       if (response.ok) {
         const result = await response.json();
         // Handle different response structures
+        // The API can return: { success: true, data: {...} } OR { contractors: [...], events: [...], documents: [...] }
         if (result.success && result.data) {
           publicData = result.data;
         } else if (result.contractors || result.events || result.documents) {
-          // If data is at root level
+          // If data is at root level (direct response)
+          publicData = result;
+        } else if (result) {
+          // If the entire result is the data object
           publicData = result;
         }
         
         // Debug logging
-        if (publicData) {
-          console.log("API response structure:", {
-            hasData: !!result.data,
-            hasContractors: !!(publicData.contractors),
-            contractorsCount: publicData.contractors?.length || 0,
-            contractorsSample: publicData.contractors?.[0],
-            allKeys: Object.keys(publicData),
-          });
-        }
+        console.log("API response structure:", {
+          responseKeys: Object.keys(result || {}),
+          hasSuccess: !!result.success,
+          hasData: !!result.data,
+          hasContractors: !!(result.contractors),
+          hasEvents: !!(result.events),
+          hasDocuments: !!(result.documents),
+          contractorsCount: result.contractors?.length || 0,
+          contractorsSample: result.contractors?.[0],
+          publicDataKeys: publicData ? Object.keys(publicData) : [],
+          publicDataContractorsCount: publicData?.contractors?.length || 0,
+        });
       } else {
         const errorText = await response.text().catch(() => '');
         console.error("Error fetching building data from API:", response.status, errorText);
