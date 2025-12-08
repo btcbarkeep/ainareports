@@ -7,7 +7,16 @@ export default function SearchBar({ initialQuery = "" }) {
   const [suggestions, setSuggestions] = useState([]);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
+  // Hide suggestions if there's an initial query (search was submitted)
+  const showSuggestions = suggestions.length > 0 && !initialQuery;
+
   useEffect(() => {
+    // Don't fetch suggestions if there's an initial query (search was submitted)
+    if (initialQuery) {
+      setSuggestions([]);
+      return;
+    }
+
     if (!query || query.trim().length < 1) {
       setSuggestions([]);
       return;
@@ -38,25 +47,16 @@ export default function SearchBar({ initialQuery = "" }) {
 
         const data = await response.json();
         const buildings = data.buildings || [];
-        const units = data.units || [];
 
-        // Map buildings to suggestions
+        // Only show buildings in autocomplete, not units
+        // (Units will still appear in the search results page after submission)
         const buildingMatches = buildings.slice(0, 5).map((b) => ({
           type: "building",
           label: `${b.name} — ${b.address || ""}`,
           slug: b.slug,
         }));
 
-        // Map units to suggestions
-        const unitMatches = units.slice(0, 5).map((u) => ({
-          type: "unit",
-          label: `Unit ${u.unit_number} — ${u.building?.name || ""}`,
-          slug: u.building?.slug,
-          unit: u.unit_number,
-        }));
-
-        const combined = [...buildingMatches, ...unitMatches];
-        setSuggestions(combined);
+        setSuggestions(buildingMatches);
       } catch (error) {
         console.error("Search error:", error);
         setSuggestions([]);
@@ -64,7 +64,7 @@ export default function SearchBar({ initialQuery = "" }) {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [query, apiUrl]);
+  }, [query, apiUrl, initialQuery]);
 
   return (
     <div className="relative w-full max-w-xl">
@@ -88,7 +88,7 @@ export default function SearchBar({ initialQuery = "" }) {
         </div>
       </form>
 
-      {suggestions.length > 0 && (
+      {showSuggestions && (
         <ul className="absolute left-0 right-0 bg-white border border-gray-200 rounded-md shadow-md mt-1 z-50">
           {suggestions.map((s, i) => (
             <li
