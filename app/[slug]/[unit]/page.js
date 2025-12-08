@@ -21,11 +21,12 @@ const ROLE_LABELS = {
 async function fetchUnitWithRelations(buildingSlug, unitNumber) {
   try {
     const supabase = getSupabaseClient();
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
-    // 1️⃣ Fetch building
+    // 1️⃣ Fetch building to get building ID
     const { data: building, error: buildingError } = await supabase
       .from("buildings")
-      .select("*")
+      .select("id, slug, name, address, city, state, zip, description, units, floors, year_built, zoning, tmk")
       .ilike("slug", buildingSlug)
       .single();
 
@@ -34,7 +35,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       return null;
     }
 
-    // 2️⃣ Fetch unit
+    // 2️⃣ Fetch unit to get unit details
     const { data: unit, error: unitError } = await supabase
       .from("units")
       .select("*")
@@ -47,108 +48,79 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       return null;
     }
 
-    // 3️⃣ Fetch EVENTS (limit 5)
-    const { data: eventsData, error: eventsError } = await supabase
-      .from("events")
-      .select("*")
-      .eq("unit_id", unit.id)
-      .order("occurred_at", { ascending: false })
-      .limit(5);
+    // 3️⃣ Fetch all data from public API endpoint
+    let publicData = null;
+    if (apiUrl) {
+      try {
+        const response = await fetch(
+          `${apiUrl}/reports/public/building/${building.id}/unit/${unitNumber}`,
+          {
+            headers: {
+              "accept": "application/json",
+            },
+          }
+        );
 
-    if (eventsError) {
-      console.error("Error fetching events:", eventsError);
-    }
-
-    const events = eventsData || [];
-
-    // 4️⃣ Fetch DOCUMENTS (limit 5)
-    const { data: documentsData, error: documentsError } = await supabase
-      .from("documents")
-      .select("*")
-      .eq("unit_id", unit.id)
-      .order("created_at", { ascending: false })
-      .limit(5);
-
-    if (documentsError) {
-      console.error("Error fetching documents:", documentsError);
-    }
-
-    const documents = documentsData || [];
-
-  // 5️⃣ Fetch Auth Users
-  // Note: Service role key removed, so user display names are not available
-  const userDisplayNames = {};
-
-    // 6️⃣ CONTRACTORS (unit level)
-    const contractorIds = [...new Set(events.map((e) => e.contractor_id).filter(Boolean))];
-
-    let contractorsById = {};
-    if (contractorIds.length > 0) {
-      const { data: contractors, error: contractorsError } = await supabase
-        .from("contractors")
-        .select("id, company_name, phone")
-        .in("id", contractorIds);
-
-      if (contractorsError) {
-        console.error("Error fetching contractors:", contractorsError);
-      } else {
-        (contractors || []).forEach((c) => {
-          contractorsById[c.id] = c;
-        });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            publicData = result.data;
+          }
+        } else {
+          console.error("Error fetching unit data from API:", response.status);
+        }
+      } catch (apiError) {
+        console.error("Error calling unit API:", apiError);
       }
     }
 
-  // Contractor activity count
-  const contractorCounts = {};
-  events.forEach((e) => {
-    if (!e.contractor_id) return;
-    contractorCounts[e.contractor_id] = (contractorCounts[e.contractor_id] || 0) + 1;
-  });
-
-  // Most active contractor (ONLY 1)
-  const [topContractorId] =
-    Object.entries(contractorCounts).sort((a, b) => b[1] - a[1])[0] || [];
-
-  let mostActiveContractor = null;
-  if (topContractorId) {
-    const c = contractorsById[topContractorId] || {};
-    mostActiveContractor = {
-      id: topContractorId,
-      name: c.company_name || "Contractor",
-      phone: c.phone || "",
-      count: contractorCounts[topContractorId],
-    };
-  }
-
-    // 7️⃣ BUILDING contractors (limit 5)
-    const { data: buildingContractorEvents, error: buildingEventsError } = await supabase
-      .from("events")
-      .select("contractor_id")
-      .eq("building_id", building.id)
-      .not("contractor_id", "is", null);
-
-    if (buildingEventsError) {
-      console.error("Error fetching building contractor events:", buildingEventsError);
-    }
-
-    const buildingContractorIds = [
-      ...new Set((buildingContractorEvents || []).map((e) => e.contractor_id)),
-    ];
-
-    let buildingContractors = [];
-    if (buildingContractorIds.length > 0) {
-      const { data: contractors, error: buildingContractorsError } = await supabase
-        .from("contractors")
-        .select("id, company_name, phone")
-        .in("id", buildingContractorIds)
+    // Fallback to Supabase if API fails or is not configured
+    if (!publicData) {
+      const { data: eventsData } = await supabase
+        .from("events")
+        .select("*")
+        .eq("unit_id", unit.id)
+        .order("occurred_at", { ascending: false })
         .limit(5);
 
-      if (buildingContractorsError) {
-        console.error("Error fetching building contractors:", buildingContractorsError);
-      } else {
-        buildingContractors = contractors || [];
-      }
+      const { data: documentsData } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("unit_id", unit.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      publicData = {
+        events: eventsData || [],
+        documents: documentsData || [],
+        contractors: [],
+        property_managers: [],
+      };
     }
+
+    const events = publicData.events || [];
+    const documents = publicData.documents || [];
+
+    // Map contractors from API response
+    const unitContractors = publicData.contractors || [];
+    const mostActiveContractor = unitContractors.length > 0
+      ? {
+          id: unitContractors[0].id || 0,
+          name: unitContractors[0].company_name || unitContractors[0].name || "Contractor",
+          phone: unitContractors[0].phone || "",
+          count: unitContractors[0].event_count || unitContractors[0].count || 0,
+        }
+      : null;
+
+    // Building contractors from API (if available) or fallback
+    const buildingContractors = (publicData.building_contractors || publicData.contractors || []).slice(0, 5).map((c) => ({
+      id: c.id,
+      company_name: c.company_name || c.name,
+      phone: c.phone || "",
+    }));
+
+    // USER DISPLAY NAMES
+    const userDisplayNames = {};
 
     return {
       building,
