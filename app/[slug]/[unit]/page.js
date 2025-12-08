@@ -23,76 +23,92 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     const supabase = getSupabaseClient();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
-    // 1️⃣ Fetch building to get building ID
-    const { data: building, error: buildingError } = await supabase
-      .from("buildings")
-      .select("id, slug, name, address, city, state, zip, description, units, floors, year_built, zoning, tmk")
-      .ilike("slug", buildingSlug)
-      .single();
+    // 1️⃣ Fetch building and unit in parallel
+    const [buildingResult, unitQuery] = await Promise.all([
+      supabase
+        .from("buildings")
+        .select("id, slug, name, address, city, state, zip, description, units, floors, year_built, zoning, tmk")
+        .ilike("slug", buildingSlug)
+        .single(),
+      // We need building first to query unit, but we can prepare the query
+      Promise.resolve(null), // Placeholder
+    ]);
+
+    const { data: building, error: buildingError } = buildingResult;
 
     if (buildingError || !building) {
       console.error("Error fetching building:", buildingError);
       return null;
     }
 
-    // 2️⃣ Fetch unit to get unit details
-    const { data: unit, error: unitError } = await supabase
-      .from("units")
-      .select("*")
-      .eq("building_id", building.id)
-      .ilike("unit_number", unitNumber)
-      .single();
+    // 2️⃣ Fetch unit and API data in parallel
+    const [unitResult, apiResult] = await Promise.allSettled([
+      supabase
+        .from("units")
+        .select("*")
+        .eq("building_id", building.id)
+        .ilike("unit_number", unitNumber)
+        .single(),
+      // API call with timeout
+      apiUrl ? Promise.race([
+        fetch(
+          `${apiUrl}/reports/public/building/${building.id}/unit/${unitNumber}`,
+          {
+            headers: {
+              "accept": "application/json",
+            },
+            next: { revalidate: 60 }, // Cache for 60 seconds
+          }
+        ),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('API timeout')), 3000)
+        )
+      ]).catch(() => null) : Promise.resolve(null),
+    ]);
+
+    const { data: unit, error: unitError } = unitResult.status === 'fulfilled' ? unitResult.value : { data: null, error: null };
 
     if (unitError || !unit) {
       console.error("Error fetching unit:", unitError);
       return null;
     }
 
-    // 3️⃣ Fetch all data from public API endpoint
+    // Process API result
     let publicData = null;
-    if (apiUrl) {
+    if (apiResult.status === 'fulfilled' && apiResult.value) {
       try {
-        const response = await fetch(
-          `${apiUrl}/reports/public/building/${building.id}/unit/${unitNumber}`,
-          {
-            headers: {
-              "accept": "application/json",
-            },
-          }
-        );
-
+        const response = apiResult.value;
         if (response.ok) {
           const result = await response.json();
           if (result.success && result.data) {
             publicData = result.data;
           }
-        } else {
-          console.error("Error fetching unit data from API:", response.status);
         }
       } catch (apiError) {
-        console.error("Error calling unit API:", apiError);
+        console.error("Error parsing API response:", apiError);
       }
     }
 
     // Fallback to Supabase if API fails or is not configured
     if (!publicData) {
-      const { data: eventsData } = await supabase
-        .from("events")
-        .select("*")
-        .eq("unit_id", unit.id)
-        .order("occurred_at", { ascending: false })
-        .limit(5);
-
-      const { data: documentsData } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("unit_id", unit.id)
-        .order("created_at", { ascending: false })
-        .limit(5);
+      const [eventsResult, documentsResult] = await Promise.allSettled([
+        supabase
+          .from("events")
+          .select("*")
+          .eq("unit_id", unit.id)
+          .order("occurred_at", { ascending: false })
+          .limit(5),
+        supabase
+          .from("documents")
+          .select("*")
+          .eq("unit_id", unit.id)
+          .order("created_at", { ascending: false })
+          .limit(5),
+      ]);
 
       publicData = {
-        events: eventsData || [],
-        documents: documentsData || [],
+        events: eventsResult.status === 'fulfilled' ? (eventsResult.value.data || []) : [],
+        documents: documentsResult.status === 'fulfilled' ? (documentsResult.value.data || []) : [],
         contractors: [],
         property_managers: [],
       };
