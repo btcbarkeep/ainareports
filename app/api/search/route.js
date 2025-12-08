@@ -21,32 +21,65 @@ export async function GET(req) {
     const hasUnitNumber = unitNumberWords.length > 0;
     const hasBuildingName = buildingNameWords.length > 0;
     
-    let buildingQuery = supabase
-      .from("buildings")
-      .select("id, name, address, city, state, zip, slug");
+    let buildings = [];
+    let buildingsError = null;
     
-    // Build search conditions
-    let buildingConditions = [];
     if (hasBuildingName && hasUnitNumber) {
       // When we have BOTH building name AND unit number:
       // Only match buildings on building name words (ignore numbers in addresses/zip)
+      const buildingConditions = [];
       buildingNameWords.forEach(word => {
         buildingConditions.push(`name.ilike.%${word}%`);
         buildingConditions.push(`address.ilike.%${word}%`);
         buildingConditions.push(`city.ilike.%${word}%`);
         buildingConditions.push(`state.ilike.%${word}%`);
       });
+      
+      const result = await supabase
+        .from("buildings")
+        .select("id, name, address, city, state, zip, slug")
+        .or(buildingConditions.join(","))
+        .limit(10);
+      buildings = result.data || [];
+      buildingsError = result.error;
     } else if (hasBuildingName) {
-      // Only building name words, no unit numbers - match on all fields
-      buildingNameWords.forEach(word => {
-        buildingConditions.push(`name.ilike.%${word}%`);
-        buildingConditions.push(`address.ilike.%${word}%`);
-        buildingConditions.push(`city.ilike.%${word}%`);
-        buildingConditions.push(`state.ilike.%${word}%`);
-        buildingConditions.push(`zip.ilike.%${word}%`);
-      });
+      // Only building name words - prioritize building name matches
+      // First, try matching building names only
+      const nameConditions = buildingNameWords.map(word => `name.ilike.%${word}%`);
+      const nameResult = await supabase
+        .from("buildings")
+        .select("id, name, address, city, state, zip, slug")
+        .or(nameConditions.join(","))
+        .limit(10);
+      
+      buildings = nameResult.data || [];
+      buildingsError = nameResult.error;
+      
+      // If we got fewer than 5 results, also search addresses to get more results
+      if (buildings.length < 5 && !buildingsError) {
+        const addressConditions = [];
+        buildingNameWords.forEach(word => {
+          addressConditions.push(`address.ilike.%${word}%`);
+          addressConditions.push(`city.ilike.%${word}%`);
+          addressConditions.push(`state.ilike.%${word}%`);
+        });
+        
+        const addressResult = await supabase
+          .from("buildings")
+          .select("id, name, address, city, state, zip, slug")
+          .or(addressConditions.join(","))
+          .limit(10);
+        
+        if (!addressResult.error && addressResult.data) {
+          // Merge results, avoiding duplicates
+          const existingIds = new Set(buildings.map(b => b.id));
+          const additionalBuildings = addressResult.data.filter(b => !existingIds.has(b.id));
+          buildings = [...buildings, ...additionalBuildings].slice(0, 10);
+        }
+      }
     } else {
       // No building name words, match all words (including numbers)
+      const buildingConditions = [];
       queryWords.forEach(word => {
         buildingConditions.push(`name.ilike.%${word}%`);
         buildingConditions.push(`address.ilike.%${word}%`);
@@ -54,11 +87,15 @@ export async function GET(req) {
         buildingConditions.push(`state.ilike.%${word}%`);
         buildingConditions.push(`zip.ilike.%${word}%`);
       });
+      
+      const result = await supabase
+        .from("buildings")
+        .select("id, name, address, city, state, zip, slug")
+        .or(buildingConditions.join(","))
+        .limit(10);
+      buildings = result.data || [];
+      buildingsError = result.error;
     }
-    
-    const { data: buildings, error: buildingsError } = await buildingQuery
-      .or(buildingConditions.join(","))
-      .limit(10);
 
     if (buildingsError) {
       console.error("Error fetching buildings:", buildingsError);
