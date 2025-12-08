@@ -55,11 +55,21 @@ async function fetchBuildingData(slug) {
     return null;
   }
 
+  if (!slug) {
+    console.error("Slug is required");
+    return null;
+  }
+
   // Fetch building report from API using slug directly
+  // Don't encode the slug in the path - let fetch handle it, or encode only if needed
+  // Most backends expect unencoded slugs in path segments
   let publicData = null;
   try {
+    const apiEndpoint = `${apiUrl}/reports/public/building/${slug}?format=json`;
+    console.log(`Fetching building data from: ${apiEndpoint}`);
+    
     const response = await fetch(
-      `${apiUrl}/reports/public/building/${slug}?format=json`,
+      apiEndpoint,
       {
         headers: {
           "accept": "application/json",
@@ -72,8 +82,10 @@ async function fetchBuildingData(slug) {
       const result = await response.json();
       // API returns data at root level
       publicData = result;
+      console.log("API response received:", Object.keys(publicData));
     } else {
-      console.error("Error fetching building data from API:", response.status);
+      const errorText = await response.text().catch(() => '');
+      console.error(`Error fetching building data from API: ${response.status}`, errorText);
       return null;
     }
   } catch (apiError) {
@@ -82,11 +94,17 @@ async function fetchBuildingData(slug) {
   }
 
   if (!publicData) {
+    console.error("No data returned from API");
     return null;
   }
 
   // Extract data from API response
   const apiBuilding = publicData.building;
+  
+  if (!apiBuilding) {
+    console.error("Building not found in API response. Response keys:", Object.keys(publicData));
+    return null;
+  }
   const apiUnits = publicData.units || [];
   const apiEvents = publicData.events || [];
   const apiDocuments = publicData.documents || [];
@@ -157,8 +175,8 @@ async function fetchBuildingData(slug) {
     })),
     documents,
     mostActiveContractors,
-    totalUnits: statistics.total_units ?? apiUnits.length ?? building.units ?? null,
-    floors: apiBuilding?.floors ?? building.floors ?? null,
+    totalUnits: statistics.total_units ?? apiUnits.length ?? apiBuilding.units ?? null,
+    floors: apiBuilding?.floors ?? null,
     userDisplayNames,
     totalDocumentsCount: statistics.total_documents ?? apiDocuments.length ?? 0,
     totalEventsCount: statistics.total_events ?? apiEvents.length ?? 0,
