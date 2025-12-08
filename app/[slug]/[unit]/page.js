@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import EventsList from "@/components/EventsList";
 import DocumentsList from "@/components/DocumentsList";
+import ContractorsList from "@/components/ContractorsList";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -460,21 +461,7 @@ export default async function UnitPage({ params, searchParams }) {
             {activeTab === "contractors" && (
               <>
                 <h2 className="font-semibold mb-3">Contractors</h2>
-
-                <div className="border rounded-md divide-y text-sm">
-                  {buildingContractors.length === 0 ? (
-                    <div className="px-3 py-3 text-gray-500">
-                      No contractors have posted events for this building yet.
-                    </div>
-                  ) : (
-                    buildingContractors.map((c) => (
-                      <div key={c.id} className="px-3 py-3">
-                        <div className="font-medium">{c.company_name}</div>
-                        <div className="text-xs text-gray-600">{c.phone || "—"}</div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                <ContractorsList contractors={buildingContractors} />
               </>
             )}
           </div>
