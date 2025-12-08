@@ -44,16 +44,26 @@ export default async function SearchResultsPage({ searchParams }) {
     );
   }
 
-  // Build absolute URL for server-side fetch
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL ||
-    (typeof window === "undefined"
-      ? "http://localhost:3000"
-      : window.location.origin);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
+  if (!apiUrl) {
+    return (
+      <main className="max-w-3xl mx-auto px-4 py-10">
+        <h1 className="text-xl font-semibold mb-2">Search</h1>
+        <p className="text-red-500">API URL not configured.</p>
+      </main>
+    );
+  }
+
+  // Call the public search API endpoint directly
   const res = await fetch(
-    `${baseUrl}/api/search?q=${encodeURIComponent(q)}`,
-    { cache: "no-store" }
+    `${apiUrl}/reports/public/search?query=${encodeURIComponent(q)}`,
+    {
+      headers: {
+        "accept": "application/json",
+      },
+      next: { revalidate: 60 }, // Cache for 60 seconds
+    }
   );
 
   if (!res.ok) {
@@ -65,7 +75,9 @@ export default async function SearchResultsPage({ searchParams }) {
     );
   }
 
-  const { buildings, units } = await res.json();
+  const data = await res.json();
+  const buildings = data.buildings || [];
+  const units = data.units || [];
 
   // Filter out units missing the building relationship
   const safeUnits = (units || []).filter((u) => u.building);
