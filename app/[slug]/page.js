@@ -1,8 +1,5 @@
 import Link from "next/link";
-import {
-  getSupabaseClient,
-  getSupabaseAdminClient,
-} from "@/lib/supabaseClient";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import EventsList from "@/components/EventsList";
 import PremiumUnlockSection from "@/components/PremiumUnlockSection";
 
@@ -166,22 +163,8 @@ async function fetchBuildingData(slug) {
   const totalEventsCount = totalEventsCountRaw ?? 0;
 
   // USER DISPLAY NAMES
-  let userDisplayNames = {};
-  try {
-    const admin = getSupabaseAdminClient();
-    const { data: userList } = await admin.auth.admin.listUsers();
-
-    (userList?.users || []).forEach((u) => {
-      const meta = u.user_metadata || u.raw_user_meta_data || {};
-
-      userDisplayNames[u.id] = {
-        name: meta.full_name || u.email || "Unknown User",
-        role: ROLE_LABELS[meta.role] || meta.role || "—",
-      };
-    });
-  } catch (err) {
-    console.error("Auth user fetch failed:", err);
-  }
+  // Note: Service role key removed, so user display names are not available
+  const userDisplayNames = {};
 
   // LIVE COUNT
   const { count: liveUnitCount } = await supabase
