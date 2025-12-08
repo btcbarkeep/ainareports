@@ -82,10 +82,14 @@ async function fetchBuildingData(slug) {
       const result = await response.json();
       // API returns data at root level
       publicData = result;
-      console.log("API response received:", Object.keys(publicData));
+      console.log("API response received, keys:", Object.keys(publicData));
     } else {
       const errorText = await response.text().catch(() => '');
       console.error(`Error fetching building data from API: ${response.status}`, errorText);
+      // If 404, the building doesn't exist
+      if (response.status === 404) {
+        console.error(`Building with slug "${slug}" not found (404)`);
+      }
       return null;
     }
   } catch (apiError) {
@@ -99,10 +103,28 @@ async function fetchBuildingData(slug) {
   }
 
   // Extract data from API response
-  const apiBuilding = publicData.building;
+  // Handle different possible response structures:
+  // 1. { building: {...}, units: [...], ... }
+  // 2. Building data at root level
+  let apiBuilding = publicData.building;
+  
+  // If no building key, check if the data itself is the building
+  if (!apiBuilding && publicData.id && publicData.name) {
+    // The response might be the building object itself
+    apiBuilding = publicData;
+    // Extract other data if present
+    publicData = {
+      building: apiBuilding,
+      units: publicData.units || [],
+      events: publicData.events || [],
+      documents: publicData.documents || [],
+      contractors: publicData.contractors || [],
+      statistics: publicData.statistics || {},
+    };
+  }
   
   if (!apiBuilding) {
-    console.error("Building not found in API response. Response keys:", Object.keys(publicData));
+    console.error("Building not found in API response. Response structure:", JSON.stringify(publicData, null, 2).substring(0, 500));
     return null;
   }
   const apiUnits = publicData.units || [];
