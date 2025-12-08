@@ -34,12 +34,17 @@ export async function GET(req) {
     const queryWords = q.toLowerCase().split(/\s+/).filter(w => w.length > 0);
     const unitNumberWords = queryWords.filter(word => /\d/.test(word));
     const hasUnitNumber = unitNumberWords.length > 0;
-
+    
+    // Get matched building IDs to filter out units from other buildings
+    const matchedBuildingIds = buildings?.length > 0 
+      ? new Set(buildings.map((b) => b.id))
+      : new Set();
+    
     // ---------------------------------------------------------
     // 1) GET UNITS BY BUILDING MATCH (filter by unit number if present)
     // ---------------------------------------------------------
     if (buildings?.length) {
-      const buildingIds = buildings.map((b) => b.id);
+      const buildingIds = Array.from(matchedBuildingIds);
 
       let unitsByBuildingQuery = supabase
         .from("units")
@@ -76,8 +81,9 @@ export async function GET(req) {
 
     // ---------------------------------------------------------
     // 2) GET UNITS DIRECTLY MATCHING TEXT
+    // If we have building matches, only include units from those buildings
     // ---------------------------------------------------------
-    const { data: unitsByText, error: unitsByTextError } = await supabase
+    let unitsByTextQuery = supabase
       .from("units")
       .select(`
         id,
@@ -92,16 +98,36 @@ export async function GET(req) {
           state,
           zip
         )
-      `)
-      .or(
-        [
-          `unit_number.ilike.%${q}%`,
-          `building.name.ilike.%${q}%`,
-          `building.address.ilike.%${q}%`,
-          `building.city.ilike.%${q}%`,
-          `building.state.ilike.%${q}%`
-        ].join(",")
+      `);
+    
+    // If we have building matches, filter to only those buildings
+    if (matchedBuildingIds.size > 0) {
+      unitsByTextQuery = unitsByTextQuery.in("building_id", Array.from(matchedBuildingIds));
+    }
+    
+    // Build search conditions
+    const searchConditions = [];
+    if (hasUnitNumber) {
+      // If we have unit numbers, prioritize those
+      const unitNumberConditions = unitNumberWords.map(word => `unit_number.ilike.%${word}%`);
+      searchConditions.push(...unitNumberConditions);
+    } else {
+      // Otherwise search by unit number or building fields
+      searchConditions.push(`unit_number.ilike.%${q}%`);
+    }
+    
+    // Only add building text conditions if we don't have building matches
+    if (matchedBuildingIds.size === 0) {
+      searchConditions.push(
+        `building.name.ilike.%${q}%`,
+        `building.address.ilike.%${q}%`,
+        `building.city.ilike.%${q}%`,
+        `building.state.ilike.%${q}%`
       );
+    }
+    
+    const { data: unitsByText, error: unitsByTextError } = await unitsByTextQuery
+      .or(searchConditions.join(","));
 
     if (unitsByTextError) {
       console.error("Error fetching units by text:", unitsByTextError);
