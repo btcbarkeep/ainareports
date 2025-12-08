@@ -1,5 +1,7 @@
 import Link from "next/link";
 import SearchBar from "@/components/SearchBar";
+import BuildingsList from "@/components/BuildingsList";
+import UnitsList from "@/components/UnitsList";
 
 export default async function Home({ searchParams }) {
   const query = (searchParams?.q || "").trim();
@@ -91,75 +93,13 @@ export default async function Home({ searchParams }) {
             {/* BUILDINGS */}
             <div>
               <h2 className="font-semibold mb-2">Buildings</h2>
-
-              {buildingResults.length === 0 ? (
-                <p className="text-gray-500">No buildings found.</p>
-              ) : (
-                <ul className="border border-gray-200 rounded-md divide-y">
-                  {buildingResults.map((b) => (
-                    <li
-                      key={b.id}
-                      className="px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-1"
-                    >
-                      <div>
-                        <div className="font-medium">{b.name}</div>
-                        <div className="text-gray-500">
-                          {[b.address, b.city, b.state, b.zip]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </div>
-                      </div>
-
-                      <Link
-                        href={`/${b.slug}`}
-                        className="text-xs md:text-sm underline underline-offset-2"
-                      >
-                        View Building Report
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <BuildingsList buildings={buildingResults} />
             </div>
 
             {/* UNITS */}
             <div>
               <h2 className="font-semibold mb-2">Units</h2>
-
-              {unitResults.length === 0 ? (
-                <p className="text-gray-500">No units found.</p>
-              ) : (
-                <ul className="border border-gray-200 rounded-md divide-y">
-                  {unitResults.map((u) => (
-                    <li
-                      key={u.id}
-                      className="px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-1"
-                    >
-                      <div>
-                        <div className="font-medium">
-                          Unit {u.unit_number}
-                          {u.building?.name ? ` — ${u.building.name}` : ""}
-                        </div>
-
-                        {u.building && (
-                          <div className="text-gray-500">
-                            {[u.building.address, u.building.city, u.building.state, u.building.zip]
-                              .filter(Boolean)
-                              .join(", ")}
-                          </div>
-                        )}
-                      </div>
-
-                      <Link
-                        href={`/${u.building?.slug}/${u.unit_number}`}
-                        className="text-xs md:text-sm underline underline-offset-2"
-                      >
-                        View Unit Report
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <UnitsList units={unitResults} />
             </div>
           </div>
         </section>
