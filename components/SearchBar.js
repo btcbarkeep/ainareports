@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { useState, useEffect } from "react";
 
 export default function SearchBar({ initialQuery = "" }) {
-  const supabase = useMemo(() => getSupabaseClient(), []);
   const [query, setQuery] = useState(initialQuery);
   const [suggestions, setSuggestions] = useState([]);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
   useEffect(() => {
     if (!query || query.trim().length < 1) {
@@ -14,59 +13,49 @@ export default function SearchBar({ initialQuery = "" }) {
       return;
     }
 
+    if (!apiUrl) {
+      console.warn("API URL not configured");
+      return;
+    }
+
     const timer = setTimeout(async () => {
       try {
-        // BUILDINGS
-        const { data: buildingMatches, error: buildingError } = await supabase
-          .from("buildings")
-          .select("id, name, address, city, state, slug")
-          .or(`name.ilike.%${query}%,address.ilike.%${query}%`)
-          .limit(5);
+        // Call the public search API endpoint
+        const response = await fetch(
+          `${apiUrl}/reports/public/search?query=${encodeURIComponent(query)}`,
+          {
+            headers: {
+              "accept": "application/json",
+            },
+          }
+        );
 
-        if (buildingError) {
-          console.error("Error fetching buildings:", buildingError);
+        if (!response.ok) {
+          console.error("Error fetching search suggestions:", response.status);
+          setSuggestions([]);
+          return;
         }
 
-        // UNITS
-        const { data: unitMatchesRaw, error: unitError } = await supabase
-          .from("units")
-          .select(`
-            id,
-            unit_number,
-            building:building_id (
-              name,
-              slug,
-              address
-            )
-          `)
-          .or(
-            [
-              `unit_number.ilike.%${query}%`,
-              `building.name.ilike.%${query}%`
-            ].join(",")
-          )
-          .limit(5);
+        const data = await response.json();
+        const buildings = data.buildings || [];
+        const units = data.units || [];
 
-        if (unitError) {
-          console.error("Error fetching units:", unitError);
-        }
+        // Map buildings to suggestions
+        const buildingMatches = buildings.slice(0, 5).map((b) => ({
+          type: "building",
+          label: `${b.name} — ${b.address || ""}`,
+          slug: b.slug,
+        }));
 
-        const unitMatches = (unitMatchesRaw || []).map((u) => ({
+        // Map units to suggestions
+        const unitMatches = units.slice(0, 5).map((u) => ({
           type: "unit",
           label: `Unit ${u.unit_number} — ${u.building?.name || ""}`,
           slug: u.building?.slug,
-          unit: u.unit_number
+          unit: u.unit_number,
         }));
 
-        const combined = [
-          ...(buildingMatches || []).map((b) => ({
-            type: "building",
-            label: `${b.name} — ${b.address}`,
-            slug: b.slug
-          })),
-          ...unitMatches
-        ];
-
+        const combined = [...buildingMatches, ...unitMatches];
         setSuggestions(combined);
       } catch (error) {
         console.error("Search error:", error);
@@ -75,7 +64,7 @@ export default function SearchBar({ initialQuery = "" }) {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [query, supabase]);
+  }, [query, apiUrl]);
 
   return (
     <div className="relative w-full max-w-xl">
