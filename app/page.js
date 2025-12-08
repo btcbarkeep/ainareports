@@ -56,8 +56,9 @@ export default async function Home({ searchParams }) {
         bData = nameResult.data || [];
         bError = nameResult.error;
         
-        // If we got fewer than 5 results, also search addresses to get more results
-        if (bData.length < 5 && !bError) {
+        // Only search addresses if we got NO results from building names
+        // This prevents "Aina" from matching all buildings with "Aina" in addresses
+        if (bData.length === 0 && !bError) {
           const addressConditions = [];
           buildingNameWords.forEach(word => {
             addressConditions.push(`address.ilike.%${word}%`);
@@ -72,14 +73,13 @@ export default async function Home({ searchParams }) {
             .limit(10);
           
           if (!addressResult.error && addressResult.data) {
-            // Merge results, avoiding duplicates
-            const existingIds = new Set(bData.map(b => b.id));
-            const additionalBuildings = addressResult.data.filter(b => !existingIds.has(b.id));
-            bData = [...bData, ...additionalBuildings].slice(0, 10);
+            bData = addressResult.data;
           }
         }
       } else {
-        // No building name words, match all words (including numbers)
+        // No building name words (only numbers) - match all words
+        // But require ALL words to match (not just any word)
+        // This prevents "lower rd" from matching buildings that only have "rd" but not "lower"
         const buildingConditions = [];
         queryWords.forEach(word => {
           buildingConditions.push(`name.ilike.%${word}%`);
@@ -89,13 +89,36 @@ export default async function Home({ searchParams }) {
           buildingConditions.push(`zip.ilike.%${word}%`);
         });
         
-        const result = await supabase
-          .from("buildings")
-          .select("id, name, address, city, state, zip, slug")
-          .or(buildingConditions.join(","))
-          .limit(10);
-        bData = result.data || [];
-        bError = result.error;
+        // For multi-word queries, we need to ensure all words match somewhere
+        // Use a more restrictive approach: each word must match in at least one field
+        if (queryWords.length > 1) {
+          // For multi-word queries, filter results to ensure all words are present
+          const result = await supabase
+            .from("buildings")
+            .select("id, name, address, city, state, zip, slug")
+            .or(buildingConditions.join(","))
+            .limit(20); // Get more results to filter
+          
+          if (!result.error && result.data) {
+            // Filter to only include buildings where ALL words match
+            bData = result.data.filter(building => {
+              const searchText = `${building.name} ${building.address} ${building.city} ${building.state} ${building.zip}`.toLowerCase();
+              return queryWords.every(word => searchText.includes(word));
+            }).slice(0, 10);
+          } else {
+            bData = [];
+            bError = result.error;
+          }
+        } else {
+          // Single word query - use simple OR
+          const result = await supabase
+            .from("buildings")
+            .select("id, name, address, city, state, zip, slug")
+            .or(buildingConditions.join(","))
+            .limit(10);
+          bData = result.data || [];
+          bError = result.error;
+        }
       }
 
       if (bError) {
