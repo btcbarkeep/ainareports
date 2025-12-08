@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getSupabaseClient } from "@/lib/supabaseClient";
 import EventsList from "@/components/EventsList";
 import DocumentsList from "@/components/DocumentsList";
 import ContractorsList from "@/components/ContractorsList";
@@ -22,46 +21,18 @@ const ROLE_LABELS = {
 // -------------------------------------------------------------
 async function fetchUnitWithRelations(buildingSlug, unitNumber) {
   try {
-    const supabase = getSupabaseClient();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
-    // 1️⃣ Fetch building by slug (need id)
-    const buildingResult = await supabase
-      .from("buildings")
-      .select("id, slug, name, address, city, state, zip, description, units, floors, year_built, zoning, tmk")
-      .ilike("slug", buildingSlug)
-      .single();
-
-    const { data: building, error: buildingError } = buildingResult;
-
-    if (buildingError || !building) {
-      console.error("Error fetching building:", buildingError);
-      return null;
-    }
-
-    // 2️⃣ Fetch unit to get unit_id
-    const { data: unit, error: unitError } = await supabase
-      .from("units")
-      .select("*")
-      .eq("building_id", building.id)
-      .ilike("unit_number", unitNumber)
-      .single();
-
-    if (unitError || !unit) {
-      console.error("Error fetching unit:", unitError);
-      return null;
-    }
-
-    // 3️⃣ Fetch all data from public API endpoint (by unit_id)
     if (!apiUrl) {
       console.error("API URL not configured");
       return null;
     }
 
+    // Fetch all data from public API endpoint using building_slug and unit_number
     let publicData = null;
     try {
       const response = await fetch(
-        `${apiUrl}/reports/public/unit/${unit.id}?format=json`,
+        `${apiUrl}/reports/public/unit/${unitNumber}?building_slug=${buildingSlug}&format=json`,
         {
           headers: {
             accept: "application/json",
@@ -88,19 +59,23 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     }
 
     // Extract data from API response
-    const apiUnit = publicData.unit || unit;
-    const apiBuilding = publicData.building || building;
+    const apiUnit = publicData.unit;
+    const apiBuilding = publicData.building;
     const apiEvents = publicData.events || [];
     const apiDocuments = publicData.documents || [];
     const apiContractors = publicData.contractors || [];
     const apiBuildingContractors = publicData.property_management_companies || [];
+
+    if (!apiUnit || !apiBuilding) {
+      return null;
+    }
 
     // Events: use unit_ids array (for unit page, events should already be filtered to this unit)
     const events = apiEvents.map((e) => {
       // Events have unit_ids array - for unit page, we can just use the unit number
       return {
         ...e,
-        unitNumber: apiUnit.unit_number || unit.unit_number,
+        unitNumber: apiUnit.unit_number,
       };
     });
 
@@ -134,14 +109,8 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     const userDisplayNames = {};
 
     return {
-      building: {
-        ...building,
-        ...apiBuilding, // Override with API data if available
-      },
-      unit: {
-        ...unit,
-        ...apiUnit, // Override with API data if available
-      },
+      building: apiBuilding,
+      unit: apiUnit,
       events,
       documents,
       mostActiveContractor,
