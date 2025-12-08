@@ -58,21 +58,21 @@ export async function GET(req) {
       // Only search addresses if we got NO results from building names
       // This prevents "Aina" from matching all buildings with "Aina" in addresses
       if (buildings.length === 0 && !buildingsError) {
-        const addressConditions = [];
-        buildingNameWords.forEach(word => {
-          addressConditions.push(`address.ilike.%${word}%`);
-          addressConditions.push(`city.ilike.%${word}%`);
-          addressConditions.push(`state.ilike.%${word}%`);
-        });
+        // Search addresses only (not city/state) to be more precise
+        const addressConditions = buildingNameWords.map(word => `address.ilike.%${word}%`);
         
         const addressResult = await supabase
           .from("buildings")
           .select("id, name, address, city, state, zip, slug")
           .or(addressConditions.join(","))
-          .limit(10);
+          .limit(20); // Get more to filter
         
         if (!addressResult.error && addressResult.data) {
-          buildings = addressResult.data;
+          // Double-check: filter to ensure the word actually appears in the address
+          buildings = addressResult.data.filter(building => {
+            const addressLower = (building.address || "").toLowerCase();
+            return buildingNameWords.some(word => addressLower.includes(word));
+          }).slice(0, 10);
         }
       }
     } else {
