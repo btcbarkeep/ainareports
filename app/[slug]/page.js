@@ -185,9 +185,14 @@ async function fetchBuildingData(slug) {
   const mostActiveContractors = contractorsArray.map((c, index) => {
     return {
       id: c.id || `contractor-${index}`,
-      name: c.company_name || "Contractor",
+      company_name: c.company_name || c.name || "Contractor",
+      name: c.company_name || c.name || "Contractor", // Support both fields
       phone: c.phone || "",
       count: c.event_count || 0,
+      // Include additional fields for the modal
+      address: c.address,
+      email: c.email,
+      license_number: c.license_number,
     };
   });
   
