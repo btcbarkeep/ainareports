@@ -282,11 +282,19 @@ export default async function BuildingPage({ params, searchParams }) {
         const unitNum = (u.unit_number || "").toLowerCase();
         const ownerName = (u.owner_name || "").toLowerCase();
         const floor = (u.floor || "").toString().toLowerCase();
-        return (
-          unitNum.includes(unitSearchQuery) ||
-          ownerName.includes(unitSearchQuery) ||
-          floor.includes(unitSearchQuery)
-        );
+        
+        // Unit number: match anywhere (e.g., "201" matches "201", "1201", "201A")
+        const matchesUnitNumber = unitNum.includes(unitSearchQuery);
+        
+        // Floor: exact match or includes
+        const matchesFloor = floor === unitSearchQuery || floor.includes(unitSearchQuery);
+        
+        // Owner name: require word boundaries to avoid matching years (e.g., "201" shouldn't match "2012")
+        // Match if it's at word boundaries (start of word, end of word, or standalone)
+        const ownerNameRegex = new RegExp(`(^|\\s|\\b)${unitSearchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|\\b|$)`, 'i');
+        const matchesOwnerName = ownerNameRegex.test(ownerName);
+        
+        return matchesUnitNumber || matchesOwnerName || matchesFloor;
       })
     : units.slice(0, 10); // Show first 10 units when no search
 
