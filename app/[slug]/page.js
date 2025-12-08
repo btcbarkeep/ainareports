@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import EventsList from "@/components/EventsList";
 import DocumentsList from "@/components/DocumentsList";
+import ContractorsList from "@/components/ContractorsList";
 import PremiumUnlockSection from "@/components/PremiumUnlockSection";
 
 const ROLE_LABELS = {
@@ -546,42 +547,19 @@ export default async function BuildingPage({ params, searchParams }) {
             {activeTab === "contractors" && (
               <>
                 <h2 className="font-semibold mb-3">Contractors</h2>
-                {mostActiveContractors.length === 0 ? (
-                  <div className="border rounded-md px-3 py-3 text-gray-500 text-sm">
-                    No contractors have posted events for this building yet.
-                  </div>
-                ) : (
+                <ContractorsList contractors={mostActiveContractors} />
+                {mostActiveContractors.length >= 5 && (
                   <>
-                    <div className="border rounded-md divide-y text-sm">
-                      <div className="flex px-3 py-2 font-semibold text-gray-700">
-                        <div className="w-2/5">Name</div>
-                        <div className="w-2/5">Phone</div>
-                        <div className="w-1/5 text-right">Events</div>
-                      </div>
-                      {mostActiveContractors.slice(0, 5).map((c) => (
-                        <div key={c.id} className="flex px-3 py-2">
-                          <div className="w-2/5">{c.name}</div>
-                          <div className="w-2/5 text-xs">{c.phone}</div>
-                          <div className="w-1/5 text-right text-xs">
-                            {c.count}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {mostActiveContractors.length >= 5 && (
-                      <>
-                        <p className="text-gray-600 text-sm mt-3">
-                          Showing 5 of {totalContractorsCount} contractors
-                        </p>
-                        <PremiumUnlockSection 
-                          itemType="Contractors" 
-                          buildingName={building.name}
-                          totalDocumentsCount={totalDocumentsCount}
-                          totalEventsCount={totalEventsCount}
-                          totalContractorsCount={totalContractorsCount}
-                        />
-                      </>
-                    )}
+                    <p className="text-gray-600 text-sm mt-3">
+                      Showing 5 of {totalContractorsCount} contractors
+                    </p>
+                    <PremiumUnlockSection 
+                      itemType="Contractors" 
+                      buildingName={building.name}
+                      totalDocumentsCount={totalDocumentsCount}
+                      totalEventsCount={totalEventsCount}
+                      totalContractorsCount={totalContractorsCount}
+                    />
                   </>
                 )}
               </>
