@@ -106,7 +106,17 @@ async function fetchBuildingData(slug) {
         const result = await response.json();
         if (result.success && result.data) {
           publicData = result.data;
+          // Debug logging
+          console.log("API response data:", {
+            events: publicData.events?.length || 0,
+            documents: publicData.documents?.length || 0,
+            contractors: publicData.contractors?.length || 0,
+            contractorsData: publicData.contractors,
+          });
         }
+      } else {
+        const errorText = await response.text().catch(() => '');
+        console.error("Error fetching building data from API:", response.status, errorText);
       }
     } catch (apiError) {
       console.error("Error parsing API response:", apiError);
@@ -160,12 +170,28 @@ async function fetchBuildingData(slug) {
   }));
 
   // Map contractors from API response
-  const mostActiveContractors = (publicData.contractors || []).map((c, index) => ({
-    id: c.id || index,
-    name: c.company_name || c.name || "Contractor",
-    phone: c.phone || "",
-    count: c.event_count || c.count || 0,
-  }));
+  // Handle different possible field names from API
+  const mostActiveContractors = (publicData.contractors || []).map((c, index) => {
+    // Try multiple possible field names
+    const contractorId = c.id || c.contractor_id || index;
+    const contractorName = c.company_name || c.name || c.contractor_name || "Contractor";
+    const contractorPhone = c.phone || c.phone_number || "";
+    const eventCount = c.event_count || c.count || c.events_count || 0;
+    
+    return {
+      id: contractorId,
+      name: contractorName,
+      phone: contractorPhone,
+      count: eventCount,
+    };
+  });
+  
+  // Debug logging
+  if (publicData.contractors && publicData.contractors.length > 0) {
+    console.log("Mapped contractors:", mostActiveContractors);
+  } else {
+    console.log("No contractors in API response. publicData keys:", Object.keys(publicData || {}));
+  }
 
   // USER DISPLAY NAMES
   const userDisplayNames = {};
