@@ -92,35 +92,80 @@ async function fetchBuildingData(slug) {
     unitNumber: e.unit_number || unitsByIdFromEvents[e.unit_id]?.unit_number,
   }));
 
-  // CONTRACTORS
-  const contractorIds = [
-    ...new Set(events.map((e) => e.contractor_id).filter(Boolean)),
-  ];
-
+  // CONTRACTORS - Fetch from Aina Protocol API
   let contractorsById = {};
+  let mostActiveContractors = [];
+  
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
+    
+    if (apiUrl) {
+      // Fetch contractors from the Aina Protocol API
+      const contractorsResponse = await fetch(
+        `${apiUrl}/buildings/${buildingId}/contractors`,
+        {
+          headers: {
+            "accept": "application/json",
+            // Add authorization if available
+            ...(process.env.API_AUTH_TOKEN && {
+              "Authorization": `Bearer ${process.env.API_AUTH_TOKEN}`
+            }),
+          },
+        }
+      );
 
-  if (contractorIds.length > 0) {
-    const { data: contractors, error: contractorsError } = await supabase
-      .from("contractors")
-      .select("id, company_name, phone")
-      .in("id", contractorIds);
-
-    if (contractorsError) {
-      console.error("Error fetching contractors:", contractorsError);
+      if (contractorsResponse.ok) {
+        const contractorsData = await contractorsResponse.json();
+        if (contractorsData.success && contractorsData.data) {
+          contractorsData.data.forEach((c) => {
+            contractorsById[c.id] = {
+              id: c.id,
+              company_name: c.company_name,
+              phone: c.phone || "",
+            };
+          });
+        }
+      } else {
+        const errorText = await contractorsResponse.text().catch(() => '');
+        console.error("Error fetching contractors from API:", contractorsResponse.status, errorText);
+        // If it's an auth error, log it but continue to fallback
+        if (contractorsResponse.status === 401 || contractorsResponse.status === 403) {
+          console.warn("API may require authentication. Add API_AUTH_TOKEN if needed.");
+        }
+      }
     }
+  } catch (apiError) {
+    console.error("Error calling contractors API:", apiError);
+    // Fallback to Supabase if API fails
+    const contractorIds = [
+      ...new Set(events.map((e) => e.contractor_id).filter(Boolean)),
+    ];
 
-    (contractors || []).forEach((c) => {
-      contractorsById[c.id] = c;
-    });
+    if (contractorIds.length > 0) {
+      const { data: contractors, error: contractorsError } = await supabase
+        .from("contractors")
+        .select("id, company_name, phone")
+        .in("id", contractorIds);
+
+      if (contractorsError) {
+        console.error("Error fetching contractors from Supabase:", contractorsError);
+      }
+
+      (contractors || []).forEach((c) => {
+        contractorsById[c.id] = c;
+      });
+    }
   }
 
+  // Count events per contractor
   const counts = {};
   eventsWithUnits.forEach((e) => {
     if (!e.contractor_id) return;
     counts[e.contractor_id] = (counts[e.contractor_id] || 0) + 1;
   });
 
-  const mostActiveContractors = Object.entries(counts)
+  // Build most active contractors list
+  mostActiveContractors = Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .map(([id, count]) => ({
       id,
@@ -128,13 +173,6 @@ async function fetchBuildingData(slug) {
       phone: contractorsById[id]?.phone || "",
       count,
     }));
-  
-  // Debug logging
-  if (contractorIds.length > 0 && mostActiveContractors.length === 0) {
-    console.log("Contractor IDs found in events:", contractorIds);
-    console.log("Contractors fetched from DB:", Object.keys(contractorsById));
-    console.log("Event counts:", counts);
-  }
 
   // UNITS - Fetch all units (no limit for search functionality)
   const { data: units } = await supabase
