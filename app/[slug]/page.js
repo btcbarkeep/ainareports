@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getSupabaseClient } from "@/lib/supabaseClient";
 import EventsList from "@/components/EventsList";
 import DocumentsList from "@/components/DocumentsList";
 import ContractorsList from "@/components/ContractorsList";
@@ -49,7 +48,6 @@ function formatDate(dateStr) {
 // FETCH BUILDING + ALL RELATED DATA
 // -------------------------------------------------------------
 async function fetchBuildingData(slug) {
-  const supabase = getSupabaseClient();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
   if (!apiUrl) {
@@ -57,25 +55,11 @@ async function fetchBuildingData(slug) {
     return null;
   }
 
-  // First, get building ID from slug (still need this to call the API)
-  const { data: building, error: buildingError } = await supabase
-    .from("buildings")
-    .select("id, slug, name, address, city, state, zip, description, units, floors, year_built, zoning, tmk")
-    .ilike("slug", slug)
-    .single();
-
-  if (buildingError || !building) {
-    console.error("Building fetch error:", buildingError);
-    return null;
-  }
-
-  const buildingId = building.id;
-
-  // Fetch building report from API
+  // Fetch building report from API using slug directly
   let publicData = null;
   try {
     const response = await fetch(
-      `${apiUrl}/reports/public/building/${buildingId}?format=json`,
+      `${apiUrl}/reports/public/building/${slug}?format=json`,
       {
         headers: {
           "accept": "application/json",
@@ -90,9 +74,11 @@ async function fetchBuildingData(slug) {
       publicData = result;
     } else {
       console.error("Error fetching building data from API:", response.status);
+      return null;
     }
   } catch (apiError) {
     console.error("Error calling building API:", apiError);
+    return null;
   }
 
   if (!publicData) {
@@ -100,7 +86,7 @@ async function fetchBuildingData(slug) {
   }
 
   // Extract data from API response
-  const apiBuilding = publicData.building || building;
+  const apiBuilding = publicData.building;
   const apiUnits = publicData.units || [];
   const apiEvents = publicData.events || [];
   const apiDocuments = publicData.documents || [];
@@ -156,11 +142,12 @@ async function fetchBuildingData(slug) {
   // USER DISPLAY NAMES
   const userDisplayNames = {};
 
+  if (!apiBuilding) {
+    return null;
+  }
+
   return {
-    building: {
-      ...building,
-      ...apiBuilding, // Override with API data if available
-    },
+    building: apiBuilding,
     events,
     units: apiUnits.map((u) => ({
       id: u.id,
