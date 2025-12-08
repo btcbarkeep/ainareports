@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /search
+
+Sitemap: https://www.ainareports.com/sitemap.xml
+
