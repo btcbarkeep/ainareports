@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import EventsList from "@/components/EventsList";
 import DocumentsList from "@/components/DocumentsList";
@@ -47,7 +48,8 @@ function formatDate(dateStr) {
 // -------------------------------------------------------------
 // FETCH BUILDING + ALL RELATED DATA
 // -------------------------------------------------------------
-async function fetchBuildingData(slug) {
+// Use cache to ensure request deduplication between generateMetadata and page component
+const fetchBuildingData = cache(async (slug) => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
   if (!apiUrl) {
@@ -61,12 +63,9 @@ async function fetchBuildingData(slug) {
   }
 
   // Fetch building report from API using slug directly
-  // Don't encode the slug in the path - let fetch handle it, or encode only if needed
-  // Most backends expect unencoded slugs in path segments
   let publicData = null;
   try {
     const apiEndpoint = `${apiUrl}/reports/public/building/${slug}?format=json`;
-    console.log(`Fetching building data from: ${apiEndpoint}`);
     
     const response = await fetch(
       apiEndpoint,
@@ -74,25 +73,16 @@ async function fetchBuildingData(slug) {
         headers: {
           "accept": "application/json",
         },
-        next: { revalidate: 60 }, // Cache for 60 seconds
+        next: { revalidate: 300 }, // Cache for 5 minutes
       }
     );
 
     if (response.ok) {
       const result = await response.json();
-      // API returns data at root level
       publicData = result;
-      console.log("API response received, keys:", Object.keys(publicData));
-      // Log the full response structure for debugging (truncated)
-      const responseStr = JSON.stringify(publicData, null, 2);
-      console.log("API response structure (first 1000 chars):", responseStr.substring(0, 1000));
     } else {
       const errorText = await response.text().catch(() => '');
       console.error(`Error fetching building data from API: ${response.status}`, errorText);
-      // If 404, the building doesn't exist
-      if (response.status === 404) {
-        console.error(`Building with slug "${slug}" not found (404)`);
-      }
       return null;
     }
   } catch (apiError) {
@@ -137,13 +127,8 @@ async function fetchBuildingData(slug) {
   }
   
   if (!apiBuilding) {
-    const errorPreview = JSON.stringify(publicData, null, 2).substring(0, 1000);
-    console.error("Building not found in API response. Response keys:", Object.keys(publicData));
-    console.error("Response preview:", errorPreview);
     return null;
   }
-  
-  console.log("Building found:", apiBuilding.name || apiBuilding.id);
   const apiUnits = publicData.units || [];
   const apiEvents = publicData.events || [];
   const apiDocuments = publicData.documents || [];
@@ -221,7 +206,7 @@ async function fetchBuildingData(slug) {
     totalEventsCount: statistics.total_events ?? apiEvents.length ?? 0,
     totalContractorsCount: statistics.total_contractors ?? mostActiveContractors.length ?? 0,
   };
-}
+});
 
 // -------------------------------------------------------------
 // METADATA
