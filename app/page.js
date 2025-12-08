@@ -40,12 +40,16 @@ export default async function Home({ searchParams }) {
       }
 
       // ⭐ UNITS - Fetch in two ways:
-      // 1) Units belonging to matching buildings
+      // 1) Units belonging to matching buildings (but filter by unit number if present)
       let units = [];
+      
+      // Check if any query word looks like a unit number (contains digits)
+      const unitNumberWords = queryWords.filter(word => /\d/.test(word));
+      const hasUnitNumber = unitNumberWords.length > 0;
       
       if (buildingResults.length > 0) {
         const buildingIds = buildingResults.map((b) => b.id);
-        const { data: unitsByBuilding, error: unitsByBuildingError } = await supabase
+        let unitsByBuildingQuery = supabase
           .from("units")
           .select(`
             id,
@@ -62,6 +66,15 @@ export default async function Home({ searchParams }) {
             )
           `)
           .in("building_id", buildingIds);
+        
+        // If we have a unit number in the query, filter by it
+        if (hasUnitNumber) {
+          // Build OR conditions for unit numbers
+          const unitNumberConditions = unitNumberWords.map(word => `unit_number.ilike.%${word}%`);
+          unitsByBuildingQuery = unitsByBuildingQuery.or(unitNumberConditions.join(","));
+        }
+
+        const { data: unitsByBuilding, error: unitsByBuildingError } = await unitsByBuildingQuery;
 
         if (unitsByBuildingError) {
           console.error("Error fetching units by building:", unitsByBuildingError);
