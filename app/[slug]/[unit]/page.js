@@ -80,8 +80,21 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
         const response = apiResult.value;
         if (response.ok) {
           const result = await response.json();
+          // Handle both data-at-root and nested data
           if (result.success && result.data) {
             publicData = result.data;
+          } else if (result.contractors || result.events || result.documents) {
+            publicData = result;
+          }
+
+          // Debug logging
+          if (publicData) {
+            console.log("Unit API response structure:", {
+              hasData: !!result.data,
+              contractorsCount: publicData.contractors?.length || 0,
+              contractorsSample: publicData.contractors?.[0],
+              allKeys: Object.keys(publicData),
+            });
           }
         }
       } catch (apiError) {
@@ -117,23 +130,31 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     const events = publicData.events || [];
     const documents = publicData.documents || [];
 
-    // Map contractors from API response
-    const unitContractors = publicData.contractors || [];
-    const mostActiveContractor = unitContractors.length > 0
-      ? {
-          id: unitContractors[0].id || 0,
-          name: unitContractors[0].company_name || unitContractors[0].name || "Contractor",
-          phone: unitContractors[0].phone || "",
-          count: unitContractors[0].event_count || unitContractors[0].count || 0,
-        }
-      : null;
+    // Map contractors from API response (unit-level and building-level)
+    const contractorsArray = publicData.contractors || [];
+    const unitContractors = contractorsArray.map((c, index) => ({
+      id: c.id || `contractor-${index}`,
+      name: c.company_name || c.name || "Contractor",
+      phone: c.phone || "",
+      count: c.event_count || c.count || 0,
+    }));
 
-    // Building contractors from API (if available) or fallback
-    const buildingContractors = (publicData.building_contractors || publicData.contractors || []).slice(0, 5).map((c) => ({
-      id: c.id,
-      company_name: c.company_name || c.name,
+    const mostActiveContractor = unitContractors.length > 0 ? unitContractors[0] : null;
+
+    const buildingContractorsRaw = publicData.building_contractors || publicData.contractors || [];
+    const buildingContractors = buildingContractorsRaw.slice(0, 5).map((c, index) => ({
+      id: c.id || `building-contractor-${index}`,
+      company_name: c.company_name || c.name || "Contractor",
       phone: c.phone || "",
     }));
+
+    // Debug logging
+    console.log("Unit contractors processing:", {
+      rawCount: contractorsArray.length,
+      mappedCount: unitContractors.length,
+      sampleRaw: contractorsArray[0],
+      sampleMapped: unitContractors[0],
+    });
 
     // USER DISPLAY NAMES
     const userDisplayNames = {};
