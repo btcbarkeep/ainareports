@@ -52,6 +52,11 @@ async function fetchBuildingData(slug) {
   const supabase = getSupabaseClient();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
+  if (!apiUrl) {
+    console.error("API URL not configured");
+    return null;
+  }
+
   // First, get building ID from slug (still need this to call the API)
   const { data: building, error: buildingError } = await supabase
     .from("buildings")
@@ -66,171 +71,111 @@ async function fetchBuildingData(slug) {
 
   const buildingId = building.id;
 
-  // Make API call and units query in parallel for better performance
-  const [apiResult, unitsResult, unitCountResult] = await Promise.allSettled([
-    // API call with timeout
-    apiUrl ? Promise.race([
-      fetch(
-        `${apiUrl}/reports/public/building/${buildingId}`,
-        {
-          headers: {
-            "accept": "application/json",
-          },
-          // Add Next.js cache
-          next: { revalidate: 60 }, // Cache for 60 seconds
-        }
-      ),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('API timeout')), 3000)
-      )
-    ]).catch(() => null) : Promise.resolve(null),
-    
-    // Units query (parallel)
-    supabase
-      .from("units")
-      .select("id, unit_number, floor, owner_name")
-      .eq("building_id", buildingId)
-      .order("unit_number", { ascending: true }),
-    
-    // Unit count query (parallel)
-    supabase
-      .from("units")
-      .select("id", { count: "exact", head: true })
-      .eq("building_id", buildingId),
-  ]);
-
-  // Process API result
+  // Fetch building report from API
   let publicData = null;
-  if (apiResult.status === 'fulfilled' && apiResult.value) {
-    try {
-      const response = apiResult.value;
-      if (response.ok) {
-        const result = await response.json();
-        // Handle different response structures
-        // The API can return: { success: true, data: {...} } OR { contractors: [...], events: [...], documents: [...] }
-        if (result.success && result.data) {
-          publicData = result.data;
-        } else if (result.contractors || result.events || result.documents) {
-          // If data is at root level (direct response)
-          publicData = result;
-        } else if (result) {
-          // If the entire result is the data object
-          publicData = result;
-        }
-        
-        // Debug logging
-        console.log("API response structure:", {
-          responseKeys: Object.keys(result || {}),
-          hasSuccess: !!result.success,
-          hasData: !!result.data,
-          hasContractors: !!(result.contractors),
-          hasEvents: !!(result.events),
-          hasDocuments: !!(result.documents),
-          contractorsCount: result.contractors?.length || 0,
-          contractorsSample: result.contractors?.[0],
-          publicDataKeys: publicData ? Object.keys(publicData) : [],
-          publicDataContractorsCount: publicData?.contractors?.length || 0,
-        });
-      } else {
-        const errorText = await response.text().catch(() => '');
-        console.error("Error fetching building data from API:", response.status, errorText);
+  try {
+    const response = await fetch(
+      `${apiUrl}/reports/public/building/${buildingId}?format=json`,
+      {
+        headers: {
+          "accept": "application/json",
+        },
+        next: { revalidate: 60 }, // Cache for 60 seconds
       }
-    } catch (apiError) {
-      console.error("Error parsing API response:", apiError);
+    );
+
+    if (response.ok) {
+      const result = await response.json();
+      // API returns data at root level
+      publicData = result;
+    } else {
+      console.error("Error fetching building data from API:", response.status);
     }
+  } catch (apiError) {
+    console.error("Error calling building API:", apiError);
   }
 
-  // Fallback to Supabase if API fails or is not configured
   if (!publicData) {
-    // Fallback logic - fetch from Supabase (parallel queries)
-    const [eventsResult, documentsResult, docCountResult, eventCountResult] = await Promise.allSettled([
-      supabase
-        .from("events")
-        .select("*")
-        .eq("building_id", buildingId)
-        .order("occurred_at", { ascending: false })
-        .limit(5),
-      supabase
-        .from("documents")
-        .select("*")
-        .eq("building_id", buildingId)
-        .order("created_at", { ascending: false })
-        .limit(5),
-      supabase
-        .from("documents")
-        .select("id", { count: "exact", head: true })
-        .eq("building_id", buildingId),
-      supabase
-        .from("events")
-        .select("id", { count: "exact", head: true })
-        .eq("building_id", buildingId),
-    ]);
-
-    publicData = {
-      events: eventsResult.status === 'fulfilled' ? (eventsResult.value.data || []) : [],
-      documents: documentsResult.status === 'fulfilled' ? (documentsResult.value.data || []) : [],
-      contractors: [],
-      property_managers: [],
-      total_documents_count: docCountResult.status === 'fulfilled' ? (docCountResult.value.count ?? 0) : 0,
-      total_events_count: eventCountResult.status === 'fulfilled' ? (eventCountResult.value.count ?? 0) : 0,
-    };
+    return null;
   }
 
-  // Process units result
-  const units = unitsResult.status === 'fulfilled' ? (unitsResult.value.data || []) : [];
-  const liveUnitCount = unitCountResult.status === 'fulfilled' ? (unitCountResult.value.count ?? null) : null;
+  // Extract data from API response
+  const apiBuilding = publicData.building || building;
+  const apiUnits = publicData.units || [];
+  const apiEvents = publicData.events || [];
+  const apiDocuments = publicData.documents || [];
+  const apiContractors = publicData.contractors || [];
+  const statistics = publicData.statistics || {};
 
-  // Map API response to expected format
-  const events = (publicData.events || []).map((e) => ({
-    ...e,
-    unitNumber: e.unit_number || e.unitNumber,
-  }));
+  // Create a map of unit_id -> unit_number for looking up unit numbers
+  const unitMap = new Map();
+  apiUnits.forEach((unit) => {
+    unitMap.set(unit.id, unit.unit_number);
+  });
+
+  // Map events: use unit_ids array to look up unit numbers
+  const events = apiEvents.map((e) => {
+    // Events have unit_ids array - get the first unit number if available
+    const unitNumbers = (e.unit_ids || [])
+      .map((uid) => unitMap.get(uid))
+      .filter(Boolean);
+    
+    return {
+      ...e,
+      unitNumber: unitNumbers.length > 0 ? unitNumbers[0] : null,
+      unitNumbers: unitNumbers, // Keep all unit numbers for reference
+    };
+  });
+
+  // Map documents: use unit_ids array to look up unit numbers
+  const documents = apiDocuments.map((d) => {
+    const unitNumbers = (d.unit_ids || [])
+      .map((uid) => unitMap.get(uid))
+      .filter(Boolean);
+    
+    return {
+      ...d,
+      unitNumbers: unitNumbers,
+    };
+  });
 
   // Map contractors from API response
-  // The API returns contractors with: id, company_name, phone, event_count
-  const contractorsArray = publicData?.contractors || [];
-  const mostActiveContractors = contractorsArray.map((c, index) => {
+  const mostActiveContractors = apiContractors.map((c, index) => {
     return {
       id: c.id || `contractor-${index}`,
       company_name: c.company_name || c.name || "Contractor",
-      name: c.company_name || c.name || "Contractor", // Support both fields
+      name: c.company_name || c.name || "Contractor",
       phone: c.phone || "",
       count: c.event_count || 0,
-      // Include additional fields for the modal
       address: c.address,
       email: c.email,
       license_number: c.license_number,
     };
   });
-  
-  // Debug logging
-  console.log("Contractors processing:", {
-    rawContractorsCount: contractorsArray.length,
-    mappedContractorsCount: mostActiveContractors.length,
-    sampleRaw: contractorsArray[0],
-    sampleMapped: mostActiveContractors[0],
-  });
 
   // USER DISPLAY NAMES
   const userDisplayNames = {};
 
-  const totalUnits =
-    (typeof building.units === "number" ? building.units : null) ??
-    liveUnitCount ??
-    null;
-
   return {
-    building,
+    building: {
+      ...building,
+      ...apiBuilding, // Override with API data if available
+    },
     events,
-    units: units || [],
-    documents: publicData.documents || [],
+    units: apiUnits.map((u) => ({
+      id: u.id,
+      unit_number: u.unit_number,
+      floor: u.floor,
+      owner_name: u.owner_name,
+    })),
+    documents,
     mostActiveContractors,
-    totalUnits,
-    floors: building.floors ?? null,
+    totalUnits: statistics.total_units ?? apiUnits.length ?? building.units ?? null,
+    floors: apiBuilding?.floors ?? building.floors ?? null,
     userDisplayNames,
-    totalDocumentsCount: publicData.total_documents_count ?? publicData.documents?.length ?? 0,
-    totalEventsCount: publicData.total_events_count ?? publicData.events?.length ?? 0,
-    totalContractorsCount: mostActiveContractors.length,
+    totalDocumentsCount: statistics.total_documents ?? apiDocuments.length ?? 0,
+    totalEventsCount: statistics.total_events ?? apiEvents.length ?? 0,
+    totalContractorsCount: statistics.total_contractors ?? mostActiveContractors.length ?? 0,
   };
 }
 
@@ -561,17 +506,17 @@ export default async function BuildingPage({ params, searchParams }) {
                 <h2 className="font-semibold mb-3">Contractors</h2>
                 <ContractorsList contractors={mostActiveContractors} />
                 {mostActiveContractors.length >= 5 && (
-                  <>
-                    <p className="text-gray-600 text-sm mt-3">
-                      Showing 5 of {totalContractorsCount} contractors
-                    </p>
-                    <PremiumUnlockSection 
-                      itemType="Contractors" 
-                      buildingName={building.name}
-                      totalDocumentsCount={totalDocumentsCount}
-                      totalEventsCount={totalEventsCount}
-                      totalContractorsCount={totalContractorsCount}
-                    />
+                      <>
+                        <p className="text-gray-600 text-sm mt-3">
+                          Showing 5 of {totalContractorsCount} contractors
+                        </p>
+                        <PremiumUnlockSection 
+                          itemType="Contractors" 
+                          buildingName={building.name}
+                          totalDocumentsCount={totalDocumentsCount}
+                          totalEventsCount={totalEventsCount}
+                          totalContractorsCount={totalContractorsCount}
+                        />
                   </>
                 )}
               </>
