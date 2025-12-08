@@ -100,10 +100,14 @@ async function fetchBuildingData(slug) {
   let contractorsById = {};
 
   if (contractorIds.length > 0) {
-    const { data: contractors } = await supabase
+    const { data: contractors, error: contractorsError } = await supabase
       .from("contractors")
       .select("id, company_name, phone")
       .in("id", contractorIds);
+
+    if (contractorsError) {
+      console.error("Error fetching contractors:", contractorsError);
+    }
 
     (contractors || []).forEach((c) => {
       contractorsById[c.id] = c;
@@ -120,10 +124,17 @@ async function fetchBuildingData(slug) {
     .sort((a, b) => b[1] - a[1])
     .map(([id, count]) => ({
       id,
-      name: contractorsById[id]?.company_name || "Contractor",
+      name: contractorsById[id]?.company_name || `Contractor ${id}`,
       phone: contractorsById[id]?.phone || "",
       count,
     }));
+  
+  // Debug logging
+  if (contractorIds.length > 0 && mostActiveContractors.length === 0) {
+    console.log("Contractor IDs found in events:", contractorIds);
+    console.log("Contractors fetched from DB:", Object.keys(contractorsById));
+    console.log("Event counts:", counts);
+  }
 
   // UNITS - Fetch all units (no limit for search functionality)
   const { data: units } = await supabase
