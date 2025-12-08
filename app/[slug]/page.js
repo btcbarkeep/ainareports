@@ -83,6 +83,9 @@ async function fetchBuildingData(slug) {
       // API returns data at root level
       publicData = result;
       console.log("API response received, keys:", Object.keys(publicData));
+      // Log the full response structure for debugging (truncated)
+      const responseStr = JSON.stringify(publicData, null, 2);
+      console.log("API response structure (first 1000 chars):", responseStr.substring(0, 1000));
     } else {
       const errorText = await response.text().catch(() => '');
       console.error(`Error fetching building data from API: ${response.status}`, errorText);
@@ -105,14 +108,24 @@ async function fetchBuildingData(slug) {
   // Extract data from API response
   // Handle different possible response structures:
   // 1. { building: {...}, units: [...], ... }
-  // 2. Building data at root level
-  let apiBuilding = publicData.building;
+  // 2. { data: { building: {...}, ... } }
+  // 3. Building data at root level
+  let apiBuilding = null;
   
-  // If no building key, check if the data itself is the building
-  if (!apiBuilding && publicData.id && publicData.name) {
+  // Check for nested data structure first
+  if (publicData.data && publicData.data.building) {
+    apiBuilding = publicData.data.building;
+    publicData = {
+      ...publicData.data,
+      building: apiBuilding,
+    };
+  } else if (publicData.building) {
+    // Standard structure: { building: {...}, units: [...], ... }
+    apiBuilding = publicData.building;
+  } else if (publicData.id && publicData.name) {
     // The response might be the building object itself
     apiBuilding = publicData;
-    // Extract other data if present
+    // Extract other data if present, or create structure
     publicData = {
       building: apiBuilding,
       units: publicData.units || [],
@@ -124,9 +137,13 @@ async function fetchBuildingData(slug) {
   }
   
   if (!apiBuilding) {
-    console.error("Building not found in API response. Response structure:", JSON.stringify(publicData, null, 2).substring(0, 500));
+    const errorPreview = JSON.stringify(publicData, null, 2).substring(0, 1000);
+    console.error("Building not found in API response. Response keys:", Object.keys(publicData));
+    console.error("Response preview:", errorPreview);
     return null;
   }
+  
+  console.log("Building found:", apiBuilding.name || apiBuilding.id);
   const apiUnits = publicData.units || [];
   const apiEvents = publicData.events || [];
   const apiDocuments = publicData.documents || [];
