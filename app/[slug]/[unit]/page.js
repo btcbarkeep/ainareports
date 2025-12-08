@@ -32,7 +32,6 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     let publicData = null;
     try {
       const apiEndpoint = `${apiUrl}/reports/public/unit/${unitNumber}?building_slug=${buildingSlug}&format=json`;
-      console.log(`Fetching unit data from: ${apiEndpoint}`);
       
       const response = await fetch(
         apiEndpoint,
@@ -40,23 +39,16 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
           headers: {
             accept: "application/json",
           },
-          next: { revalidate: 60 },
+          next: { revalidate: 300 }, // Cache for 5 minutes
         }
       );
 
       if (response.ok) {
         const result = await response.json();
-        // API returns data at root level
         publicData = result;
-        console.log("Unit API response received, keys:", Object.keys(publicData));
-        const responseStr = JSON.stringify(publicData, null, 2);
-        console.log("Unit API response structure (first 1000 chars):", responseStr.substring(0, 1000));
       } else {
         const errorText = await response.text().catch(() => '');
         console.error(`Error fetching unit data from API: ${response.status}`, errorText);
-        if (response.status === 404) {
-          console.error(`Unit "${unitNumber}" in building "${buildingSlug}" not found (404)`);
-        }
         return null;
       }
     } catch (apiError) {
@@ -65,7 +57,6 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     }
 
     if (!publicData) {
-      console.error("No data returned from unit API");
       return null;
     }
 
@@ -112,21 +103,9 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     const apiContractors = publicData.contractors || [];
     const apiBuildingContractors = publicData.property_management_companies || [];
 
-    if (!apiUnit) {
-      const errorPreview = JSON.stringify(publicData, null, 2).substring(0, 1000);
-      console.error("Unit not found in API response. Response keys:", Object.keys(publicData));
-      console.error("Response preview:", errorPreview);
+    if (!apiUnit || !apiBuilding) {
       return null;
     }
-    
-    if (!apiBuilding) {
-      console.error("Building not found in unit API response, but unit was found");
-      // We might still be able to proceed without building data, but it's better to fail
-      return null;
-    }
-    
-    console.log("Unit found:", apiUnit.unit_number || apiUnit.id);
-    console.log("Building found:", apiBuilding.name || apiBuilding.id);
 
     // Events: use unit_ids array (for unit page, events should already be filtered to this unit)
     const events = apiEvents.map((e) => {
