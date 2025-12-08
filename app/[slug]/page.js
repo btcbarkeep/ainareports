@@ -64,75 +64,94 @@ async function fetchBuildingData(slug) {
 
   const buildingId = building.id;
 
-  // Fetch all data from public API endpoint
-  let publicData = null;
-  if (apiUrl) {
-    try {
-      const response = await fetch(
+  // Make API call and units query in parallel for better performance
+  const [apiResult, unitsResult, unitCountResult] = await Promise.allSettled([
+    // API call with timeout
+    apiUrl ? Promise.race([
+      fetch(
         `${apiUrl}/reports/public/building/${buildingId}`,
         {
           headers: {
             "accept": "application/json",
           },
+          // Add Next.js cache
+          next: { revalidate: 60 }, // Cache for 60 seconds
         }
-      );
+      ),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('API timeout')), 3000)
+      )
+    ]).catch(() => null) : Promise.resolve(null),
+    
+    // Units query (parallel)
+    supabase
+      .from("units")
+      .select("id, unit_number, floor, owner_name")
+      .eq("building_id", buildingId)
+      .order("unit_number", { ascending: true }),
+    
+    // Unit count query (parallel)
+    supabase
+      .from("units")
+      .select("id", { count: "exact", head: true })
+      .eq("building_id", buildingId),
+  ]);
 
+  // Process API result
+  let publicData = null;
+  if (apiResult.status === 'fulfilled' && apiResult.value) {
+    try {
+      const response = apiResult.value;
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.data) {
           publicData = result.data;
         }
-      } else {
-        console.error("Error fetching building data from API:", response.status);
       }
     } catch (apiError) {
-      console.error("Error calling building API:", apiError);
+      console.error("Error parsing API response:", apiError);
     }
   }
 
   // Fallback to Supabase if API fails or is not configured
   if (!publicData) {
-    // Fallback logic - fetch from Supabase
-    const { data: eventsData } = await supabase
-      .from("events")
-      .select("*")
-      .eq("building_id", buildingId)
-      .order("occurred_at", { ascending: false })
-      .limit(5);
-
-    const { data: documentsData } = await supabase
-      .from("documents")
-      .select("*")
-      .eq("building_id", buildingId)
-      .order("created_at", { ascending: false })
-      .limit(5);
-
-    const { count: totalDocumentsCountRaw } = await supabase
-      .from("documents")
-      .select("id", { count: "exact", head: true })
-      .eq("building_id", buildingId);
-
-    const { count: totalEventsCountRaw } = await supabase
-      .from("events")
-      .select("id", { count: "exact", head: true })
-      .eq("building_id", buildingId);
+    // Fallback logic - fetch from Supabase (parallel queries)
+    const [eventsResult, documentsResult, docCountResult, eventCountResult] = await Promise.allSettled([
+      supabase
+        .from("events")
+        .select("*")
+        .eq("building_id", buildingId)
+        .order("occurred_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("documents")
+        .select("*")
+        .eq("building_id", buildingId)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("documents")
+        .select("id", { count: "exact", head: true })
+        .eq("building_id", buildingId),
+      supabase
+        .from("events")
+        .select("id", { count: "exact", head: true })
+        .eq("building_id", buildingId),
+    ]);
 
     publicData = {
-      events: eventsData || [],
-      documents: documentsData || [],
+      events: eventsResult.status === 'fulfilled' ? (eventsResult.value.data || []) : [],
+      documents: documentsResult.status === 'fulfilled' ? (documentsResult.value.data || []) : [],
       contractors: [],
       property_managers: [],
-      total_documents_count: totalDocumentsCountRaw ?? 0,
-      total_events_count: totalEventsCountRaw ?? 0,
+      total_documents_count: docCountResult.status === 'fulfilled' ? (docCountResult.value.count ?? 0) : 0,
+      total_events_count: eventCountResult.status === 'fulfilled' ? (eventCountResult.value.count ?? 0) : 0,
     };
   }
 
-  // UNITS - Still need all units for search functionality
-  const { data: units } = await supabase
-    .from("units")
-    .select("id, unit_number, floor, owner_name")
-    .eq("building_id", buildingId)
-    .order("unit_number", { ascending: true });
+  // Process units result
+  const units = unitsResult.status === 'fulfilled' ? (unitsResult.value.data || []) : [];
+  const liveUnitCount = unitCountResult.status === 'fulfilled' ? (unitCountResult.value.count ?? null) : null;
 
   // Map API response to expected format
   const events = (publicData.events || []).map((e) => ({
@@ -150,12 +169,6 @@ async function fetchBuildingData(slug) {
 
   // USER DISPLAY NAMES
   const userDisplayNames = {};
-
-  // Get total units count
-  const { count: liveUnitCount } = await supabase
-    .from("units")
-    .select("id", { count: "exact", head: true })
-    .eq("building_id", buildingId);
 
   const totalUnits =
     (typeof building.units === "number" ? building.units : null) ??
