@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { getSupabaseClient } from "@/lib/supabaseClient";
 
 export async function GET(req) {
   try {
-    const supabase = getSupabaseClient();
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q")?.trim();
 
@@ -11,235 +9,39 @@ export async function GET(req) {
       return NextResponse.json({ buildings: [], units: [] });
     }
 
-    // ---------------------------------------------------------
-    // BUILDINGS
-    // ---------------------------------------------------------
-    // Separate building name words (non-numeric) from unit numbers (numeric)
-    const queryWords = q.toLowerCase().split(/\s+/).filter(w => w.length > 0);
-    const buildingNameWords = queryWords.filter(word => !/\d/.test(word));
-    const unitNumberWords = queryWords.filter(word => /\d/.test(word));
-    const hasUnitNumber = unitNumberWords.length > 0;
-    const hasBuildingName = buildingNameWords.length > 0;
-    
-    let buildings = [];
-    let buildingsError = null;
-    
-    if (hasBuildingName && hasUnitNumber) {
-      // When we have BOTH building name AND unit number:
-      // Only match buildings on building name words (ignore numbers in addresses/zip)
-      const buildingConditions = [];
-      buildingNameWords.forEach(word => {
-        buildingConditions.push(`name.ilike.%${word}%`);
-        buildingConditions.push(`address.ilike.%${word}%`);
-        buildingConditions.push(`city.ilike.%${word}%`);
-        buildingConditions.push(`state.ilike.%${word}%`);
-      });
-      
-      const result = await supabase
-        .from("buildings")
-        .select("id, name, address, city, state, zip, slug")
-        .or(buildingConditions.join(","))
-        .limit(10);
-      buildings = result.data || [];
-      buildingsError = result.error;
-    } else if (hasBuildingName) {
-      // Only building name words - prioritize building name matches
-      // First, try matching building names only
-      const nameConditions = buildingNameWords.map(word => `name.ilike.%${word}%`);
-      const nameResult = await supabase
-        .from("buildings")
-        .select("id, name, address, city, state, zip, slug")
-        .or(nameConditions.join(","))
-        .limit(10);
-      
-      buildings = nameResult.data || [];
-      buildingsError = nameResult.error;
-      
-      // Only search addresses if we got NO results from building names
-      // This prevents "Aina" from matching all buildings with "Aina" in addresses
-      if (buildings.length === 0 && !buildingsError) {
-        // Search addresses only (not city/state) to be more precise
-        const addressConditions = buildingNameWords.map(word => `address.ilike.%${word}%`);
-        
-        const addressResult = await supabase
-          .from("buildings")
-          .select("id, name, address, city, state, zip, slug")
-          .or(addressConditions.join(","))
-          .limit(20); // Get more to filter
-        
-        if (!addressResult.error && addressResult.data) {
-          // Double-check: filter to ensure the word actually appears in the address
-          buildings = addressResult.data.filter(building => {
-            const addressLower = (building.address || "").toLowerCase();
-            return buildingNameWords.some(word => addressLower.includes(word));
-          }).slice(0, 10);
-        }
-      }
-    } else {
-      // No building name words (only numbers) - match all words
-      // But require ALL words to match (not just any word)
-      const buildingConditions = [];
-      queryWords.forEach(word => {
-        buildingConditions.push(`name.ilike.%${word}%`);
-        buildingConditions.push(`address.ilike.%${word}%`);
-        buildingConditions.push(`city.ilike.%${word}%`);
-        buildingConditions.push(`state.ilike.%${word}%`);
-        buildingConditions.push(`zip.ilike.%${word}%`);
-      });
-      
-      // For multi-word queries, filter results to ensure all words are present
-      if (queryWords.length > 1) {
-        const result = await supabase
-          .from("buildings")
-          .select("id, name, address, city, state, zip, slug")
-          .or(buildingConditions.join(","))
-          .limit(20); // Get more results to filter
-        
-        if (!result.error && result.data) {
-          // Filter to only include buildings where ALL words match
-          buildings = result.data.filter(building => {
-            const searchText = `${building.name} ${building.address} ${building.city} ${building.state} ${building.zip}`.toLowerCase();
-            return queryWords.every(word => searchText.includes(word));
-          }).slice(0, 10);
-        } else {
-          buildings = [];
-          buildingsError = result.error;
-        }
-      } else {
-        // Single word query - use simple OR
-        const result = await supabase
-          .from("buildings")
-          .select("id, name, address, city, state, zip, slug")
-          .or(buildingConditions.join(","))
-          .limit(10);
-        buildings = result.data || [];
-        buildingsError = result.error;
-      }
-    }
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
-    if (buildingsError) {
-      console.error("Error fetching buildings:", buildingsError);
+    if (!apiUrl) {
+      console.error("API URL not configured");
       return NextResponse.json(
-        { error: "Failed to fetch buildings" },
+        { error: "API URL not configured" },
         { status: 500 }
       );
     }
 
-    let units = [];
-    
-    // Get matched building IDs to filter out units from other buildings
-    const matchedBuildingIds = buildings?.length > 0 
-      ? new Set(buildings.map((b) => b.id))
-      : new Set();
-    
-    // ---------------------------------------------------------
-    // 1) GET UNITS BY BUILDING MATCH (filter by unit number if present)
-    // ---------------------------------------------------------
-    if (buildings?.length) {
-      const buildingIds = Array.from(matchedBuildingIds);
-
-      let unitsByBuildingQuery = supabase
-        .from("units")
-        .select(`
-          id,
-          unit_number,
-          building_id,
-          building:building_id (
-            id,
-            name,
-            slug,
-            address,
-            city,
-            state,
-            zip
-          )
-        `)
-        .in("building_id", buildingIds);
-      
-      // If we have a unit number in the query, filter by it
-      if (hasUnitNumber) {
-        const unitNumberConditions = unitNumberWords.map(word => `unit_number.ilike.%${word}%`);
-        unitsByBuildingQuery = unitsByBuildingQuery.or(unitNumberConditions.join(","));
+    // Call the public search API endpoint
+    const response = await fetch(
+      `${apiUrl}/reports/public/search?query=${encodeURIComponent(q)}`,
+      {
+        headers: {
+          "accept": "application/json",
+        },
       }
-
-      const { data: unitsByBuilding, error: unitsByBuildingError } = await unitsByBuildingQuery;
-
-      if (unitsByBuildingError) {
-        console.error("Error fetching units by building:", unitsByBuildingError);
-      } else if (unitsByBuilding) {
-        units.push(...unitsByBuilding);
-      }
-    }
-
-    // ---------------------------------------------------------
-    // 2) GET UNITS DIRECTLY MATCHING TEXT
-    // If we have building matches, only include units from those buildings
-    // ---------------------------------------------------------
-    let unitsByTextQuery = supabase
-      .from("units")
-      .select(`
-        id,
-        unit_number,
-        building_id,
-        building:building_id (
-          id,
-          name,
-          slug,
-          address,
-          city,
-          state,
-          zip
-        )
-      `);
-    
-    // If we have building matches, filter to only those buildings
-    if (matchedBuildingIds.size > 0) {
-      unitsByTextQuery = unitsByTextQuery.in("building_id", Array.from(matchedBuildingIds));
-    }
-    
-    // Build search conditions
-    const searchConditions = [];
-    if (hasUnitNumber) {
-      // If we have unit numbers, prioritize those
-      const unitNumberConditions = unitNumberWords.map(word => `unit_number.ilike.%${word}%`);
-      searchConditions.push(...unitNumberConditions);
-    } else {
-      // Otherwise search by unit number or building fields
-      searchConditions.push(`unit_number.ilike.%${q}%`);
-    }
-    
-    // Only add building text conditions if we don't have building matches
-    if (matchedBuildingIds.size === 0) {
-      searchConditions.push(
-        `building.name.ilike.%${q}%`,
-        `building.address.ilike.%${q}%`,
-        `building.city.ilike.%${q}%`,
-        `building.state.ilike.%${q}%`
-      );
-    }
-    
-    const { data: unitsByText, error: unitsByTextError } = await unitsByTextQuery
-      .or(searchConditions.join(","));
-
-    if (unitsByTextError) {
-      console.error("Error fetching units by text:", unitsByTextError);
-    } else if (unitsByText) {
-      units.push(...unitsByText);
-    }
-
-    // ---------------------------------------------------------
-    // 3) REMOVE DUPLICATES
-    // ---------------------------------------------------------
-    const uniqueUnits = Object.values(
-      units.reduce((acc, u) => {
-        acc[u.id] = u;
-        return acc;
-      }, {})
     );
 
+    if (!response.ok) {
+      console.error("Error fetching search results from API:", response.status);
+      return NextResponse.json(
+        { error: "Failed to fetch search results" },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+
     return NextResponse.json({
-      buildings: buildings || [],
-      units: uniqueUnits
+      buildings: data.buildings || [],
+      units: data.units || [],
     });
   } catch (error) {
     console.error("Search API error:", error);
