@@ -14,10 +14,50 @@ export async function GET(req) {
     // ---------------------------------------------------------
     // BUILDINGS
     // ---------------------------------------------------------
-    const { data: buildings, error: buildingsError } = await supabase
+    // Separate building name words (non-numeric) from unit numbers (numeric)
+    const queryWords = q.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+    const buildingNameWords = queryWords.filter(word => !/\d/.test(word));
+    const unitNumberWords = queryWords.filter(word => /\d/.test(word));
+    const hasUnitNumber = unitNumberWords.length > 0;
+    const hasBuildingName = buildingNameWords.length > 0;
+    
+    let buildingQuery = supabase
       .from("buildings")
-      .select("id, name, address, city, state, zip, slug")
-      .or(`name.ilike.%${q}%,address.ilike.%${q}%`)
+      .select("id, name, address, city, state, zip, slug");
+    
+    // Build search conditions
+    let buildingConditions = [];
+    if (hasBuildingName && hasUnitNumber) {
+      // When we have BOTH building name AND unit number:
+      // Only match buildings on building name words (ignore numbers in addresses/zip)
+      buildingNameWords.forEach(word => {
+        buildingConditions.push(`name.ilike.%${word}%`);
+        buildingConditions.push(`address.ilike.%${word}%`);
+        buildingConditions.push(`city.ilike.%${word}%`);
+        buildingConditions.push(`state.ilike.%${word}%`);
+      });
+    } else if (hasBuildingName) {
+      // Only building name words, no unit numbers - match on all fields
+      buildingNameWords.forEach(word => {
+        buildingConditions.push(`name.ilike.%${word}%`);
+        buildingConditions.push(`address.ilike.%${word}%`);
+        buildingConditions.push(`city.ilike.%${word}%`);
+        buildingConditions.push(`state.ilike.%${word}%`);
+        buildingConditions.push(`zip.ilike.%${word}%`);
+      });
+    } else {
+      // No building name words, match all words (including numbers)
+      queryWords.forEach(word => {
+        buildingConditions.push(`name.ilike.%${word}%`);
+        buildingConditions.push(`address.ilike.%${word}%`);
+        buildingConditions.push(`city.ilike.%${word}%`);
+        buildingConditions.push(`state.ilike.%${word}%`);
+        buildingConditions.push(`zip.ilike.%${word}%`);
+      });
+    }
+    
+    const { data: buildings, error: buildingsError } = await buildingQuery
+      .or(buildingConditions.join(","))
       .limit(10);
 
     if (buildingsError) {
@@ -29,11 +69,6 @@ export async function GET(req) {
     }
 
     let units = [];
-
-    // Check if query contains a unit number (has digits)
-    const queryWords = q.toLowerCase().split(/\s+/).filter(w => w.length > 0);
-    const unitNumberWords = queryWords.filter(word => /\d/.test(word));
-    const hasUnitNumber = unitNumberWords.length > 0;
     
     // Get matched building IDs to filter out units from other buildings
     const matchedBuildingIds = buildings?.length > 0 
