@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import EventsList from "@/components/EventsList";
+import UnitDocuments from "@/components/UnitDocuments";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -429,68 +430,7 @@ export default async function UnitPage({ params, searchParams }) {
                 {documents.length === 0 ? (
                   <p className="text-gray-500 text-sm">No documents available.</p>
                 ) : (
-                  <div className="border rounded-md divide-y text-sm">
-                    <div className="flex px-3 py-2 font-semibold text-gray-700">
-                      <div className="w-2/5 min-w-0">Name</div>
-                      <div className="w-1/5 min-w-0 pl-4">Category</div>
-                      <div className="w-2/5 text-right min-w-0 pl-4">Uploaded By</div>
-                    </div>
-                    {documents.map((doc) => {
-                      // Use download_url/document_url if available, otherwise use Next.js API route
-                      const documentUrl = doc.download_url || doc.document_url;
-                      const filename = doc.filename || doc.document_type || "—";
-                      
-                      // Check if it's a valid URL (starts with http:// or https://)
-                      const isValidUrl = documentUrl && 
-                        typeof documentUrl === 'string' && 
-                        documentUrl.trim() !== '' &&
-                        (documentUrl.startsWith('http://') || documentUrl.startsWith('https://'));
-                      
-                      // If no direct URL but we have s3_key, use Next.js API route (which proxies to FastAPI)
-                      const downloadLink = isValidUrl 
-                        ? documentUrl 
-                        : (doc.s3_key ? `/api/documents/${doc.id}/download` : null);
-                      
-                      return (
-                        <div key={doc.id} className="flex px-3 py-2">
-                          <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-                            {downloadLink ? (
-                              <a
-                                href={downloadLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block"
-                                title={filename}
-                              >
-                                {filename}
-                              </a>
-                            ) : (
-                              <div className="font-medium truncate" title={filename}>{filename}</div>
-                            )}
-                          </div>
-                          <div className="w-1/5 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
-                            <div className="truncate" title={doc.category || "—"}>
-                              {doc.category || "—"}
-                            </div>
-                          </div>
-                          <div className="w-2/5 text-right text-xs min-w-0 pl-4 overflow-hidden">
-                            <div className="truncate" title={
-                              (doc.uploaded_by && userDisplayNames[doc.uploaded_by]
-                                ? userDisplayNames[doc.uploaded_by].role
-                                : "—") + " " + formatDate(doc.created_at)
-                            }>
-                              {doc.uploaded_by && userDisplayNames[doc.uploaded_by]
-                                ? userDisplayNames[doc.uploaded_by].role
-                                : "—"}
-                              <span className="ml-2 text-gray-500">
-                                {formatDate(doc.created_at)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <UnitDocuments documents={documents} userDisplayNames={userDisplayNames} />
                 )}
               </>
             )}
