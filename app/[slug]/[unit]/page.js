@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import EventsList from "@/components/EventsList";
-import UnitDocuments from "@/components/UnitDocuments";
+import DocumentsList from "@/components/DocumentsList";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -430,7 +430,7 @@ export default async function UnitPage({ params, searchParams }) {
                 {documents.length === 0 ? (
                   <p className="text-gray-500 text-sm">No documents available.</p>
                 ) : (
-                  <UnitDocuments documents={documents} userDisplayNames={userDisplayNames} />
+                  <DocumentsList documents={documents} userDisplayNames={userDisplayNames} />
                 )}
               </>
             )}
