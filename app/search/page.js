@@ -1,5 +1,37 @@
 import UnitsList from "./UnitsList";
 
+export async function generateMetadata({ searchParams }) {
+  const q = searchParams?.q?.trim() || "";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.ainareports.com";
+  
+  if (q) {
+    return {
+      title: `Search Results for "${q}" | AinaReports`,
+      description: `Search results for "${q}" on AinaReports. Find building reports, unit reports, and AOAO documents for Hawaii condos.`,
+      openGraph: {
+        title: `Search Results for "${q}" | AinaReports`,
+        description: `Search results for "${q}" on AinaReports. Find building reports, unit reports, and AOAO documents for Hawaii condos.`,
+        url: `${siteUrl}/search?q=${encodeURIComponent(q)}`,
+        siteName: "AinaReports",
+        type: "website",
+      },
+      robots: {
+        index: false, // Don't index search result pages
+        follow: true,
+      },
+    };
+  }
+  
+  return {
+    title: "Search | AinaReports",
+    description: "Search for building reports, unit reports, and AOAO documents on AinaReports.",
+    robots: {
+      index: false,
+      follow: true,
+    },
+  };
+}
+
 export default async function SearchResultsPage({ searchParams }) {
   const q = searchParams.q?.trim() || "";
 
