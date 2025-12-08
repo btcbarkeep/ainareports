@@ -193,6 +193,59 @@ async function fetchBuildingData(slug) {
 }
 
 // -------------------------------------------------------------
+// METADATA
+// -------------------------------------------------------------
+export async function generateMetadata({ params }) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.ainareports.com";
+  const data = await fetchBuildingData(params.slug);
+  
+  if (!data || !data.building) {
+    return {
+      title: "Building Not Found",
+    };
+  }
+
+  const building = data.building;
+  const address = [building.address, building.city, building.state, building.zip]
+    .filter(Boolean)
+    .join(", ");
+  
+  const title = `${building.name} - Building Report | AinaReports`;
+  const description = building.description 
+    ? `${building.description} View building reports, events, documents, and unit information for ${building.name}${address ? ` located at ${address}` : ""}.`
+    : `Building report for ${building.name}${address ? ` located at ${address}` : ""}. View events, documents, contractors, and unit information.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/${building.slug}`,
+      siteName: "AinaReports",
+      type: "website",
+      images: [
+        {
+          url: "/aina-logo-dark.png",
+          width: 1200,
+          height: 630,
+          alt: `${building.name} - AinaReports`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/aina-logo-dark.png"],
+    },
+    alternates: {
+      canonical: `${siteUrl}/${building.slug}`,
+    },
+  };
+}
+
+// -------------------------------------------------------------
 // PAGE
 // -------------------------------------------------------------
 export default async function BuildingPage({ params, searchParams }) {
