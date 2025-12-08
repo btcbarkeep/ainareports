@@ -311,8 +311,8 @@ export default async function BuildingPage({ params, searchParams }) {
         const matchesOwnerName = ownerNameRegex.test(ownerName);
         
         return matchesUnitNumber || matchesOwnerName || matchesFloor;
-      }).slice(0, 10) // Limit to 10 results
-    : units.slice(0, 10); // Show first 10 units when no search
+      }).slice(0, 5) // Limit to 5 results
+    : units.slice(0, 5); // Show first 5 units when no search
 
   const activeTab =
     typeof searchParams?.tab === "string" &&
