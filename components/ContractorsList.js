@@ -20,14 +20,17 @@ export default function ContractorsList({ contractors = [] }) {
   const renderRow = (c, index) => (
     <div
       key={c.id || `contractor-${index}`}
-      className="px-3 py-3 hover:bg-gray-50 cursor-pointer border rounded-md"
+      className="flex px-3 py-2 hover:bg-gray-50 cursor-pointer"
       role="button"
       tabIndex={0}
       onClick={() => setOpenContractor(c)}
       onKeyDown={(e) => onKeyDown(e, c)}
     >
-      <div className="font-medium">{c.company_name || c.name || "Contractor"}</div>
-      <div className="text-xs text-gray-600">{formatPhone(c.phone)}</div>
+      <div className="w-2/5">{c.company_name || c.name || "Contractor"}</div>
+      <div className="w-2/5 text-xs">{formatPhone(c.phone)}</div>
+      {c.count !== undefined && (
+        <div className="w-1/5 text-right text-xs">{c.count}</div>
+      )}
     </div>
   );
 
@@ -91,7 +94,14 @@ export default function ContractorsList({ contractors = [] }) {
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="border rounded-md divide-y text-sm">
+        <div className="flex px-3 py-2 font-semibold text-gray-700">
+          <div className="w-2/5">Name</div>
+          <div className="w-2/5">Phone</div>
+          {contractors.some(c => c.count !== undefined) && (
+            <div className="w-1/5 text-right">Events</div>
+          )}
+        </div>
         {contractors.map(renderRow)}
       </div>
       {renderModal()}
