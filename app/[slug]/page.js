@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import EventsList from "@/components/EventsList";
+import DocumentsList from "@/components/DocumentsList";
 import PremiumUnlockSection from "@/components/PremiumUnlockSection";
 
 const ROLE_LABELS = {
@@ -521,71 +522,7 @@ export default async function BuildingPage({ params, searchParams }) {
                   </div>
                 ) : (
                   <>
-                    <div className="border rounded-md divide-y text-sm">
-                      <div className="flex px-3 py-2 font-semibold text-gray-700">
-                        <div className="w-2/5 min-w-0">Name</div>
-                        <div className="w-1/5 min-w-0 pl-4">Category</div>
-                        <div className="w-2/5 text-right min-w-0 pl-4">Uploaded By</div>
-                      </div>
-                      {documents.map((doc) => {
-                        const documentUrl = doc.download_url || doc.document_url;
-                        const filename =
-                          doc.title || doc.source || "—";
-
-                        const isValidUrl =
-                          documentUrl &&
-                          typeof documentUrl === "string" &&
-                          documentUrl.trim() !== "" &&
-                          (documentUrl.startsWith("http://") ||
-                            documentUrl.startsWith("https://"));
-
-                        const downloadLink = isValidUrl
-                          ? documentUrl
-                          : doc.s3_key
-                          ? `/api/documents/${doc.id}/download`
-                          : null;
-
-                        return (
-                          <div key={doc.id} className="flex px-3 py-2">
-                            <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-                              {downloadLink ? (
-                                <a
-                                  href={downloadLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block"
-                                  title={filename}
-                                >
-                                  {filename}
-                                </a>
-                              ) : (
-                                <div className="font-medium truncate" title={filename}>{filename}</div>
-                              )}
-                            </div>
-                            <div className="w-1/5 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
-                              <div className="truncate" title={doc.category || "—"}>
-                                {doc.category || "—"}
-                              </div>
-                            </div>
-                            <div className="w-2/5 text-right text-xs min-w-0 pl-4 overflow-hidden">
-                              <div className="truncate" title={
-                                (doc.uploaded_by && userDisplayNames[doc.uploaded_by]
-                                  ? userDisplayNames[doc.uploaded_by].role
-                                  : "—") + " " + formatDate(doc.created_at)
-                              }>
-                                {doc.uploaded_by &&
-                                userDisplayNames[doc.uploaded_by]
-                                  ? userDisplayNames[doc.uploaded_by].role
-                                  : "—"}
-                                <span className="ml-2 text-gray-500">
-                                  {formatDate(doc.created_at)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                    <DocumentsList documents={documents} userDisplayNames={userDisplayNames} />
                     {documents.length >= 5 && totalDocumentsCount > 5 && (
                       <>
                         <p className="text-gray-600 text-sm mt-3">
