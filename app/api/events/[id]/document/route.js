@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getSupabaseClient } from "@/lib/supabaseClient";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -15,85 +14,75 @@ export async function GET(req, { params }) {
       );
     }
 
-    const supabase = getSupabaseClient();
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
-    // First, get the event to check if it has a document_id or s3_key
-    const { data: event, error: eventError } = await supabase
-      .from("events")
-      .select("*")
-      .eq("id", eventId)
-      .single();
-
-    if (eventError || !event) {
+    if (!apiUrl) {
       return NextResponse.json(
-        { error: "Event not found" },
-        { status: 404 }
+        { error: "API URL not configured" },
+        { status: 500 }
       );
     }
 
-    // If event has s3_key but no document_id, try to find the document with that s3_key
-    let foundDocumentId = event.document_id || null;
-    if (event.s3_key && !event.document_id) {
-      const { data: document, error: docError } = await supabase
-        .from("documents")
-        .select("id")
-        .eq("s3_key", event.s3_key)
-        .limit(1)
-        .maybeSingle();
-      
-      if (!docError && document && document.id) {
-        foundDocumentId = document.id;
-      }
-    }
-
-    // Fetch unit number if event has a unit_id
-    let unitNumber = null;
+    // Try to get event data from backend API
+    // Note: This assumes the backend has an endpoint for individual events
+    // If not, we'll need to add one, or use the event data already loaded in the page
     try {
-      if (event.unit_id) {
-        // Try to get unit_number from event first (in case it's already there)
-        if (event.unit_number) {
-          unitNumber = event.unit_number;
-        } else {
-          // Otherwise, fetch from units table
-          const { data: unit, error: unitError } = await supabase
-            .from("units")
-            .select("unit_number")
-            .eq("id", event.unit_id)
-            .maybeSingle();
-          
-          if (!unitError && unit && unit.unit_number) {
-            unitNumber = unit.unit_number;
-          }
-          // If unit lookup fails, we'll just leave unitNumber as null
+      const response = await fetch(
+        `${apiUrl}/reports/public/event/${eventId}`,
+        {
+          headers: {
+            "accept": "application/json",
+          },
         }
+      );
+
+      if (response.ok) {
+        const event = await response.json();
+        
+        // Get unit number from unit_ids array if available
+        let unitNumber = null;
+        if (event.unit_ids && event.unit_ids.length > 0) {
+          // If we have unit data, we could look it up, but for now just use the first unit_id
+          // The unit_number should be in the event data from the API
+          unitNumber = event.unit_number || null;
+        }
+
+        return NextResponse.json({
+          id: event.id,
+          title: event.title || null,
+          event_type: event.event_type || null,
+          occurred_at: event.occurred_at || null,
+          status: event.status || null,
+          body: event.body || null,
+          unit_number: unitNumber,
+          // Document-related fields
+          s3_key: event.s3_key || null,
+          download_url: event.download_url || null,
+          document_url: event.document_url || null,
+          document_id: event.document_id || null,
+          // Legacy fields for backward compatibility
+          filename: event.title || "Event Document",
+          document_type: event.title,
+          category: event.category || null,
+          created_at: event.occurred_at || event.created_at,
+          description: event.description || null,
+        });
+      } else if (response.status === 404) {
+        return NextResponse.json(
+          { error: "Event not found" },
+          { status: 404 }
+        );
       }
-    } catch (unitLookupError) {
-      // Log the error but don't fail the request
-      console.error("Error fetching unit number:", unitLookupError);
-      // Continue without unit number
+    } catch (apiError) {
+      console.error("Error fetching event from API:", apiError);
+      // Fall through to return error
     }
 
-    // Return event data with all event fields
-    return NextResponse.json({
-      id: event.id,
-      title: event.title || null,
-      event_type: event.event_type || null,
-      occurred_at: event.occurred_at || null,
-      status: event.status || null,
-      body: event.body || null,
-      unit_number: unitNumber, // Unit number for the event
-      // Document-related fields
-      s3_key: event.s3_key || null,
-      download_url: event.download_url || null,
-      document_url: event.document_url || null,
-      document_id: foundDocumentId, // Use found document ID if available
-      // Legacy fields for backward compatibility
-      filename: event.title || "Event Document",
-      document_type: event.title,
-      category: event.category || null,
-      created_at: event.occurred_at || event.created_at,
-      description: event.description || null,
-    });
+    // If API call failed, return error
+    return NextResponse.json(
+      { error: "Event not found or API endpoint not available" },
+      { status: 404 }
+    );
 
   } catch (error) {
     console.error("Error fetching event document:", error);
