@@ -33,36 +33,49 @@ export default function EventsList({ events, userDisplayNames }) {
         </div>
       ) : (
         events.map((e) => {
-        const eventTitle = e.title || "—";
-        
-        return (
-          <div key={e.id} className="flex px-3 py-2">
-            <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-              <button
-                onClick={() => handleEventClick(e)}
-                className="font-medium underline hover:text-gray-600 cursor-pointer text-blue-600 truncate block text-left"
-                title={eventTitle}
-              >
-                {eventTitle}
-              </button>
-            </div>
-            <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-              <div className="truncate" title={e.severity || "—"}>
-                {e.severity || "—"}
+          const eventTitle = e.title || "—";
+
+          const onKeyDown = (evt) => {
+            if (evt.key === "Enter" || evt.key === " ") {
+              evt.preventDefault();
+              handleEventClick(e);
+            }
+          };
+
+          return (
+            <div
+              key={e.id}
+              className="flex px-3 py-2 hover:bg-gray-50 cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onClick={() => handleEventClick(e)}
+              onKeyDown={onKeyDown}
+            >
+              <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
+                <div
+                  className="font-medium text-blue-600 truncate"
+                  title={eventTitle}
+                >
+                  {eventTitle}
+                </div>
+              </div>
+              <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                <div className="truncate" title={e.severity || "—"}>
+                  {e.severity || "—"}
+                </div>
+              </div>
+              <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
+                  {userDisplayNames[e.created_by]?.role || "—"}
+                </div>
+              </div>
+              <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
+                <div className="truncate" title={formatDate(e.occurred_at)}>
+                  {formatDate(e.occurred_at)}
+                </div>
               </div>
             </div>
-            <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-              <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
-                {userDisplayNames[e.created_by]?.role || "—"}
-              </div>
-            </div>
-            <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
-              <div className="truncate" title={formatDate(e.occurred_at)}>
-                {formatDate(e.occurred_at)}
-              </div>
-            </div>
-          </div>
-        );
+          );
         })
       )}
       
