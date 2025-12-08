@@ -53,144 +53,95 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     }
 
     // 3️⃣ Fetch all data from public API endpoint (by unit_id)
-    const apiResult = await Promise.allSettled([
-      apiUrl
-        ? Promise.race([
-            fetch(`${apiUrl}/reports/public/building/${building.id}/unit/${unit.id}`, {
-              headers: {
-                accept: "application/json",
-              },
-              next: { revalidate: 60 },
-            }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("API timeout")), 3000)),
-          ]).catch(() => null)
-        : Promise.resolve(null),
-    ]);
+    if (!apiUrl) {
+      console.error("API URL not configured");
+      return null;
+    }
 
-    // Process API result
     let publicData = null;
-    if (apiResult[0].status === "fulfilled" && apiResult[0].value) {
-      try {
-        const response = apiResult[0].value;
-        if (response.ok) {
-          const result = await response.json();
-          // Handle both data-at-root and nested data
-          if (result.success && result.data) {
-            publicData = result.data;
-          } else if (result.contractors || result.events || result.documents) {
-            publicData = result;
-          }
+    try {
+      const response = await fetch(
+        `${apiUrl}/reports/public/unit/${unit.id}?format=json`,
+        {
+          headers: {
+            accept: "application/json",
+          },
+          next: { revalidate: 60 },
         }
-      } catch (apiError) {
-        console.error("Error parsing API response:", apiError);
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        // API returns data at root level
+        publicData = result;
+      } else {
+        console.error("Error fetching unit data from API:", response.status);
+        return null;
       }
+    } catch (apiError) {
+      console.error("Error calling unit API:", apiError);
+      return null;
     }
 
-    // Fallback to Supabase if API fails or is not configured
     if (!publicData) {
-      const [eventsResult, documentsResult] = await Promise.allSettled([
-        supabase
-          .from("events")
-          .select("*")
-          .eq("unit_id", unit.id)
-          .order("occurred_at", { ascending: false })
-          .limit(5),
-        supabase
-          .from("documents")
-          .select("*")
-          .eq("unit_id", unit.id)
-          .order("created_at", { ascending: false })
-          .limit(5),
-      ]);
+      return null;
+    }
 
-      publicData = {
-        events: eventsResult.status === 'fulfilled' ? (eventsResult.value.data || []) : [],
-        documents: documentsResult.status === 'fulfilled' ? (documentsResult.value.data || []) : [],
-        contractors: [],
-        property_managers: [],
+    // Extract data from API response
+    const apiUnit = publicData.unit || unit;
+    const apiBuilding = publicData.building || building;
+    const apiEvents = publicData.events || [];
+    const apiDocuments = publicData.documents || [];
+    const apiContractors = publicData.contractors || [];
+    const apiBuildingContractors = publicData.property_management_companies || [];
+
+    // Events: use unit_ids array (for unit page, events should already be filtered to this unit)
+    const events = apiEvents.map((e) => {
+      // Events have unit_ids array - for unit page, we can just use the unit number
+      return {
+        ...e,
+        unitNumber: apiUnit.unit_number || unit.unit_number,
       };
-    }
+    });
 
-    // Events: prefer API, fallback to Supabase if none
-    let events = publicData.events || publicData.unit_events || [];
-    if (!events.length) {
-      const { data: fallbackEvents, error: eventsError } = await supabase
-        .from("events")
-        .select("*")
-        .eq("unit_id", unit.id)
-        .order("occurred_at", { ascending: false })
-        .limit(5);
-      if (eventsError) console.error("Fallback events error:", eventsError);
-      events = fallbackEvents || [];
-    }
+    // Documents: use unit_ids array
+    const documents = apiDocuments.map((d) => ({
+      ...d,
+      // Documents have unit_ids array
+    }));
 
-    // Documents: keep API result (already present from publicData)
-    const documents = publicData.documents || [];
-
-    // Contractors: prefer API, fallback to contractors linked via events
-    const contractorsArray =
-      publicData.contractors ||
-      publicData.unit_contractors ||
-      publicData.building_contractors ||
-      [];
-
-    let unitContractors = contractorsArray.map((c, index) => ({
+    // Map contractors from API response
+    const unitContractors = apiContractors.map((c, index) => ({
       id: c.id || `contractor-${index}`,
       name: c.company_name || c.name || "Contractor",
       phone: c.phone || "",
       count: c.event_count || c.count || 0,
+      address: c.address,
+      email: c.email,
+      license_number: c.license_number,
     }));
-
-    if (!unitContractors.length) {
-      const contractorIds = [
-        ...new Set(events.map((e) => e.contractor_id).filter(Boolean)),
-      ];
-      if (contractorIds.length) {
-        const { data: contractorsFallback, error: contractorsError } = await supabase
-          .from("contractors")
-          .select("id, company_name, phone")
-          .in("id", contractorIds);
-        if (contractorsError) {
-          console.error("Fallback contractors error:", contractorsError);
-        }
-        unitContractors =
-          contractorsFallback?.map((c, idx) => ({
-            id: c.id || `contractor-fallback-${idx}`,
-            name: c.company_name || "Contractor",
-            phone: c.phone || "",
-            count: 0,
-          })) || [];
-      }
-    }
 
     const mostActiveContractor = unitContractors.length > 0 ? unitContractors[0] : null;
 
-    const buildingContractorsRaw =
-      publicData.building_contractors ||
-      unitContractors ||
-      publicData.contractors ||
-      [];
-    const buildingContractors = buildingContractorsRaw.slice(0, 5).map((c, index) => ({
-      id: c.id || `building-contractor-${index}`,
-      company_name: c.company_name || c.name || "Contractor",
+    // Building contractors (property management companies)
+    const buildingContractors = apiBuildingContractors.slice(0, 5).map((c) => ({
+      id: c.id,
+      company_name: c.company_name || c.name,
       phone: c.phone || "",
     }));
-
-    // Debug logging
-    console.log("Unit contractors processing:", {
-      rawCount: contractorsArray.length,
-      mappedCount: unitContractors.length,
-      sampleRaw: contractorsArray[0],
-      sampleMapped: unitContractors[0],
-      eventsCount: events.length,
-    });
 
     // USER DISPLAY NAMES
     const userDisplayNames = {};
 
     return {
-      building,
-      unit,
+      building: {
+        ...building,
+        ...apiBuilding, // Override with API data if available
+      },
+      unit: {
+        ...unit,
+        ...apiUnit, // Override with API data if available
+      },
       events,
       documents,
       mostActiveContractor,
