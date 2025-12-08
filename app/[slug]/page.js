@@ -104,14 +104,22 @@ async function fetchBuildingData(slug) {
       const response = apiResult.value;
       if (response.ok) {
         const result = await response.json();
+        // Handle different response structures
         if (result.success && result.data) {
           publicData = result.data;
-          // Debug logging
-          console.log("API response data:", {
-            events: publicData.events?.length || 0,
-            documents: publicData.documents?.length || 0,
-            contractors: publicData.contractors?.length || 0,
-            contractorsData: publicData.contractors,
+        } else if (result.contractors || result.events || result.documents) {
+          // If data is at root level
+          publicData = result;
+        }
+        
+        // Debug logging
+        if (publicData) {
+          console.log("API response structure:", {
+            hasData: !!result.data,
+            hasContractors: !!(publicData.contractors),
+            contractorsCount: publicData.contractors?.length || 0,
+            contractorsSample: publicData.contractors?.[0],
+            allKeys: Object.keys(publicData),
           });
         }
       } else {
@@ -170,28 +178,24 @@ async function fetchBuildingData(slug) {
   }));
 
   // Map contractors from API response
-  // Handle different possible field names from API
-  const mostActiveContractors = (publicData.contractors || []).map((c, index) => {
-    // Try multiple possible field names
-    const contractorId = c.id || c.contractor_id || index;
-    const contractorName = c.company_name || c.name || c.contractor_name || "Contractor";
-    const contractorPhone = c.phone || c.phone_number || "";
-    const eventCount = c.event_count || c.count || c.events_count || 0;
-    
+  // The API returns contractors with: id, company_name, phone, event_count
+  const contractorsArray = publicData?.contractors || [];
+  const mostActiveContractors = contractorsArray.map((c, index) => {
     return {
-      id: contractorId,
-      name: contractorName,
-      phone: contractorPhone,
-      count: eventCount,
+      id: c.id || `contractor-${index}`,
+      name: c.company_name || "Contractor",
+      phone: c.phone || "",
+      count: c.event_count || 0,
     };
   });
   
   // Debug logging
-  if (publicData.contractors && publicData.contractors.length > 0) {
-    console.log("Mapped contractors:", mostActiveContractors);
-  } else {
-    console.log("No contractors in API response. publicData keys:", Object.keys(publicData || {}));
-  }
+  console.log("Contractors processing:", {
+    rawContractorsCount: contractorsArray.length,
+    mappedContractorsCount: mostActiveContractors.length,
+    sampleRaw: contractorsArray[0],
+    sampleMapped: mostActiveContractors[0],
+  });
 
   // USER DISPLAY NAMES
   const userDisplayNames = {};
