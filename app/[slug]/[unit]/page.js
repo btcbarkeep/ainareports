@@ -23,16 +23,12 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     const supabase = getSupabaseClient();
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
-    // 1️⃣ Fetch building and unit in parallel
-    const [buildingResult, unitQuery] = await Promise.all([
-      supabase
-        .from("buildings")
-        .select("id, slug, name, address, city, state, zip, description, units, floors, year_built, zoning, tmk")
-        .ilike("slug", buildingSlug)
-        .single(),
-      // We need building first to query unit, but we can prepare the query
-      Promise.resolve(null), // Placeholder
-    ]);
+    // 1️⃣ Fetch building by slug (need id)
+    const buildingResult = await supabase
+      .from("buildings")
+      .select("id, slug, name, address, city, state, zip, description, units, floors, year_built, zoning, tmk")
+      .ilike("slug", buildingSlug)
+      .single();
 
     const { data: building, error: buildingError } = buildingResult;
 
@@ -41,43 +37,39 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       return null;
     }
 
-    // 2️⃣ Fetch unit and API data in parallel
-    const [unitResult, apiResult] = await Promise.allSettled([
-      supabase
-        .from("units")
-        .select("*")
-        .eq("building_id", building.id)
-        .ilike("unit_number", unitNumber)
-        .single(),
-      // API call with timeout
-      apiUrl ? Promise.race([
-        fetch(
-          `${apiUrl}/reports/public/building/${building.id}/unit/${unitNumber}`,
-          {
-            headers: {
-              "accept": "application/json",
-            },
-            next: { revalidate: 60 }, // Cache for 60 seconds
-          }
-        ),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('API timeout')), 3000)
-        )
-      ]).catch(() => null) : Promise.resolve(null),
-    ]);
-
-    const { data: unit, error: unitError } = unitResult.status === 'fulfilled' ? unitResult.value : { data: null, error: null };
+    // 2️⃣ Fetch unit to get unit_id
+    const { data: unit, error: unitError } = await supabase
+      .from("units")
+      .select("*")
+      .eq("building_id", building.id)
+      .ilike("unit_number", unitNumber)
+      .single();
 
     if (unitError || !unit) {
       console.error("Error fetching unit:", unitError);
       return null;
     }
 
+    // 3️⃣ Fetch all data from public API endpoint (by unit_id)
+    const apiResult = await Promise.allSettled([
+      apiUrl
+        ? Promise.race([
+            fetch(`${apiUrl}/reports/public/building/${building.id}/unit/${unit.id}`, {
+              headers: {
+                accept: "application/json",
+              },
+              next: { revalidate: 60 },
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("API timeout")), 3000)),
+          ]).catch(() => null)
+        : Promise.resolve(null),
+    ]);
+
     // Process API result
     let publicData = null;
-    if (apiResult.status === 'fulfilled' && apiResult.value) {
+    if (apiResult[0].status === "fulfilled" && apiResult[0].value) {
       try {
-        const response = apiResult.value;
+        const response = apiResult[0].value;
         if (response.ok) {
           const result = await response.json();
           // Handle both data-at-root and nested data
@@ -85,16 +77,6 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
             publicData = result.data;
           } else if (result.contractors || result.events || result.documents) {
             publicData = result;
-          }
-
-          // Debug logging
-          if (publicData) {
-            console.log("Unit API response structure:", {
-              hasData: !!result.data,
-              contractorsCount: publicData.contractors?.length || 0,
-              contractorsSample: publicData.contractors?.[0],
-              allKeys: Object.keys(publicData),
-            });
           }
         }
       } catch (apiError) {
@@ -127,21 +109,65 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       };
     }
 
-    const events = publicData.events || [];
+    // Events: prefer API, fallback to Supabase if none
+    let events = publicData.events || publicData.unit_events || [];
+    if (!events.length) {
+      const { data: fallbackEvents, error: eventsError } = await supabase
+        .from("events")
+        .select("*")
+        .eq("unit_id", unit.id)
+        .order("occurred_at", { ascending: false })
+        .limit(5);
+      if (eventsError) console.error("Fallback events error:", eventsError);
+      events = fallbackEvents || [];
+    }
+
+    // Documents: keep API result (already present from publicData)
     const documents = publicData.documents || [];
 
-    // Map contractors from API response (unit-level and building-level)
-    const contractorsArray = publicData.contractors || [];
-    const unitContractors = contractorsArray.map((c, index) => ({
+    // Contractors: prefer API, fallback to contractors linked via events
+    const contractorsArray =
+      publicData.contractors ||
+      publicData.unit_contractors ||
+      publicData.building_contractors ||
+      [];
+
+    let unitContractors = contractorsArray.map((c, index) => ({
       id: c.id || `contractor-${index}`,
       name: c.company_name || c.name || "Contractor",
       phone: c.phone || "",
       count: c.event_count || c.count || 0,
     }));
 
+    if (!unitContractors.length) {
+      const contractorIds = [
+        ...new Set(events.map((e) => e.contractor_id).filter(Boolean)),
+      ];
+      if (contractorIds.length) {
+        const { data: contractorsFallback, error: contractorsError } = await supabase
+          .from("contractors")
+          .select("id, company_name, phone")
+          .in("id", contractorIds);
+        if (contractorsError) {
+          console.error("Fallback contractors error:", contractorsError);
+        }
+        unitContractors =
+          contractorsFallback?.map((c, idx) => ({
+            id: c.id || `contractor-fallback-${idx}`,
+            name: c.company_name || "Contractor",
+            phone: c.phone || "",
+            count: 0,
+          })) || [];
+      }
+    }
+
     const mostActiveContractor = unitContractors.length > 0 ? unitContractors[0] : null;
 
-    const buildingContractorsRaw = publicData.building_contractors || publicData.contractors || [];
+    const buildingContractorsRaw =
+      publicData.building_contractors ||
+      unitContractors ||
+      publicData.contractors ||
+      [];
     const buildingContractors = buildingContractorsRaw.slice(0, 5).map((c, index) => ({
       id: c.id || `building-contractor-${index}`,
       company_name: c.company_name || c.name || "Contractor",
@@ -154,6 +180,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       mappedCount: unitContractors.length,
       sampleRaw: contractorsArray[0],
       sampleMapped: unitContractors[0],
+      eventsCount: events.length,
     });
 
     // USER DISPLAY NAMES
