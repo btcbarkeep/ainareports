@@ -7,6 +7,16 @@ function formatPhone(phone) {
   return phone;
 }
 
+function formatAddress(contractor) {
+  const parts = [
+    contractor.address,
+    contractor.city,
+    contractor.state,
+    contractor.zip_code,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : null;
+}
+
 export default function ContractorsList({ contractors = [] }) {
   const [openContractor, setOpenContractor] = useState(null);
 
@@ -59,26 +69,76 @@ export default function ContractorsList({ contractors = [] }) {
               </button>
             </div>
             <div className="space-y-2 text-sm text-gray-700">
-              <div>
-                <span className="font-medium">Phone:</span>{" "}
-                {formatPhone(openContractor.phone)}
-              </div>
-              {openContractor.address && (
+              {openContractor.contact_person && (
                 <div>
-                  <span className="font-medium">Address:</span>{" "}
-                  {openContractor.address}
+                  <span className="font-medium">Contact Person:</span>{" "}
+                  {openContractor.contact_person}
+                </div>
+              )}
+              {openContractor.phone && (
+                <div>
+                  <span className="font-medium">Phone:</span>{" "}
+                  {formatPhone(openContractor.phone)}
                 </div>
               )}
               {openContractor.email && (
                 <div>
                   <span className="font-medium">Email:</span>{" "}
-                  {openContractor.email}
+                  <a
+                    href={`mailto:${openContractor.email}`}
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    {openContractor.email}
+                  </a>
                 </div>
               )}
-              {openContractor.license_number && (
+              {formatAddress(openContractor) && (
+                <div>
+                  <span className="font-medium">Address:</span>{" "}
+                  {formatAddress(openContractor)}
+                </div>
+              )}
+              {openContractor.website && openContractor.website !== "string" && (
+                <div>
+                  <span className="font-medium">Website:</span>{" "}
+                  <a
+                    href={openContractor.website.startsWith('http') ? openContractor.website : `https://${openContractor.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    {openContractor.website}
+                  </a>
+                </div>
+              )}
+              {openContractor.license_number && openContractor.license_number !== "string" && (
                 <div>
                   <span className="font-medium">License:</span>{" "}
                   {openContractor.license_number}
+                </div>
+              )}
+              {openContractor.insurance_info && openContractor.insurance_info !== "string" && (
+                <div>
+                  <span className="font-medium">Insurance Info:</span>{" "}
+                  {openContractor.insurance_info}
+                </div>
+              )}
+              {openContractor.roles && Array.isArray(openContractor.roles) && openContractor.roles.length > 0 && (
+                <div>
+                  <span className="font-medium">Roles:</span>{" "}
+                  {openContractor.roles.join(", ")}
+                </div>
+              )}
+              {openContractor.notes && openContractor.notes !== "string" && (
+                <div>
+                  <span className="font-medium">Notes:</span>{" "}
+                  {openContractor.notes}
+                </div>
+              )}
+              {openContractor.count !== undefined && (
+                <div>
+                  <span className="font-medium">Event Count:</span>{" "}
+                  {openContractor.count}
                 </div>
               )}
             </div>
