@@ -17,6 +17,12 @@ function formatAddress(contractor) {
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
+function formatRole(roles) {
+  if (!roles || !Array.isArray(roles) || roles.length === 0) return "—";
+  // Capitalize first letter of each role
+  return roles.map(role => role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()).join(", ");
+}
+
 export default function ContractorsList({ contractors = [] }) {
   const [openContractor, setOpenContractor] = useState(null);
 
@@ -27,8 +33,26 @@ export default function ContractorsList({ contractors = [] }) {
     }
   };
 
+  // Sort contractors: Certified first, then by event count descending
+  const sortedContractors = [...contractors].sort((a, b) => {
+    const aIsPaid = a.subscription_tier === "paid";
+    const bIsPaid = b.subscription_tier === "paid";
+    
+    // If one is paid and the other isn't, paid comes first
+    if (aIsPaid && !bIsPaid) return -1;
+    if (!aIsPaid && bIsPaid) return 1;
+    
+    // Both same certification status, sort by event count descending
+    const aCount = a.count || a.event_count || 0;
+    const bCount = b.count || b.event_count || 0;
+    return bCount - aCount;
+  });
+
   const renderRow = (c, index) => {
     const isPaid = c.subscription_tier === "paid";
+    const roles = c.roles || [];
+    const roleText = formatRole(roles);
+    
     return (
       <div
         key={c.id || `contractor-${index}`}
@@ -38,19 +62,25 @@ export default function ContractorsList({ contractors = [] }) {
         onClick={() => setOpenContractor(c)}
         onKeyDown={(e) => onKeyDown(e, c)}
       >
-        <div className="w-2/5">
-          <div className="flex items-center gap-2">
-            <div className="truncate">{c.company_name || c.name || "Contractor"}</div>
-            {isPaid && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 flex-shrink-0">
+        <div className="w-2/5 min-w-0 pr-4">
+          <div className="truncate" title={c.company_name || c.name || "Contractor"}>
+            {c.company_name || c.name || "Contractor"}
+          </div>
+          {isPaid && (
+            <div className="mt-1">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
                 ✓ Certified
               </span>
-            )}
+            </div>
+          )}
+        </div>
+        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
+          <div className="truncate" title={roleText}>
+            {roleText}
           </div>
         </div>
-        <div className="w-2/5 text-xs">{formatPhone(c.phone)}</div>
         {c.count !== undefined && (
-          <div className="w-1/5 text-right text-xs">{c.count}</div>
+          <div className="flex-1 text-right text-xs min-w-0 pl-4">{c.count}</div>
         )}
       </div>
     );
@@ -223,12 +253,12 @@ export default function ContractorsList({ contractors = [] }) {
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
           <div className="w-2/5">Name</div>
-          <div className="w-2/5">Phone</div>
-          {contractors.some(c => c.count !== undefined) && (
-            <div className="w-1/5 text-right">Events</div>
+          <div className="w-1/3 pl-4">Role</div>
+          {sortedContractors.some(c => c.count !== undefined) && (
+            <div className="flex-1 text-right pl-4">Events</div>
           )}
         </div>
-        {contractors.map(renderRow)}
+        {sortedContractors.map(renderRow)}
       </div>
       {renderModal()}
     </>
