@@ -136,11 +136,16 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
 
     const mostActiveContractor = unitContractors.length > 0 ? unitContractors[0] : null;
 
-    // Building contractors (property management companies) - only those with access to this unit
+    // Building contractors (property management companies)
+    // If the API includes unit_ids/unit_numbers, filter to those that manage this unit.
+    // If those fields are absent/empty (already scoped to this unit), show them all.
     const buildingContractors = apiBuildingContractors
       .filter((c) => {
         const unitIds = Array.isArray(c.unit_ids) ? c.unit_ids : [];
         const unitNumbers = Array.isArray(c.unit_numbers) ? c.unit_numbers : [];
+        const hasLinkage = unitIds.length > 0 || unitNumbers.length > 0;
+
+        if (!hasLinkage) return true; // assume already scoped by backend
 
         const managesById = unitIds.some(
           (id) => id === apiUnit.id || String(id) === String(apiUnit.id)
