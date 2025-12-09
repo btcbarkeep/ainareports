@@ -428,9 +428,9 @@ export default async function UnitPage({ params, searchParams }) {
 
                 <div className="border rounded-md divide-y text-sm">
                   <div className="flex px-3 py-2 font-semibold text-gray-700">
-                    <div className="w-2/5 min-w-0">Event</div>
-                    <div className="w-1/5 min-w-0 pl-4">Severity</div>
-                    <div className="w-1/5 min-w-0 pl-4">Created By</div>
+                    <div className="w-2/5 min-w-0">Title</div>
+                    <div className="w-1/5 min-w-0 pl-4">Type</div>
+                    <div className="w-1/5 min-w-0 pl-4">Status</div>
                     <div className="w-1/5 text-right min-w-0 pl-4">Date</div>
                   </div>
 
