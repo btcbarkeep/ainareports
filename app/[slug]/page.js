@@ -140,8 +140,8 @@ const fetchBuildingData = cache(async (slug) => {
   // Extract AOAO organizations (use first one if multiple)
   const aoaoOrganizations = publicData.aoao_organizations || [];
   const aoao = aoaoOrganizations.length > 0 ? aoaoOrganizations[0] : null;
-  // Extract property management companies (limit to 5)
-  const apiPropertyManagers = (publicData.property_management_companies || []).slice(0, 5);
+  // Extract property management companies (all from report)
+  const apiPropertyManagers = publicData.property_management_companies || [];
 
   // Create a map of unit_id -> unit_number for looking up unit numbers
   const unitMap = new Map();
@@ -181,11 +181,19 @@ const fetchBuildingData = cache(async (slug) => {
       id: c.id || `contractor-${index}`,
       company_name: c.company_name || c.name || "Contractor",
       name: c.company_name || c.name || "Contractor",
-      phone: c.phone || "",
-      count: c.event_count || 0,
+      phone: c.contact_phone || c.phone || "",
+      count: c.event_count || c.count || 0,
       address: c.address,
-      email: c.email,
+      city: c.city,
+      state: c.state,
+      zip_code: c.zip_code || c.zip,
+      email: c.contact_email || c.email,
+      contact_person: c.contact_person,
+      website: c.website,
       license_number: c.license_number,
+      insurance_info: c.insurance_info,
+      notes: c.notes,
+      roles: c.roles,
     };
   });
 
@@ -207,7 +215,21 @@ const fetchBuildingData = cache(async (slug) => {
     })),
     documents,
     mostActiveContractors,
-    propertyManagers: apiPropertyManagers,
+    propertyManagers: apiPropertyManagers.map((pm) => ({
+      id: pm.id,
+      company_name: pm.company_name || pm.name,
+      name: pm.company_name || pm.name,
+      phone: pm.contact_phone || pm.phone || "",
+      address: pm.address,
+      city: pm.city,
+      state: pm.state,
+      zip_code: pm.zip_code || pm.zip,
+      email: pm.contact_email || pm.email,
+      contact_person: pm.contact_person,
+      website: pm.website,
+      notes: pm.notes,
+      unit_count: pm.unit_count,
+    })),
     aoao,
     totalUnits: statistics.total_units ?? apiUnits.length ?? apiBuilding.units ?? null,
     floors: apiBuilding?.floors ?? null,
