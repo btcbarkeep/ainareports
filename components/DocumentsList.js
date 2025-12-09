@@ -127,12 +127,12 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
             {title}
           </div>
         </div>
-        <div className="w-1/5 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
+        <div className="w-1/4 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
           <div className="truncate capitalize" title={category}>
             {category}
           </div>
         </div>
-        <div className="w-2/5 text-right text-xs min-w-0 pl-4 overflow-hidden">
+        <div className="flex-1 text-right text-xs min-w-0 pl-4 overflow-hidden">
           <div className="truncate" title={updatedDate}>
             {updatedDate}
           </div>
@@ -146,8 +146,8 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
           <div className="w-2/5 min-w-0">Title</div>
-          <div className="w-1/5 min-w-0 pl-4">Category</div>
-          <div className="w-2/5 text-right min-w-0 pl-4">Date</div>
+          <div className="w-1/4 min-w-0 pl-4">Category</div>
+          <div className="flex-1 text-right min-w-0 pl-4">Date</div>
         </div>
         {documents.map(renderRow)}
       </div>
