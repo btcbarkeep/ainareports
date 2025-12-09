@@ -3,6 +3,7 @@ import Link from "next/link";
 import EventsList from "@/components/EventsList";
 import DocumentsList from "@/components/DocumentsList";
 import ContractorsList from "@/components/ContractorsList";
+import PropertyManagementList from "@/components/PropertyManagementList";
 import PremiumUnlockSection from "@/components/PremiumUnlockSection";
 import AOAOBox from "@/components/AOAOBox";
 
@@ -24,6 +25,7 @@ const TABS = [
   { id: "units", label: "Units" },
   { id: "documents", label: "Documents" },
   { id: "events", label: "Events" },
+  { id: "property_management", label: "Property Management" },
   { id: "contractors", label: "Contractors" },
 ];
 
@@ -138,6 +140,8 @@ const fetchBuildingData = cache(async (slug) => {
   // Extract AOAO organizations (use first one if multiple)
   const aoaoOrganizations = publicData.aoao_organizations || [];
   const aoao = aoaoOrganizations.length > 0 ? aoaoOrganizations[0] : null;
+  // Extract property management companies (limit to 5)
+  const apiPropertyManagers = (publicData.property_management_companies || []).slice(0, 5);
 
   // Create a map of unit_id -> unit_number for looking up unit numbers
   const unitMap = new Map();
@@ -203,6 +207,7 @@ const fetchBuildingData = cache(async (slug) => {
     })),
     documents,
     mostActiveContractors,
+    propertyManagers: apiPropertyManagers,
     aoao,
     totalUnits: statistics.total_units ?? apiUnits.length ?? apiBuilding.units ?? null,
     floors: apiBuilding?.floors ?? null,
@@ -286,6 +291,7 @@ export default async function BuildingPage({ params, searchParams }) {
     units,
     documents,
     mostActiveContractors,
+    propertyManagers,
     aoao,
     totalUnits,
     floors,
@@ -533,6 +539,14 @@ export default async function BuildingPage({ params, searchParams }) {
                     )}
                   </>
                 )}
+              </>
+            )}
+
+            {/* PROPERTY MANAGEMENT */}
+            {activeTab === "property_management" && (
+              <>
+                <h2 className="font-semibold mb-3">Property Management</h2>
+                <PropertyManagementList propertyManagers={propertyManagers} />
               </>
             )}
 
