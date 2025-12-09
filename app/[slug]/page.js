@@ -23,10 +23,10 @@ export const revalidate = 0;
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "units", label: "Units" },
-  { id: "documents", label: "Documents" },
+  { id: "documents", label: "Docs" },
   { id: "events", label: "Events" },
-  { id: "property_management", label: "Property Management" },
-  { id: "contractors", label: "Contractors" },
+  { id: "property_management", label: "Manage" },
+  { id: "contractors", label: "Vendors" },
 ];
 
 // -------------------------------------------------------------
