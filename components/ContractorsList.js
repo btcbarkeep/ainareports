@@ -148,6 +148,15 @@ export default function ContractorsList({ contractors = [] }) {
           <div className="p-6">
             <div className="flex justify-center items-center mb-6 relative">
               <div className="text-center">
+                {isPaid && openContractor.logo_url && (
+                  <div className="mb-3 flex justify-center">
+                    <img
+                      src={openContractor.logo_url}
+                      alt={`${openContractor.company_name || openContractor.name} logo`}
+                      className="h-16 w-auto object-contain"
+                    />
+                  </div>
+                )}
                 <h3 className="text-xl font-bold text-gray-900 mb-1">
                   {openContractor.company_name || openContractor.name || "Contractor"}
                 </h3>
