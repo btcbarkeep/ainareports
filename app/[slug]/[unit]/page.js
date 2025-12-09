@@ -502,11 +502,6 @@ export default async function UnitPage({ params, searchParams }) {
               ) : (
                 <div className="text-center">
                   <div className="font-medium">{mostActiveContractor.name}</div>
-                  {mostActiveContractor.phone && (
-                    <div className="text-gray-600 text-xs mb-1">
-                      {mostActiveContractor.phone}
-                    </div>
-                  )}
                   <div className="text-gray-500 text-xs">
                     {mostActiveContractor.count} recent event
                     {mostActiveContractor.count > 1 ? "s" : ""}
