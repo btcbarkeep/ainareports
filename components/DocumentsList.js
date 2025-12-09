@@ -5,7 +5,7 @@ import { useState } from "react";
 function formatDate(dateStr) {
   if (!dateStr) return "—";
   try {
-    return new Date(dateStr).toLocaleDateString();
+    return new Date(dateStr).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
   } catch {
     return dateStr;
   }
@@ -54,10 +54,15 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
             </div>
 
             <div className="space-y-3 text-sm text-gray-700">
-              <div>
-                <span className="font-medium">Category:</span>{" "}
-                {openDoc.category || "—"}
-              </div>
+              {openDoc.category && (
+                <div>
+                  <span className="font-medium">Category:</span>{" "}
+                  <span className="capitalize">{openDoc.category}</span>
+                  {openDoc.subcategory && (
+                    <span className="text-gray-500"> / <span className="capitalize">{openDoc.subcategory.replace(/_/g, ' ')}</span></span>
+                  )}
+                </div>
+              )}
               <div>
                 <span className="font-medium">Uploaded:</span>{" "}
                 {formatDate(openDoc.created_at)}
@@ -97,7 +102,10 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
   };
 
   const renderRow = (doc) => {
-    const filename = doc.filename || doc.document_type || "—";
+    const title = doc.title || doc.filename || doc.document_type || "—";
+    const category = doc.category || "—";
+    const updatedDate = formatDate(doc.updated_at);
+    
     const onKeyDown = (evt) => {
       if (evt.key === "Enter" || evt.key === " ") {
         evt.preventDefault();
@@ -115,30 +123,18 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
         onKeyDown={onKeyDown}
       >
         <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-          <div className="font-medium text-blue-600 truncate" title={filename}>
-            {filename}
+          <div className="font-medium text-blue-600 truncate" title={title}>
+            {title}
           </div>
         </div>
         <div className="w-1/5 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
-          <div className="truncate" title={doc.category || "—"}>
-            {doc.category || "—"}
+          <div className="truncate capitalize" title={category}>
+            {category}
           </div>
         </div>
         <div className="w-2/5 text-right text-xs min-w-0 pl-4 overflow-hidden">
-          <div
-            className="truncate"
-            title={
-              (doc.uploaded_by && userDisplayNames[doc.uploaded_by]
-                ? userDisplayNames[doc.uploaded_by].role
-                : "—") +
-              " " +
-              formatDate(doc.created_at)
-            }
-          >
-            {doc.uploaded_by && userDisplayNames[doc.uploaded_by]
-              ? userDisplayNames[doc.uploaded_by].role
-              : "—"}
-            <span className="ml-2 text-gray-500">{formatDate(doc.created_at)}</span>
+          <div className="truncate" title={updatedDate}>
+            {updatedDate}
           </div>
         </div>
       </div>
@@ -149,9 +145,9 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
     <>
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
-          <div className="w-2/5 min-w-0">Name</div>
+          <div className="w-2/5 min-w-0">Title</div>
           <div className="w-1/5 min-w-0 pl-4">Category</div>
-          <div className="w-2/5 text-right min-w-0 pl-4">Uploaded By</div>
+          <div className="w-2/5 text-right min-w-0 pl-4">Date</div>
         </div>
         {documents.map(renderRow)}
       </div>
