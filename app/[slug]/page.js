@@ -208,6 +208,8 @@ const fetchBuildingData = cache(async (slug) => {
       notes: c.notes,
       roles: c.roles,
       subscription_tier: c.subscription_tier,
+      created_at: c.created_at,
+      logo_url: c.logo_url,
     };
   });
 
