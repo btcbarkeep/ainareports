@@ -52,36 +52,43 @@ export default function ContractorsList({ contractors = [] }) {
     const isPaid = c.subscription_tier === "paid";
     const roles = c.roles || [];
     const roleText = formatRole(roles);
+    const licenseNumber = c.license_number && c.license_number !== "string" ? c.license_number : null;
     
     return (
       <div
         key={c.id || `contractor-${index}`}
-        className="flex px-3 py-2 hover:bg-gray-50 cursor-pointer"
+        className={`flex px-3 py-2 cursor-pointer ${
+          isPaid 
+            ? 'bg-amber-50 hover:bg-amber-100 border-l-4 border-amber-400' 
+            : 'hover:bg-gray-50'
+        }`}
         role="button"
         tabIndex={0}
         onClick={() => setOpenContractor(c)}
         onKeyDown={(e) => onKeyDown(e, c)}
       >
         <div className="w-2/5 min-w-0 pr-4">
-          <div className="truncate" title={c.company_name || c.name || "Contractor"}>
-            {c.company_name || c.name || "Contractor"}
-          </div>
-          {isPaid && (
-            <div className="mt-1">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                ✓ Certified
-              </span>
+          <div className="flex items-center gap-2">
+            <div className="truncate" title={c.company_name || c.name || "Contractor"}>
+              {c.company_name || c.name || "Contractor"}
             </div>
-          )}
+            {isPaid && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-500 text-white flex-shrink-0" title="Aina Certified">
+                ⭐
+              </span>
+            )}
+          </div>
         </div>
         <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
           <div className="truncate" title={roleText}>
             {roleText}
           </div>
         </div>
-        {c.count !== undefined && (
-          <div className="flex-1 text-right text-xs min-w-0 pl-4">{c.count}</div>
-        )}
+        <div className="flex-1 text-xs min-w-0 pl-4 overflow-hidden">
+          <div className="truncate" title={licenseNumber || "—"}>
+            {licenseNumber || "—"}
+          </div>
+        </div>
       </div>
     );
   };
@@ -254,9 +261,7 @@ export default function ContractorsList({ contractors = [] }) {
         <div className="flex px-3 py-2 font-semibold text-gray-700">
           <div className="w-2/5">Name</div>
           <div className="w-1/3 pl-4">Role</div>
-          {sortedContractors.some(c => c.count !== undefined) && (
-            <div className="flex-1 text-right pl-4">Events</div>
-          )}
+          <div className="flex-1 pl-4">License</div>
         </div>
         {sortedContractors.map(renderRow)}
       </div>
