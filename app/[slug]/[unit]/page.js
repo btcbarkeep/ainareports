@@ -127,49 +127,41 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     const unitContractors = apiContractors.map((c, index) => ({
       id: c.id || `contractor-${index}`,
       name: c.company_name || c.name || "Contractor",
-      phone: c.phone || "",
+      company_name: c.company_name || c.name || "Contractor",
+      phone: c.contact_phone || c.phone || "",
       count: c.event_count || c.count || 0,
       address: c.address,
-      email: c.email,
+      city: c.city,
+      state: c.state,
+      zip_code: c.zip_code || c.zip,
+      email: c.contact_email || c.email,
+      contact_person: c.contact_person,
+      website: c.website,
       license_number: c.license_number,
+      insurance_info: c.insurance_info,
+      notes: c.notes,
+      roles: c.roles,
     }));
 
     const mostActiveContractor = unitContractors.length > 0 ? unitContractors[0] : null;
 
     // Building contractors (property management companies)
-    // If the API includes unit_ids/unit_numbers, filter to those that manage this unit.
-    // If those fields are absent/empty (already scoped to this unit), show them all.
+    // The API endpoint already filters to only return PM companies with access to this unit
     const buildingContractors = apiBuildingContractors
-      .filter((c) => {
-        const unitIds = Array.isArray(c.unit_ids) ? c.unit_ids : [];
-        const unitNumbers = Array.isArray(c.unit_numbers) ? c.unit_numbers : [];
-        const hasLinkage = unitIds.length > 0 || unitNumbers.length > 0;
-
-        if (!hasLinkage) return true; // assume already scoped by backend
-
-        const managesById = unitIds.some(
-          (id) => id === apiUnit.id || String(id) === String(apiUnit.id)
-        );
-        const managesByNumber = unitNumbers.some(
-          (num) =>
-            num === apiUnit.unit_number ||
-            String(num) === String(apiUnit.unit_number)
-        );
-
-        return managesById || managesByNumber;
-      })
       .slice(0, 5)
       .map((c) => ({
         id: c.id,
         company_name: c.company_name || c.name,
         name: c.company_name || c.name,
-        phone: c.phone || "",
+        phone: c.contact_phone || c.phone || "",
         address: c.address,
         city: c.city,
         state: c.state,
         zip_code: c.zip_code || c.zip,
-        email: c.email,
+        email: c.contact_email || c.email,
+        contact_person: c.contact_person,
         website: c.website,
+        notes: c.notes,
         unit_count: c.unit_count,
       }));
 
@@ -183,6 +175,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       documents,
       mostActiveContractor,
       buildingContractors,
+      unitContractors,
       userDisplayNames,
     };
   } catch (error) {
@@ -284,6 +277,7 @@ export default async function UnitPage({ params, searchParams }) {
     documents,
     mostActiveContractor,
     buildingContractors,
+    unitContractors,
     userDisplayNames,
   } = result;
 
@@ -458,7 +452,7 @@ export default async function UnitPage({ params, searchParams }) {
             {activeTab === "contractors" && (
               <>
                 <h2 className="font-semibold mb-3">Contractors</h2>
-                <ContractorsList contractors={buildingContractors} />
+                <ContractorsList contractors={unitContractors} />
               </>
             )}
           </div>
