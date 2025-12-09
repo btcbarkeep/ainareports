@@ -155,6 +155,8 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       notes: c.notes,
       roles: c.roles,
       subscription_tier: c.subscription_tier,
+      created_at: c.created_at,
+      logo_url: c.logo_url,
     }));
 
     const mostActiveContractor = unitContractors.length > 0 ? unitContractors[0] : null;
