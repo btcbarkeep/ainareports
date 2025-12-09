@@ -83,16 +83,16 @@ export default function PropertyManagementList({ propertyManagers = [] }) {
               </button>
             </div>
             <div className="space-y-2 text-sm text-gray-700">
+              {openPM.contact_person && (
+                <div>
+                  <span className="font-medium">Contact Person:</span>{" "}
+                  {openPM.contact_person}
+                </div>
+              )}
               {openPM.phone && (
                 <div>
                   <span className="font-medium">Phone:</span>{" "}
                   {formatPhone(openPM.phone)}
-                </div>
-              )}
-              {address && (
-                <div>
-                  <span className="font-medium">Address:</span>{" "}
-                  {address}
                 </div>
               )}
               {openPM.email && (
@@ -106,6 +106,12 @@ export default function PropertyManagementList({ propertyManagers = [] }) {
                   </a>
                 </div>
               )}
+              {address && (
+                <div>
+                  <span className="font-medium">Address:</span>{" "}
+                  {address}
+                </div>
+              )}
               {openPM.website && (
                 <div>
                   <span className="font-medium">Website:</span>{" "}
@@ -117,6 +123,12 @@ export default function PropertyManagementList({ propertyManagers = [] }) {
                   >
                     {openPM.website}
                   </a>
+                </div>
+              )}
+              {openPM.notes && openPM.notes !== "string" && (
+                <div>
+                  <span className="font-medium">Notes:</span>{" "}
+                  {openPM.notes}
                 </div>
               )}
               {openPM.unit_count !== undefined && (
