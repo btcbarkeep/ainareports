@@ -490,18 +490,17 @@ export default async function BuildingPage({ params, searchParams }) {
                     </div>
                   ) : (
                     filteredUnits.map((u) => (
-                      <div key={u.id} className="flex px-3 py-2">
-                        <div className="w-1/4">
-                          <Link
-                            href={`/${building.slug}/${u.unit_number}`}
-                            className="underline hover:text-gray-600"
-                          >
-                            {u.unit_number}
-                          </Link>
+                      <Link
+                        key={u.id}
+                        href={`/${building.slug}/${u.unit_number}`}
+                        className="flex px-3 py-2 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="w-1/4 font-medium text-blue-600 hover:text-blue-800">
+                          {u.unit_number}
                         </div>
                         <div className="w-1/4">{u.floor ?? "—"}</div>
                         <div className="w-2/4">{u.owner_name || "—"}</div>
-                      </div>
+                      </Link>
                     ))
                   )}
                 </div>
