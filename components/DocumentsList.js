@@ -11,6 +11,16 @@ function formatDate(dateStr) {
   }
 }
 
+function formatCategory(category) {
+  if (!category) return "—";
+  // Replace underscores with spaces and capitalize each word
+  return category
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export default function DocumentsList({ documents = [], userDisplayNames = {} }) {
   const [openDoc, setOpenDoc] = useState(null);
 
@@ -30,7 +40,7 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
   const renderModal = () => {
     if (!openDoc) return null;
     const downloadLink = buildDownloadLink(openDoc);
-    const filename = openDoc.filename || openDoc.document_type || "Document";
+    const title = openDoc.title || openDoc.filename || openDoc.document_type || "Document";
 
     return (
       <div
@@ -43,7 +53,7 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
         >
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">{filename}</h3>
+              <h3 className="text-lg font-semibold">{title}</h3>
               <button
                 onClick={() => setOpenDoc(null)}
                 className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
@@ -57,10 +67,16 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
               {openDoc.category && (
                 <div>
                   <span className="font-medium">Category:</span>{" "}
-                  <span className="capitalize">{openDoc.category}</span>
+                  {formatCategory(openDoc.category)}
                   {openDoc.subcategory && (
-                    <span className="text-gray-500"> / <span className="capitalize">{openDoc.subcategory.replace(/_/g, ' ')}</span></span>
+                    <span className="text-gray-500"> / {formatCategory(openDoc.subcategory)}</span>
                   )}
+                </div>
+              )}
+              {openDoc.source && (
+                <div>
+                  <span className="font-medium">Source:</span>{" "}
+                  {openDoc.source}
                 </div>
               )}
               <div>
@@ -79,6 +95,18 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
                   <p className="mt-1 whitespace-pre-wrap">
                     {openDoc.description}
                   </p>
+                </div>
+              )}
+              {openDoc.permit_number && (
+                <div>
+                  <span className="font-medium">Permit Number:</span>{" "}
+                  {openDoc.permit_number}
+                </div>
+              )}
+              {openDoc.permit_type && (
+                <div>
+                  <span className="font-medium">Permit Type:</span>{" "}
+                  {openDoc.permit_type}
                 </div>
               )}
             </div>
@@ -103,7 +131,7 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
 
   const renderRow = (doc) => {
     const title = doc.title || doc.filename || doc.document_type || "—";
-    const category = doc.category || "—";
+    const category = formatCategory(doc.category);
     const updatedDate = formatDate(doc.updated_at);
     
     const onKeyDown = (evt) => {
@@ -128,7 +156,7 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
           </div>
         </div>
         <div className="w-1/4 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
-          <div className="truncate capitalize" title={category}>
+          <div className="truncate" title={category}>
             {category}
           </div>
         </div>
