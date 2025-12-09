@@ -85,9 +85,11 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
               </div>
               <div>
                 <span className="font-medium">Uploaded By:</span>{" "}
-                {openDoc.uploaded_by && userDisplayNames[openDoc.uploaded_by]
-                  ? userDisplayNames[openDoc.uploaded_by].role
-                  : "—"}
+                {openDoc.uploaded_by_role ? (
+                  <span className="capitalize">{openDoc.uploaded_by_role}</span>
+                ) : (
+                  "—"
+                )}
               </div>
               {openDoc.description && (
                 <div>
