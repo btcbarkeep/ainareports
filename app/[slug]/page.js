@@ -4,6 +4,7 @@ import EventsList from "@/components/EventsList";
 import DocumentsList from "@/components/DocumentsList";
 import ContractorsList from "@/components/ContractorsList";
 import PremiumUnlockSection from "@/components/PremiumUnlockSection";
+import AOAOBox from "@/components/AOAOBox";
 
 const ROLE_LABELS = {
   super_admin: "Admin",
@@ -134,6 +135,9 @@ const fetchBuildingData = cache(async (slug) => {
   const apiDocuments = publicData.documents || [];
   const apiContractors = publicData.contractors || [];
   const statistics = publicData.statistics || {};
+  // Extract AOAO organizations (use first one if multiple)
+  const aoaoOrganizations = publicData.aoao_organizations || [];
+  const aoao = aoaoOrganizations.length > 0 ? aoaoOrganizations[0] : null;
 
   // Create a map of unit_id -> unit_number for looking up unit numbers
   const unitMap = new Map();
@@ -199,6 +203,7 @@ const fetchBuildingData = cache(async (slug) => {
     })),
     documents,
     mostActiveContractors,
+    aoao,
     totalUnits: statistics.total_units ?? apiUnits.length ?? apiBuilding.units ?? null,
     floors: apiBuilding?.floors ?? null,
     userDisplayNames,
@@ -281,6 +286,7 @@ export default async function BuildingPage({ params, searchParams }) {
     units,
     documents,
     mostActiveContractors,
+    aoao,
     totalUnits,
     floors,
     userDisplayNames,
@@ -431,6 +437,7 @@ export default async function BuildingPage({ params, searchParams }) {
                 <p className="text-gray-700 text-sm leading-relaxed mb-6">
                   {description}
                 </p>
+                <AOAOBox aoao={aoao} />
               </>
             )}
 
