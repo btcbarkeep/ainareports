@@ -11,18 +11,18 @@ function formatDate(dateStr) {
 }
 
 export default function EventsList({ events, userDisplayNames }) {
-  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleEventClick = (event) => {
     // Open modal for all events, regardless of document status
-    setSelectedEventId(event.id);
+    setSelectedEvent(event);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setSelectedEventId(null);
+    setSelectedEvent(null);
   };
 
   return (
@@ -59,17 +59,17 @@ export default function EventsList({ events, userDisplayNames }) {
                   {eventTitle}
                 </div>
               </div>
-              <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+              <div className="w-1/4 min-w-0 pl-4 pr-4 overflow-hidden">
                 <div className="truncate capitalize" title={e.event_type || "—"}>
                   {e.event_type || "—"}
                 </div>
               </div>
-              <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+              <div className="w-1/6 min-w-0 pl-4 pr-4 overflow-hidden">
                 <div className="truncate capitalize" title={e.status || "—"}>
                   {e.status || "—"}
                 </div>
               </div>
-              <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
+              <div className="w-1/6 text-right min-w-0 pl-4 overflow-hidden">
                 <div className="truncate" title={formatDate(e.occurred_at)}>
                   {formatDate(e.occurred_at)}
                 </div>
@@ -80,7 +80,7 @@ export default function EventsList({ events, userDisplayNames }) {
       )}
       
       <EventDocumentModal
-        eventId={selectedEventId}
+        event={selectedEvent}
         isOpen={isModalOpen}
         onClose={closeModal}
       />
