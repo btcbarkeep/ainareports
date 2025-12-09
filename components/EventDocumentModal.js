@@ -1,64 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-export default function EventDocumentModal({ eventId, isOpen, onClose }) {
-  const [document, setDocument] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [documentId, setDocumentId] = useState(null);
-
-  useEffect(() => {
-    if (isOpen && eventId) {
-      fetchDocumentDetails();
-    } else {
-      setDocument(null);
-      setError(null);
-      setDocumentId(null);
-    }
-  }, [isOpen, eventId]);
-
-  async function fetchDocumentDetails() {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/events/${eventId}/document`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError("Event not found");
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          setError(errorData.error || "Failed to load event details");
-        }
-        setLoading(false);
-        return;
-      }
-      const data = await response.json();
-      setDocument(data);
-      
-      // Set document ID if available (the API route now looks it up for us)
-      if (data.document_id) {
-        setDocumentId(data.document_id);
-      }
-    } catch (err) {
-      setError("Failed to load document details");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (!isOpen) return null;
+export default function EventDocumentModal({ event, isOpen, onClose }) {
+  if (!isOpen || !event) return null;
 
   // Check if there's a document attached (s3_key, download_url, document_url, or document_id)
-  const hasDocument = document && (
-    document.s3_key || 
-    document.download_url || 
-    document.document_url || 
-    document.document_id
+  const hasDocument = event && (
+    event.s3_key || 
+    event.download_url || 
+    event.document_url || 
+    event.document_id
   );
 
-  const documentUrl = document?.download_url || document?.document_url;
+  const documentUrl = event?.download_url || event?.document_url;
   const isValidUrl = documentUrl && 
     typeof documentUrl === 'string' && 
     documentUrl.trim() !== '' &&
@@ -69,15 +22,15 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
   if (hasDocument) {
     if (isValidUrl) {
       downloadLink = documentUrl;
-    } else if (documentId || document?.document_id) {
-      // Use the document ID (either from lookup or from event)
-      const docId = documentId || document.document_id;
-      downloadLink = `/api/documents/${docId}/download`;
-    } else if (document?.s3_key) {
-      // Fallback: try events endpoint (though this may not work)
-      downloadLink = `/api/events/${eventId}/download`;
+    } else if (event?.document_id) {
+      downloadLink = `/api/documents/${event.document_id}/download`;
+    } else if (event?.s3_key) {
+      downloadLink = `/api/events/${event.id}/download`;
     }
   }
+
+  // Get unit number from event data
+  const unitNumber = event.unitNumber || event.unit_numbers?.[0] || null;
 
   // Format occurred_at date
   const formatDate = (dateStr) => {
@@ -110,73 +63,59 @@ export default function EventDocumentModal({ eventId, isOpen, onClose }) {
             </button>
           </div>
 
-          {loading && (
-            <div className="text-center py-8 text-gray-500">
-              Loading event details...
+          <div className="space-y-6">
+            {/* Title */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {event.title || "—"}
+              </h3>
             </div>
-          )}
 
-          {error && (
-            <div className="text-center py-8 text-red-500">
-              {error}
-            </div>
-          )}
-
-          {document && !loading && !error && (
-            <div className="space-y-6">
-              {/* Title */}
+            {/* Event Type, Unit Number, Occurred At, and Status */}
+            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+              {event.event_type && (
+                <div>
+                  <span className="font-medium">Type:</span> <span className="capitalize">{event.event_type}</span>
+                </div>
+              )}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {document.title || "—"}
-                </h3>
+                <span className="font-medium">Unit:</span> {unitNumber || "Building"}
               </div>
-
-              {/* Event Type, Unit Number, Occurred At, and Status */}
-              <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                {document.event_type && (
-                  <div>
-                    <span className="font-medium">Type:</span> {document.event_type}
-                  </div>
-                )}
+              {event.occurred_at && (
                 <div>
-                  <span className="font-medium">Unit:</span> {document.unit_number || "Building"}
-                </div>
-                {document.occurred_at && (
-                  <div>
-                    <span className="font-medium">Occurred:</span> {formatDate(document.occurred_at)}
-                  </div>
-                )}
-                {document.status && (
-                  <div>
-                    <span className="font-medium">Status:</span> {document.status}
-                  </div>
-                )}
-              </div>
-
-              {/* Body */}
-              {document.body && (
-                <div>
-                  <div className="text-gray-700 whitespace-pre-wrap">
-                    {document.body}
-                  </div>
+                  <span className="font-medium">Occurred:</span> {formatDate(event.occurred_at)}
                 </div>
               )}
-
-              {/* View Document Button - only if document exists */}
-              {hasDocument && downloadLink && (
-                <div className="pt-4 border-t">
-                  <a
-                    href={downloadLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    View Document
-                  </a>
+              {event.status && (
+                <div>
+                  <span className="font-medium">Status:</span> <span className="capitalize">{event.status}</span>
                 </div>
               )}
             </div>
-          )}
+
+            {/* Body */}
+            {event.body && (
+              <div>
+                <div className="text-gray-700 whitespace-pre-wrap">
+                  {event.body}
+                </div>
+              </div>
+            )}
+
+            {/* View Document Button - only if document exists */}
+            {hasDocument && downloadLink && (
+              <div className="pt-4 border-t">
+                <a
+                  href={downloadLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  View Document
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
