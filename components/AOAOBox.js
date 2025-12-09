@@ -24,7 +24,7 @@ export default function AOAOBox({ aoao }) {
   return (
     <>
       <div
-        className="border border-gray-300 rounded-md p-4 mb-6 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="bg-gray-800 rounded-lg p-6 mb-6 cursor-pointer hover:bg-gray-700 transition-colors shadow-md"
         onClick={() => setIsOpen(true)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -35,23 +35,20 @@ export default function AOAOBox({ aoao }) {
         role="button"
         tabIndex={0}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">
-              AOAO Organization
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="font-semibold text-gray-900">
-                {aoao.organization_name}
-              </div>
-              {aoao.subscription_tier === "paid" && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                  ✓ Certified Partner
-                </span>
-              )}
-            </div>
+        <div className="text-center">
+          <div className="text-xs uppercase tracking-wide text-gray-300 mb-2">
+            AOAO Organization
           </div>
-          <div className="text-gray-400">→</div>
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <div className="font-bold text-white text-lg">
+              {aoao.organization_name}
+            </div>
+            {aoao.subscription_tier === "paid" && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500 text-white border border-amber-400 shadow-sm">
+                ✓ Certified Partner
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
