@@ -141,6 +141,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       insurance_info: c.insurance_info,
       notes: c.notes,
       roles: c.roles,
+      subscription_tier: c.subscription_tier,
     }));
 
     const mostActiveContractor = unitContractors.length > 0 ? unitContractors[0] : null;
@@ -163,6 +164,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
         website: c.website,
         notes: c.notes,
         unit_count: c.unit_count,
+        subscription_tier: c.subscription_tier,
       }));
 
     // USER DISPLAY NAMES
