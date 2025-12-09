@@ -189,7 +189,7 @@ const fetchBuildingData = cache(async (slug) => {
   });
 
   // Map contractors from API response
-  const mostActiveContractors = apiContractors.map((c, index) => {
+  const mappedContractors = apiContractors.map((c, index) => {
     return {
       id: c.id || `contractor-${index}`,
       company_name: c.company_name || c.name || "Contractor",
@@ -209,6 +209,19 @@ const fetchBuildingData = cache(async (slug) => {
       roles: c.roles,
       subscription_tier: c.subscription_tier,
     };
+  });
+
+  // Sort contractors: Certified first, then by event count descending
+  const mostActiveContractors = mappedContractors.sort((a, b) => {
+    const aIsPaid = a.subscription_tier === "paid";
+    const bIsPaid = b.subscription_tier === "paid";
+    
+    // If one is paid and the other isn't, paid comes first
+    if (aIsPaid && !bIsPaid) return -1;
+    if (!aIsPaid && bIsPaid) return 1;
+    
+    // Both same certification status, sort by event count descending
+    return b.count - a.count;
   });
 
   // USER DISPLAY NAMES
@@ -691,11 +704,6 @@ export default async function BuildingPage({ params, searchParams }) {
                     <div className="font-medium">
                       {singleMostActive.name}
                     </div>
-                    {singleMostActive.phone && (
-                      <div className="text-xs text-gray-600 mb-1">
-                        {singleMostActive.phone}
-                      </div>
-                    )}
                     <div className="text-xs text-gray-500">
                       {singleMostActive.count} recent event
                       {singleMostActive.count > 1 ? "s" : ""}
