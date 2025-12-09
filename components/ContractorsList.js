@@ -148,7 +148,7 @@ export default function ContractorsList({ contractors = [] }) {
           <div className="p-6">
             <div className="flex justify-center items-start mb-4 relative">
               <div className="text-center flex-1">
-                {isPaid && openContractor.logo_url && openContractor.logo_url !== "string" && (
+                {openContractor.logo_url && openContractor.logo_url !== "string" && (
                   <div className="mb-3 flex justify-center">
                     <img
                       src={openContractor.logo_url}
