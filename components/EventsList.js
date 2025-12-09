@@ -64,12 +64,12 @@ export default function EventsList({ events, userDisplayNames }) {
                   {e.event_type || "—"}
                 </div>
               </div>
-              <div className="w-1/6 min-w-0 pl-4 pr-4 overflow-hidden">
+              <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
                 <div className="truncate capitalize" title={e.status || "—"}>
                   {e.status || "—"}
                 </div>
               </div>
-              <div className="w-1/6 text-right min-w-0 pl-4 overflow-hidden">
+              <div className="flex-1 text-right min-w-0 pl-4 overflow-hidden">
                 <div className="truncate" title={formatDate(e.occurred_at)}>
                   {formatDate(e.occurred_at)}
                 </div>
