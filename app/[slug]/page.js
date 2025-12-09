@@ -149,6 +149,14 @@ const fetchBuildingData = cache(async (slug) => {
     unitMap.set(unit.id, unit.unit_number);
   });
 
+  // Create a map of event_id -> document for quick lookup
+  const eventDocumentMap = new Map();
+  apiDocuments.forEach((doc) => {
+    if (doc.event_id) {
+      eventDocumentMap.set(doc.event_id, doc);
+    }
+  });
+
   // Map events: use unit_ids array to look up unit numbers
   const events = apiEvents.map((e) => {
     // Events have unit_ids array - get the first unit number if available
@@ -156,10 +164,15 @@ const fetchBuildingData = cache(async (slug) => {
       .map((uid) => unitMap.get(uid))
       .filter(Boolean);
     
+    // Find associated document if it exists
+    const associatedDoc = eventDocumentMap.get(e.id);
+    
     return {
       ...e,
       unitNumber: unitNumbers.length > 0 ? unitNumbers[0] : null,
       unitNumbers: unitNumbers, // Keep all unit numbers for reference
+      // Add document_id from associated document if available
+      document_id: e.document_id || associatedDoc?.id || null,
     };
   });
 
@@ -609,8 +622,8 @@ export default async function BuildingPage({ params, searchParams }) {
                       <div className="flex px-3 py-2 font-semibold text-gray-700">
                         <div className="w-2/5 min-w-0">Title</div>
                         <div className="w-1/4 min-w-0 pl-4">Type</div>
-                        <div className="w-1/6 min-w-0 pl-4">Status</div>
-                        <div className="w-1/6 text-right min-w-0 pl-4">Date</div>
+                        <div className="w-1/5 min-w-0 pl-4">Status</div>
+                        <div className="flex-1 text-right min-w-0 pl-4">Date</div>
                       </div>
 
                       <EventsList
