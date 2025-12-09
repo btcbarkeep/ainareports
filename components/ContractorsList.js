@@ -146,14 +146,17 @@ export default function ContractorsList({ contractors = [] }) {
             </div>
           )}
           <div className="p-6">
-            <div className="flex justify-center items-center mb-6 relative">
-              <div className="text-center">
-                {isPaid && openContractor.logo_url && (
+            <div className="flex justify-center items-start mb-4 relative">
+              <div className="text-center flex-1">
+                {isPaid && openContractor.logo_url && openContractor.logo_url !== "string" && (
                   <div className="mb-3 flex justify-center">
                     <img
                       src={openContractor.logo_url}
                       alt={`${openContractor.company_name || openContractor.name} logo`}
-                      className="h-16 w-auto object-contain"
+                      className="h-16 w-auto object-contain max-w-full"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
                     />
                   </div>
                 )}
@@ -173,24 +176,47 @@ export default function ContractorsList({ contractors = [] }) {
               </button>
             </div>
             
-            <div className="space-y-4 text-sm text-center">
-              {openContractor.contact_person && (
-                <div className="pb-3 border-b border-gray-100">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Contact Person</span>
-                  <div className="text-gray-900 font-medium">{openContractor.contact_person}</div>
-                </div>
-              )}
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                {openContractor.contact_person && (
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Contact Person</span>
+                    <div className="text-gray-900 font-medium">{openContractor.contact_person}</div>
+                  </div>
+                )}
+                
+                {openContractor.license_number && openContractor.license_number !== "string" && (
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">License</span>
+                    <div className="text-gray-900 font-medium">{openContractor.license_number}</div>
+                  </div>
+                )}
+                
+                {openContractor.count !== undefined && (
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Events Completed</span>
+                    <div className="text-gray-900 font-medium">{openContractor.count}</div>
+                  </div>
+                )}
+                
+                {openContractor.created_at && calculateMemberSince(openContractor.created_at) && (
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Member Since</span>
+                    <div className="text-gray-900 font-medium">{calculateMemberSince(openContractor.created_at)}</div>
+                  </div>
+                )}
+              </div>
               
               {address && (
                 <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Address</span>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Address</span>
                   <div className="text-gray-900">{address}</div>
                 </div>
               )}
               
               {openContractor.website && openContractor.website !== "string" && (
                 <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Website</span>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Website</span>
                   <a
                     href={openContractor.website.startsWith('http') ? openContractor.website : `https://${openContractor.website}`}
                     target="_blank"
@@ -204,8 +230,8 @@ export default function ContractorsList({ contractors = [] }) {
               
               {openContractor.roles && Array.isArray(openContractor.roles) && openContractor.roles.length > 0 && (
                 <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Services</span>
-                  <div className="flex flex-wrap gap-1 justify-center">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Services</span>
+                  <div className="flex flex-wrap gap-1">
                     {openContractor.roles.map((role, idx) => (
                       <span key={idx} className="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium capitalize">
                         {role}
@@ -215,37 +241,16 @@ export default function ContractorsList({ contractors = [] }) {
                 </div>
               )}
               
-              {openContractor.license_number && openContractor.license_number !== "string" && (
-                <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">License</span>
-                  <div className="text-gray-900 font-medium">{openContractor.license_number}</div>
-                </div>
-              )}
-              
               {openContractor.insurance_info && openContractor.insurance_info !== "string" && (
                 <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Insurance</span>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Insurance</span>
                   <div className="text-gray-700">{openContractor.insurance_info}</div>
-                </div>
-              )}
-              
-              {openContractor.count !== undefined && (
-                <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Events Completed</span>
-                  <div className="text-gray-900 font-medium">{openContractor.count}</div>
-                </div>
-              )}
-              
-              {openContractor.created_at && calculateMemberSince(openContractor.created_at) && (
-                <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Member Since</span>
-                  <div className="text-gray-900 font-medium">{calculateMemberSince(openContractor.created_at)}</div>
                 </div>
               )}
               
               {openContractor.notes && openContractor.notes !== "string" && (
                 <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Notes</span>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">About</span>
                   <div className="text-gray-700">{openContractor.notes}</div>
                 </div>
               )}
