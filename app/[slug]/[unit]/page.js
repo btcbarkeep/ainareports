@@ -311,9 +311,9 @@ export default async function UnitPage({ params, searchParams }) {
           <ul className="flex gap-6">
             {[
               { id: "details", label: "Details" },
-              { id: "documents", label: "Documents" },
+              { id: "documents", label: "Docs" },
               { id: "events", label: "Events" },
-              { id: "contractors", label: "Contractors" },
+              { id: "contractors", label: "Vendors" },
             ].map((tab) => (
               <li key={tab.id}>
                 <a
