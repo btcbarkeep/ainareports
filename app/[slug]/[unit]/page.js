@@ -2,6 +2,7 @@ import Link from "next/link";
 import EventsList from "@/components/EventsList";
 import DocumentsList from "@/components/DocumentsList";
 import ContractorsList from "@/components/ContractorsList";
+import PropertyManagementList from "@/components/PropertyManagementList";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -135,12 +136,37 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
 
     const mostActiveContractor = unitContractors.length > 0 ? unitContractors[0] : null;
 
-    // Building contractors (property management companies)
-    const buildingContractors = apiBuildingContractors.slice(0, 5).map((c) => ({
-      id: c.id,
-      company_name: c.company_name || c.name,
-      phone: c.phone || "",
-    }));
+    // Building contractors (property management companies) - only those with access to this unit
+    const buildingContractors = apiBuildingContractors
+      .filter((c) => {
+        const unitIds = Array.isArray(c.unit_ids) ? c.unit_ids : [];
+        const unitNumbers = Array.isArray(c.unit_numbers) ? c.unit_numbers : [];
+
+        const managesById = unitIds.some(
+          (id) => id === apiUnit.id || String(id) === String(apiUnit.id)
+        );
+        const managesByNumber = unitNumbers.some(
+          (num) =>
+            num === apiUnit.unit_number ||
+            String(num) === String(apiUnit.unit_number)
+        );
+
+        return managesById || managesByNumber;
+      })
+      .slice(0, 5)
+      .map((c) => ({
+        id: c.id,
+        company_name: c.company_name || c.name,
+        name: c.company_name || c.name,
+        phone: c.phone || "",
+        address: c.address,
+        city: c.city,
+        state: c.state,
+        zip_code: c.zip_code || c.zip,
+        email: c.email,
+        website: c.website,
+        unit_count: c.unit_count,
+      }));
 
     // USER DISPLAY NAMES
     const userDisplayNames = {};
@@ -235,7 +261,7 @@ export async function generateMetadata({ params }) {
 // PAGE
 // -------------------------------------------------------------
 export default async function UnitPage({ params, searchParams }) {
-  const activeTab = searchParams?.tab || "details";
+  const activeTab = searchParams?.tab || "overview";
 
   const result = await fetchUnitWithRelations(params.slug, params.unit);
   if (!result) {
@@ -310,9 +336,10 @@ export default async function UnitPage({ params, searchParams }) {
         <nav className="border-b mb-6 text-sm md:text-base">
           <ul className="flex gap-6">
             {[
-              { id: "details", label: "Details" },
+              { id: "overview", label: "Overview" },
               { id: "documents", label: "Docs" },
               { id: "events", label: "Events" },
+              { id: "property_management", label: "Mgmt" },
               { id: "contractors", label: "Vendors" },
             ].map((tab) => (
               <li key={tab.id}>
@@ -334,8 +361,8 @@ export default async function UnitPage({ params, searchParams }) {
         {/* GRID */}
         <div className="grid md:grid-cols-[3fr,2fr] gap-10">
           <div>
-            {/* ---------------- DETAILS TAB ---------------- */}
-            {activeTab === "details" && (
+            {/* ---------------- OVERVIEW TAB ---------------- */}
+            {activeTab === "overview" && (
               <>
                 <h2 className="font-semibold mb-3">Unit Details</h2>
 
@@ -411,6 +438,14 @@ export default async function UnitPage({ params, searchParams }) {
                     userDisplayNames={userDisplayNames}
                   />
                 </div>
+              </>
+            )}
+
+            {/* ---------------- PROPERTY MANAGEMENT TAB ---------------- */}
+            {activeTab === "property_management" && (
+              <>
+                <h2 className="font-semibold mb-3">Property Management</h2>
+                <PropertyManagementList propertyManagers={buildingContractors} />
               </>
             )}
 
