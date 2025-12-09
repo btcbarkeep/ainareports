@@ -108,12 +108,25 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       return null;
     }
 
+    // Create a map of event_id -> document for quick lookup
+    const eventDocumentMap = new Map();
+    apiDocuments.forEach((doc) => {
+      if (doc.event_id) {
+        eventDocumentMap.set(doc.event_id, doc);
+      }
+    });
+
     // Events: use unit_ids array (for unit page, events should already be filtered to this unit)
     const events = apiEvents.map((e) => {
+      // Find associated document if it exists
+      const associatedDoc = eventDocumentMap.get(e.id);
+      
       // Events have unit_ids array - for unit page, we can just use the unit number
       return {
         ...e,
         unitNumber: apiUnit.unit_number,
+        // Add document_id from associated document if available
+        document_id: e.document_id || associatedDoc?.id || null,
       };
     });
 
@@ -430,8 +443,8 @@ export default async function UnitPage({ params, searchParams }) {
                   <div className="flex px-3 py-2 font-semibold text-gray-700">
                     <div className="w-2/5 min-w-0">Title</div>
                     <div className="w-1/4 min-w-0 pl-4">Type</div>
-                    <div className="w-1/6 min-w-0 pl-4">Status</div>
-                    <div className="w-1/6 text-right min-w-0 pl-4">Date</div>
+                    <div className="w-1/5 min-w-0 pl-4">Status</div>
+                    <div className="flex-1 text-right min-w-0 pl-4">Date</div>
                   </div>
 
                   <EventsList
