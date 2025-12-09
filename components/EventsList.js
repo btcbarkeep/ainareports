@@ -60,13 +60,13 @@ export default function EventsList({ events, userDisplayNames }) {
                 </div>
               </div>
               <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                <div className="truncate" title={e.severity || "—"}>
-                  {e.severity || "—"}
+                <div className="truncate capitalize" title={e.event_type || "—"}>
+                  {e.event_type || "—"}
                 </div>
               </div>
               <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                <div className="truncate" title={userDisplayNames[e.created_by]?.role || "—"}>
-                  {userDisplayNames[e.created_by]?.role || "—"}
+                <div className="truncate capitalize" title={e.status || "—"}>
+                  {e.status || "—"}
                 </div>
               </div>
               <div className="w-1/5 text-right min-w-0 pl-4 overflow-hidden">
