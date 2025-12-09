@@ -17,14 +17,17 @@ export default function EventDocumentModal({ event, isOpen, onClose }) {
     documentUrl.trim() !== '' &&
     (documentUrl.startsWith('http://') || documentUrl.startsWith('https://'));
   
-  // Determine download link
+  // Determine download link - prioritize document_id over s3_key
   let downloadLink = null;
   if (hasDocument) {
     if (isValidUrl) {
+      // Direct URL - use it
       downloadLink = documentUrl;
     } else if (event?.document_id) {
+      // Use document_id to download via documents endpoint (most reliable)
       downloadLink = `/api/documents/${event.document_id}/download`;
     } else if (event?.s3_key) {
+      // Fallback: try events download endpoint (may not work if backend endpoint doesn't exist)
       downloadLink = `/api/events/${event.id}/download`;
     }
   }
