@@ -25,7 +25,7 @@ const TABS = [
   { id: "units", label: "Units" },
   { id: "documents", label: "Docs" },
   { id: "events", label: "Events" },
-  { id: "property_management", label: "Manage" },
+  { id: "property_management", label: "Mgmt" },
   { id: "contractors", label: "Vendors" },
 ];
 
