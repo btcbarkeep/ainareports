@@ -113,8 +113,8 @@ export default function ContractorsList({ contractors = [] }) {
           </div>
         </div>
         <div className="flex-1 text-xs min-w-0 pl-4 overflow-hidden">
-          <div className="truncate" title={licenseNumber || "—"}>
-            {licenseNumber || "—"}
+          <div className="truncate" title={c.count !== undefined ? String(c.count) : "—"}>
+            {c.count !== undefined ? c.count : "—"}
           </div>
         </div>
       </div>
@@ -294,7 +294,7 @@ export default function ContractorsList({ contractors = [] }) {
         <div className="flex px-3 py-2 font-semibold text-gray-700">
           <div className="w-2/5">Name</div>
           <div className="w-1/3 pl-4">Role</div>
-          <div className="flex-1 pl-4">License</div>
+          <div className="flex-1 pl-4">Total Events</div>
         </div>
         {sortedContractors.map(renderRow)}
       </div>
