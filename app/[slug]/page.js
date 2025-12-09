@@ -194,6 +194,7 @@ const fetchBuildingData = cache(async (slug) => {
       insurance_info: c.insurance_info,
       notes: c.notes,
       roles: c.roles,
+      subscription_tier: c.subscription_tier,
     };
   });
 
@@ -229,6 +230,7 @@ const fetchBuildingData = cache(async (slug) => {
       website: pm.website,
       notes: pm.notes,
       unit_count: pm.unit_count,
+      subscription_tier: pm.subscription_tier,
     })),
     aoao,
     totalUnits: statistics.total_units ?? apiUnits.length ?? apiBuilding.units ?? null,
