@@ -606,21 +606,13 @@ export default async function BuildingPage({ params, searchParams }) {
             {activeTab === "contractors" && (
               <>
                 <h2 className="font-semibold mb-3">Contractors</h2>
-                <ContractorsList contractors={mostActiveContractors} />
-                {mostActiveContractors.length >= 5 && (
-                      <>
-                        <p className="text-gray-600 text-sm mt-3">
-                          Showing 5 of {totalContractorsCount} contractors
-                        </p>
-                        <PremiumUnlockSection 
-                          itemType="Contractors" 
-                          buildingName={building.name}
-                          totalDocumentsCount={totalDocumentsCount}
-                          totalEventsCount={totalEventsCount}
-                          totalContractorsCount={totalContractorsCount}
-                        />
-                  </>
-                )}
+                <ContractorsList 
+                  contractors={mostActiveContractors}
+                  totalContractorsCount={totalContractorsCount}
+                  buildingName={building.name}
+                  totalDocumentsCount={totalDocumentsCount}
+                  totalEventsCount={totalEventsCount}
+                />
               </>
             )}
 
