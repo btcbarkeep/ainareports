@@ -100,9 +100,9 @@ export default function ContractorsList({ contractors = [] }) {
     return (
       <div
         key={c.id || `contractor-${index}`}
-        className={`flex items-center px-3 py-2 cursor-pointer relative font-bold ${
+        className={`flex items-center px-3 py-2 cursor-pointer relative ${
           isPaid 
-            ? 'hover:bg-amber-50' 
+            ? 'font-bold hover:bg-amber-50' 
             : 'hover:bg-gray-50'
         }`}
         role="button"
@@ -110,13 +110,11 @@ export default function ContractorsList({ contractors = [] }) {
         onClick={() => setOpenContractor(c)}
         onKeyDown={(e) => onKeyDown(e, c)}
       >
-        {isPaid && (
-          <div className="flex-shrink-0 mr-1.5">
-            <span className="text-amber-500 text-lg">⭐</span>
-          </div>
-        )}
-        <div className="w-2/5 min-w-0 pr-4">
-          <div className="truncate" title={c.company_name || c.name || "Contractor"}>
+        <div className="w-2/5 min-w-0 pr-4 relative">
+          {isPaid && (
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 text-amber-500 text-sm">⭐</span>
+          )}
+          <div className={`truncate ${isPaid ? 'pl-5' : ''}`} title={c.company_name || c.name || "Contractor"}>
             {c.company_name || c.name || "Contractor"}
           </div>
         </div>
