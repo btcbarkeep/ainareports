@@ -237,12 +237,18 @@ const fetchBuildingData = cache(async (slug) => {
   return {
     building: apiBuilding,
     events,
-    units: apiUnits.map((u) => ({
-      id: u.id,
-      unit_number: u.unit_number,
-      floor: u.floor,
-      owner_name: u.owner_name,
-    })),
+    units: apiUnits.map((u) => {
+      // Check if any owner has paid subscription
+      const hasPaidOwner = u.owners && Array.isArray(u.owners) && u.owners.some(owner => owner.subscription_tier === "paid");
+      return {
+        id: u.id,
+        unit_number: u.unit_number,
+        floor: u.floor,
+        owner_name: u.owner_name,
+        owners: u.owners || [],
+        hasPaidOwner,
+      };
+    }),
     documents,
     mostActiveContractors,
     propertyManagers: apiPropertyManagers.map((pm) => ({
@@ -527,8 +533,20 @@ export default async function BuildingPage({ params, searchParams }) {
                       <Link
                         key={u.id}
                         href={`/${building.slug}/${u.unit_number}`}
-                        className="flex px-3 py-2 hover:bg-gray-50 transition-colors"
+                        className={`flex px-3 py-2 transition-colors relative group ${
+                          u.hasPaidOwner 
+                            ? 'font-bold hover:bg-amber-50' 
+                            : 'hover:bg-gray-50'
+                        }`}
                       >
+                        {u.hasPaidOwner && (
+                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10 border border-gray-200">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-amber-500 text-[10px]">⭐</span>
+                              <span>Premium Unit Owner — Verified by Aina Protocol</span>
+                            </div>
+                          </div>
+                        )}
                         <div className="w-1/5 min-w-0 pr-4 overflow-hidden">
                           <div className="font-medium text-blue-600 hover:text-blue-800 truncate" title={u.unit_number}>
                             {u.unit_number}
@@ -540,14 +558,25 @@ export default async function BuildingPage({ params, searchParams }) {
                           </div>
                         </div>
                         <div className="flex-1 min-w-0 pl-4 overflow-hidden">
-                          <div className="truncate" title={u.owner_name || "—"}>
-                            {u.owner_name || "—"}
+                          <div className="truncate flex items-center gap-1.5" title={u.owner_name || "—"}>
+                            {u.hasPaidOwner && (
+                              <span className="text-amber-500 text-[10px] leading-none flex-shrink-0">⭐</span>
+                            )}
+                            <span className="min-w-0">{u.owner_name || "—"}</span>
                           </div>
                         </div>
                       </Link>
                     ))
                   )}
                 </div>
+                {filteredUnits.some(u => u.hasPaidOwner) && (
+                  <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-200 mt-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-amber-500 text-[10px]">⭐</span>
+                      <span>Premium Unit Owner — Verified by Aina Protocol</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Search Units Bar */}
                 <div className="mt-4">
