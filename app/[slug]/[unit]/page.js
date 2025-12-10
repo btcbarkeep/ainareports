@@ -180,6 +180,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
         notes: c.notes,
         unit_count: c.unit_count,
         subscription_tier: c.subscription_tier,
+        license_number: c.license_number,
       }));
 
     // USER DISPLAY NAMES
