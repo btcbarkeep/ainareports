@@ -76,11 +76,11 @@ export default function PropertyManagementList({
             </div>
           </div>
         )}
-        <div className="w-2/5 min-w-0 pr-4 relative flex-shrink-0">
+        <div className="w-2/5 min-w-0 pr-4 relative flex-shrink-0 overflow-hidden">
           {isPaid && (
-            <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] leading-none">⭐</span>
+            <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] leading-none z-10">⭐</span>
           )}
-          <div className={`truncate overflow-hidden ${isPaid ? 'pl-3' : ''}`} title={pm.company_name || pm.name || "Property Manager"}>
+          <div className={`truncate ${isPaid ? 'pl-3' : ''}`} title={pm.company_name || pm.name || "Property Manager"}>
             {pm.company_name || pm.name || "Property Manager"}
           </div>
         </div>
@@ -269,8 +269,8 @@ export default function PropertyManagementList({
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
           <div className="w-2/5 min-w-0">Name</div>
-          <div className="w-1/3 min-w-0 pl-4 pr-4 overflow-hidden flex items-center">
-            <span className="ml-5">License</span>
+          <div className="w-1/3 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">
+            <span>License</span>
           </div>
           <div className="flex-1 min-w-0 pl-4 overflow-hidden text-center">Units</div>
         </div>
