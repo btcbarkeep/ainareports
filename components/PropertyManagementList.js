@@ -18,6 +18,34 @@ function formatAddress(pm) {
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
+function calculateMemberSince(createdAt) {
+  if (!createdAt) return null;
+  
+  try {
+    const created = new Date(createdAt);
+    const now = new Date();
+    const diffTime = Math.abs(now - created);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 30) {
+      return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+    } else if (diffDays < 365) {
+      const months = Math.floor(diffDays / 30);
+      return `${months} month${months !== 1 ? 's' : ''}`;
+    } else {
+      const years = Math.floor(diffDays / 365);
+      const remainingMonths = Math.floor((diffDays % 365) / 30);
+      if (remainingMonths === 0) {
+        return `${years} year${years !== 1 ? 's' : ''}`;
+      } else {
+        return `${years} year${years !== 1 ? 's' : ''}, ${remainingMonths} month${remainingMonths !== 1 ? 's' : ''}`;
+      }
+    }
+  } catch {
+    return null;
+  }
+}
+
 export default function PropertyManagementList({ 
   propertyManagers = [],
   totalPropertyManagersCount = 0,
@@ -162,13 +190,6 @@ export default function PropertyManagementList({
             
             <div className="space-y-3 text-sm">
               <div className="grid grid-cols-2 gap-3">
-                {openPM.contact_person && (
-                  <div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Contact Person</span>
-                    <div className="text-gray-900 font-medium">{openPM.contact_person}</div>
-                  </div>
-                )}
-                
                 {openPM.phone && (
                   <div>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Phone</span>
@@ -195,6 +216,13 @@ export default function PropertyManagementList({
                   <div>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Units Managed</span>
                     <div className="text-gray-900 font-medium">{openPM.unit_count}</div>
+                  </div>
+                )}
+                
+                {openPM.created_at && calculateMemberSince(openPM.created_at) && (
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Member Since</span>
+                    <div className="text-gray-900 font-medium">{calculateMemberSince(openPM.created_at)}</div>
                   </div>
                 )}
               </div>
