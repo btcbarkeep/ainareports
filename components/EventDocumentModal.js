@@ -45,6 +45,15 @@ export default function EventDocumentModal({ event, isOpen, onClose }) {
     }
   };
 
+  // Get severity styling
+  const severity = event.severity?.toLowerCase() || "";
+  const getSeverityBadgeClass = () => {
+    if (severity === "high") return "bg-red-100 text-red-800";
+    if (severity === "medium") return "bg-amber-100 text-amber-800";
+    if (severity === "low") return "bg-green-100 text-green-800";
+    return "bg-gray-100 text-gray-800";
+  };
+
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -74,7 +83,7 @@ export default function EventDocumentModal({ event, isOpen, onClose }) {
               </h3>
             </div>
 
-            {/* Event Type, Unit Number, Occurred At, and Status */}
+            {/* Event Type, Unit Number, Occurred At, Status, and Severity */}
             <div className="flex flex-wrap gap-4 text-sm text-gray-600">
               {event.event_type && (
                 <div>
@@ -92,6 +101,14 @@ export default function EventDocumentModal({ event, isOpen, onClose }) {
               {event.status && (
                 <div>
                   <span className="font-medium">Status:</span> <span className="capitalize">{event.status}</span>
+                </div>
+              )}
+              {event.severity && (
+                <div>
+                  <span className="font-medium">Severity:</span>{" "}
+                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium capitalize ${getSeverityBadgeClass()}`}>
+                    {event.severity}
+                  </span>
                 </div>
               )}
             </div>
