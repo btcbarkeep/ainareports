@@ -158,12 +158,10 @@ export default function ContractorsList({ contractors = [] }) {
           onClick={(e) => e.stopPropagation()}
         >
           {isPaid && (
-            <div className="bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200 px-6 py-3 rounded-t-lg">
-              <div className="flex items-center justify-center gap-2">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-amber-500 text-white">
-                  ⭐ Aina Certified
-                </span>
-                <span className="text-xs text-amber-700">Verified Professional</span>
+            <div className="bg-gray-100 border-b border-gray-200 px-6 py-3 rounded-t-lg">
+              <div className="flex items-center justify-center gap-1.5 text-sm text-gray-700">
+                <span className="text-amber-500 text-[10px]">⭐</span>
+                <span>Premium Contractor — Verified by Aina Protocol</span>
               </div>
             </div>
           )}
