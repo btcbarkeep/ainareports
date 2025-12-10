@@ -306,7 +306,7 @@ export default function PropertyManagementList({
             buildingName={buildingName}
             totalDocumentsCount={totalDocumentsCount}
             totalEventsCount={totalEventsCount}
-            totalContractorsCount={totalPropertyManagersCount || sortedPMs.length}
+            totalContractorsCount={0}
           />
         </>
       )}
