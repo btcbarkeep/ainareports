@@ -510,10 +510,10 @@ export default async function BuildingPage({ params, searchParams }) {
               <>
                 <h2 className="font-semibold mb-3">Units</h2>
                 <div className="border rounded-md divide-y text-sm">
-                  <div className="flex px-3 py-2 font-medium text-gray-700">
-                    <div className="w-1/4">Unit</div>
-                    <div className="w-1/4">Floor</div>
-                    <div className="w-2/4">Owner</div>
+                  <div className="flex px-3 py-2 font-semibold text-gray-700">
+                    <div className="w-1/5 min-w-0">Unit</div>
+                    <div className="w-1/5 min-w-0 pl-4">Floor</div>
+                    <div className="flex-1 min-w-0 pl-4">Owner</div>
                   </div>
 
                   {filteredUnits.length === 0 ? (
@@ -529,11 +529,21 @@ export default async function BuildingPage({ params, searchParams }) {
                         href={`/${building.slug}/${u.unit_number}`}
                         className="flex px-3 py-2 hover:bg-gray-50 transition-colors"
                       >
-                        <div className="w-1/4 font-medium text-blue-600 hover:text-blue-800">
-                          {u.unit_number}
+                        <div className="w-1/5 min-w-0 pr-4 overflow-hidden">
+                          <div className="font-medium text-blue-600 hover:text-blue-800 truncate" title={u.unit_number}>
+                            {u.unit_number}
+                          </div>
                         </div>
-                        <div className="w-1/4">{u.floor ?? "—"}</div>
-                        <div className="w-2/4">{u.owner_name || "—"}</div>
+                        <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                          <div className="truncate" title={u.floor?.toString() || "—"}>
+                            {u.floor ?? "—"}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0 pl-4 overflow-hidden">
+                          <div className="truncate" title={u.owner_name || "—"}>
+                            {u.owner_name || "—"}
+                          </div>
+                        </div>
                       </Link>
                     ))
                   )}
