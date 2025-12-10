@@ -154,6 +154,9 @@ export default function ContractorsList({ contractors = [] }) {
                       src={openContractor.logo_url}
                       alt={`${openContractor.company_name || openContractor.name} logo`}
                       className="h-16 w-auto object-contain max-w-full"
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
                       onError={(e) => {
                         e.target.style.display = 'none';
                       }}
