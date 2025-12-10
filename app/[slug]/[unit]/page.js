@@ -103,6 +103,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     const apiDocuments = publicData.documents || [];
     const apiContractors = publicData.contractors || [];
     const apiBuildingContractors = publicData.property_management_companies || [];
+    const statistics = publicData.statistics || {};
 
     if (!apiUnit || !apiBuilding) {
       return null;
@@ -168,7 +169,6 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     // Building contractors (property management companies)
     // The API endpoint already filters to only return PM companies with access to this unit
     const buildingContractors = apiBuildingContractors
-      .slice(0, 5)
       .map((c) => ({
         id: c.id,
         company_name: c.company_name || c.name,
@@ -192,11 +192,11 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     // USER DISPLAY NAMES
     const userDisplayNames = {};
 
-    // Calculate totals for unlock section
-    const totalContractorsCount = apiContractors.length;
-    const totalDocumentsCount = apiDocuments.length;
-    const totalEventsCount = apiEvents.length;
-    const totalPropertyManagersCount = apiBuildingContractors.length;
+    // Calculate totals for unlock section (use statistics if available, otherwise use array lengths)
+    const totalContractorsCount = statistics.total_contractors ?? apiContractors.length ?? 0;
+    const totalDocumentsCount = statistics.total_documents ?? apiDocuments.length ?? 0;
+    const totalEventsCount = statistics.total_events ?? apiEvents.length ?? 0;
+    const totalPropertyManagersCount = statistics.total_property_managers ?? apiBuildingContractors.length ?? 0;
 
     return {
       building: apiBuilding,
