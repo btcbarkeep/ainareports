@@ -32,7 +32,8 @@ export default function EventsList({ events, userDisplayNames }) {
           No events recorded yet.
         </div>
       ) : (
-        events.map((e) => {
+        <>
+          {events.map((e) => {
           const eventTitle = e.title || "—";
           const severity = e.severity?.toLowerCase() || "";
           
@@ -77,14 +78,9 @@ export default function EventsList({ events, userDisplayNames }) {
                   {eventTitle}
                 </div>
               </div>
-              <div className="w-1/4 min-w-0 pl-4 pr-4 overflow-hidden">
+              <div className="w-1/3 min-w-0 pl-4 pr-4 overflow-hidden">
                 <div className="truncate capitalize" title={e.event_type || "—"}>
                   {e.event_type || "—"}
-                </div>
-              </div>
-              <div className="w-1/5 min-w-0 pl-4 pr-4 overflow-hidden">
-                <div className="truncate capitalize" title={e.status || "—"}>
-                  {e.status || "—"}
                 </div>
               </div>
               <div className="flex-1 text-right min-w-0 pl-4 overflow-hidden">
@@ -94,7 +90,24 @@ export default function EventsList({ events, userDisplayNames }) {
               </div>
             </div>
           );
-        })
+          })}
+          <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-200">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 bg-red-50 border border-red-200 rounded"></div>
+                <span>High Severity</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 bg-amber-50 border border-amber-200 rounded"></div>
+                <span>Medium Severity</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 bg-green-50 border border-green-200 rounded"></div>
+                <span>Low Severity</span>
+              </div>
+            </div>
+          </div>
+        </>
       )}
       
       <EventDocumentModal
