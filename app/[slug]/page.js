@@ -271,7 +271,7 @@ const fetchBuildingData = cache(async (slug) => {
     totalDocumentsCount: statistics.total_documents ?? apiDocuments.length ?? 0,
     totalEventsCount: statistics.total_events ?? apiEvents.length ?? 0,
     totalContractorsCount: statistics.total_contractors ?? mostActiveContractors.length ?? 0,
-    totalPropertyManagersCount: statistics.total_property_managers ?? apiPropertyManagers.length ?? 0,
+    totalPropertyManagersCount: statistics.total_pm_companies ?? apiPropertyManagers.length ?? 0,
   };
 });
 
