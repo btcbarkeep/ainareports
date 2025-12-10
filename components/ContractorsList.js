@@ -107,13 +107,13 @@ export default function ContractorsList({ contractors = [] }) {
             )}
           </div>
         </div>
-        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
+        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center">
           <div className="truncate" title={roleText}>
             {roleText}
           </div>
         </div>
-        <div className="flex-1 text-xs min-w-0 pl-4 overflow-hidden">
-          <div className="truncate text-center" title={c.count !== undefined ? String(c.count) : "—"}>
+        <div className="flex-1 text-xs min-w-0 pl-4 overflow-hidden flex items-center justify-center">
+          <div className="truncate" title={c.count !== undefined ? String(c.count) : "—"}>
             {c.count !== undefined ? c.count : "—"}
           </div>
         </div>
