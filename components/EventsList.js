@@ -78,7 +78,7 @@ export default function EventsList({ events, userDisplayNames }) {
                   {eventTitle}
                 </div>
               </div>
-              <div className="w-1/3 min-w-0 pl-6 pr-4 overflow-hidden">
+              <div className="w-1/3 min-w-0 pl-8 pr-4 overflow-hidden">
                 <div className="truncate capitalize" title={e.event_type || "—"}>
                   {e.event_type || "—"}
                 </div>
