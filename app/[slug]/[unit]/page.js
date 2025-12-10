@@ -181,6 +181,8 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
         unit_count: c.unit_count,
         subscription_tier: c.subscription_tier,
         license_number: c.license_number || c.license,
+        logo_url: c.logo_url,
+        created_at: c.created_at,
       }));
 
     // USER DISPLAY NAMES
@@ -190,6 +192,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     const totalContractorsCount = apiContractors.length;
     const totalDocumentsCount = apiDocuments.length;
     const totalEventsCount = apiEvents.length;
+    const totalPropertyManagersCount = apiBuildingContractors.length;
 
     return {
       building: apiBuilding,
@@ -203,6 +206,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       totalContractorsCount,
       totalDocumentsCount,
       totalEventsCount,
+      totalPropertyManagersCount,
     };
   } catch (error) {
     console.error("Error in fetchUnitWithRelations:", error);
@@ -308,6 +312,7 @@ export default async function UnitPage({ params, searchParams }) {
     totalContractorsCount,
     totalDocumentsCount,
     totalEventsCount,
+    totalPropertyManagersCount,
   } = result;
 
   const addressLine = formatAddress(building);
@@ -473,7 +478,13 @@ export default async function UnitPage({ params, searchParams }) {
             {activeTab === "property_management" && (
               <>
                 <h2 className="font-semibold mb-3">Property Management</h2>
-                <PropertyManagementList propertyManagers={buildingContractors} />
+                <PropertyManagementList 
+                  propertyManagers={buildingContractors}
+                  totalPropertyManagersCount={totalPropertyManagersCount}
+                  buildingName={building.name}
+                  totalDocumentsCount={totalDocumentsCount}
+                  totalEventsCount={totalEventsCount}
+                />
               </>
             )}
 
