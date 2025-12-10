@@ -38,7 +38,7 @@ export default function PropertyManagementList({ propertyManagers = [] }) {
         onClick={() => setOpenPM(pm)}
         onKeyDown={(e) => onKeyDown(e, pm)}
       >
-        <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
+        <div className="w-1/2 min-w-0 pr-4 overflow-hidden">
           <div className="flex items-center gap-2">
             <div className="font-medium truncate" title={pm.company_name || pm.name || "Property Manager"}>
               {pm.company_name || pm.name || "Property Manager"}
@@ -50,12 +50,12 @@ export default function PropertyManagementList({ propertyManagers = [] }) {
             )}
           </div>
         </div>
-        <div className="w-2/5 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
+        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
           <div className="truncate" title={pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}>
             {pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}
           </div>
         </div>
-        <div className="w-1/5 text-right text-xs min-w-0 pl-4 overflow-hidden">
+        <div className="w-1/6 text-right text-xs min-w-0 pl-4 overflow-hidden">
           {pm.unit_count !== undefined && (
             <div className="truncate" title={pm.unit_count?.toString() || "0"}>
               {pm.unit_count || 0}
@@ -209,10 +209,10 @@ export default function PropertyManagementList({ propertyManagers = [] }) {
     <>
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
-          <div className="w-2/5">Name</div>
-          <div className="w-2/5">License</div>
+          <div className="w-1/2">Name</div>
+          <div className="w-1/3">License</div>
           {propertyManagers.some(pm => pm.unit_count !== undefined) && (
-            <div className="w-1/5 text-right">Units</div>
+            <div className="w-1/6 text-right">Units</div>
           )}
         </div>
         {propertyManagers.map(renderRow)}
