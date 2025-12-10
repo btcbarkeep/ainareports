@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PremiumUnlockSection from "./PremiumUnlockSection";
 
 function formatPhone(phone) {
   if (!phone) return "—";
@@ -66,7 +67,13 @@ function getRoleIcon(role) {
   return iconMap[roleLower] || "📋";
 }
 
-export default function ContractorsList({ contractors = [] }) {
+export default function ContractorsList({ 
+  contractors = [],
+  totalContractorsCount = 0,
+  buildingName = "",
+  totalDocumentsCount = 0,
+  totalEventsCount = 0,
+}) {
   const [openContractor, setOpenContractor] = useState(null);
 
   const onKeyDown = (evt, contractor) => {
@@ -90,6 +97,10 @@ export default function ContractorsList({ contractors = [] }) {
     const bCount = b.count || b.event_count || 0;
     return bCount - aCount;
   });
+
+  // Limit to 5 contractors for display
+  const displayedContractors = sortedContractors.slice(0, 5);
+  const hasMoreContractors = totalContractorsCount > 5 || sortedContractors.length > 5;
 
   const renderRow = (c, index) => {
     const isPaid = c.subscription_tier === "paid";
@@ -343,7 +354,7 @@ export default function ContractorsList({ contractors = [] }) {
           </div>
           <div className="flex-1 pl-4 text-center">Total Events</div>
         </div>
-        {sortedContractors.map(renderRow)}
+        {displayedContractors.map(renderRow)}
         <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-200">
           <div className="flex items-center gap-1.5">
             <span className="text-amber-500 text-[10px]">⭐</span>
@@ -351,6 +362,20 @@ export default function ContractorsList({ contractors = [] }) {
           </div>
         </div>
       </div>
+      {hasMoreContractors && (
+        <>
+          <p className="text-gray-600 text-sm mt-3">
+            Showing 5 of {totalContractorsCount || sortedContractors.length} contractors
+          </p>
+          <PremiumUnlockSection 
+            itemType="Contractors" 
+            buildingName={buildingName}
+            totalDocumentsCount={totalDocumentsCount}
+            totalEventsCount={totalEventsCount}
+            totalContractorsCount={totalContractorsCount || sortedContractors.length}
+          />
+        </>
+      )}
       {renderModal()}
     </>
   );
