@@ -100,7 +100,16 @@ export default function EventDocumentModal({ event, isOpen, onClose }) {
               )}
               {event.status && (
                 <div>
-                  <span className="font-medium">Status:</span> <span className="capitalize">{event.status}</span>
+                  <span className="font-medium">Status:</span>{" "}
+                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium capitalize ${
+                    event.status.toLowerCase() === "open" 
+                      ? "bg-red-100 text-red-800" 
+                      : event.status.toLowerCase() === "resolved"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}>
+                    {event.status}
+                  </span>
                 </div>
               )}
               {event.severity && (
