@@ -348,11 +348,11 @@ export default function ContractorsList({
     <>
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
-          <div className="w-2/5">Name</div>
-          <div className="w-1/3 pl-4 flex items-center">
+          <div className="w-2/5 min-w-0">Name</div>
+          <div className="w-1/3 min-w-0 pl-4 pr-4 overflow-hidden flex items-center">
             <span className="ml-5">Role</span>
           </div>
-          <div className="flex-1 pl-4 text-center">Total Events</div>
+          <div className="flex-1 min-w-0 pl-4 overflow-hidden text-center">Total Events</div>
         </div>
         {displayedContractors.map(renderRow)}
         <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-200">
