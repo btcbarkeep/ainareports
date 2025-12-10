@@ -89,7 +89,7 @@ export default function PropertyManagementList({
             {pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}
           </div>
         </div>
-        <div className="w-1/6 text-xs min-w-0 pl-4 overflow-hidden flex items-center justify-center flex-shrink-0">
+        <div className="w-1/6 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center flex-shrink-0">
           {pm.unit_count !== undefined && (
             <div className="truncate overflow-hidden" title={pm.unit_count?.toString() || "0"}>
               {pm.unit_count || 0}
@@ -208,19 +208,7 @@ export default function PropertyManagementList({
                 </div>
               )}
               
-              {openPM.email && (
-                <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Email</span>
-                  <a
-                    href={`mailto:${openPM.email}`}
-                    className="text-blue-600 hover:text-blue-800 font-medium break-all"
-                  >
-                    {openPM.email}
-                  </a>
-                </div>
-              )}
-              
-              {openPM.website && openPM.website !== "string" && (
+              {isPaid && openPM.website && openPM.website !== "string" && (
                 <div>
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Website</span>
                   <a
@@ -234,7 +222,7 @@ export default function PropertyManagementList({
                 </div>
               )}
               
-              {openPM.notes && openPM.notes !== "string" && (
+              {isPaid && openPM.notes && openPM.notes !== "string" && (
                 <div>
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">About</span>
                   <div className="text-gray-700">{openPM.notes}</div>
