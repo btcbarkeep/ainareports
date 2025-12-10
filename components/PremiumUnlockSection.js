@@ -7,30 +7,13 @@ export default function PremiumUnlockSection({
 }) {
   const itemTypeLower = itemType.toLowerCase();
   
-  const unlockItems = {
-    documents: [
-      `All documents (${totalDocumentsCount} total)`,
-      "All events",
-      "Contractor history",
-    ],
-    events: [
-      "All events",
-      "All documents",
-      "Contractor history",
-    ],
-    contractors: [
-      "All contractors",
-      "All documents",
-      "All events",
-    ],
-    "property managers": [
-      "All property managers",
-      "All documents",
-      "All events",
-    ],
-  };
-
-  const items = unlockItems[itemTypeLower] || unlockItems.documents;
+  // Always show the same 4 items with counts
+  const items = [
+    `All events (${totalEventsCount})`,
+    `All documents (${totalDocumentsCount})`,
+    "Full Contractor history",
+    "AOAO, PM, Contractor Notes",
+  ];
 
   return (
     <div className="mt-6 border rounded-md p-4 bg-gray-50 text-sm">
