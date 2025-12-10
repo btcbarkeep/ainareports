@@ -100,9 +100,9 @@ export default function ContractorsList({ contractors = [] }) {
     return (
       <div
         key={c.id || `contractor-${index}`}
-        className={`flex items-center px-3 py-2 cursor-pointer ${
+        className={`flex items-center px-3 py-2 cursor-pointer relative ${
           isPaid 
-            ? 'bg-amber-50 hover:bg-amber-100 border-l-4 border-amber-400' 
+            ? 'bg-amber-50 hover:bg-amber-100' 
             : 'hover:bg-gray-50'
         }`}
         role="button"
@@ -111,7 +111,7 @@ export default function ContractorsList({ contractors = [] }) {
         onKeyDown={(e) => onKeyDown(e, c)}
       >
         {isPaid && (
-          <div className="flex-shrink-0 mr-2 w-5 h-5 flex items-center justify-center">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center">
             <img 
               src="/aina-logo-dark.png" 
               alt="Aina Certified" 
@@ -119,8 +119,8 @@ export default function ContractorsList({ contractors = [] }) {
             />
           </div>
         )}
-        <div className={`w-2/5 min-w-0 ${isPaid ? 'pr-4' : 'pr-4'}`}>
-          <div className="truncate" title={c.company_name || c.name || "Contractor"}>
+        <div className="w-2/5 min-w-0 pr-4">
+          <div className={`truncate ${isPaid ? 'pl-7' : ''}`} title={c.company_name || c.name || "Contractor"}>
             {c.company_name || c.name || "Contractor"}
           </div>
         </div>
