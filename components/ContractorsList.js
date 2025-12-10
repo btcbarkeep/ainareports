@@ -112,7 +112,7 @@ export default function ContractorsList({ contractors = [] }) {
       >
         <div className="w-2/5 min-w-0 pr-4 relative">
           {isPaid && (
-            <span className="absolute left-0 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] leading-none">⭐</span>
+            <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] leading-none">⭐</span>
           )}
           <div className={`truncate ${isPaid ? 'pl-4' : ''}`} title={c.company_name || c.name || "Contractor"}>
             {c.company_name || c.name || "Contractor"}
