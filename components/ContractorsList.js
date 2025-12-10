@@ -85,7 +85,7 @@ export default function ContractorsList({ contractors = [] }) {
     return (
       <div
         key={c.id || `contractor-${index}`}
-        className={`flex px-3 py-2 cursor-pointer ${
+        className={`flex items-center px-3 py-2 cursor-pointer ${
           isPaid 
             ? 'bg-amber-50 hover:bg-amber-100 border-l-4 border-amber-400' 
             : 'hover:bg-gray-50'
@@ -113,7 +113,7 @@ export default function ContractorsList({ contractors = [] }) {
           </div>
         </div>
         <div className="flex-1 text-xs min-w-0 pl-4 overflow-hidden">
-          <div className="truncate" title={c.count !== undefined ? String(c.count) : "—"}>
+          <div className="truncate text-center" title={c.count !== undefined ? String(c.count) : "—"}>
             {c.count !== undefined ? c.count : "—"}
           </div>
         </div>
@@ -123,7 +123,6 @@ export default function ContractorsList({ contractors = [] }) {
 
   const renderModal = () => {
     if (!openContractor) return null;
-    const address = formatAddress(openContractor);
     const isPaid = openContractor.subscription_tier === "paid";
     
     return (
@@ -132,7 +131,7 @@ export default function ContractorsList({ contractors = [] }) {
         onClick={() => setOpenContractor(null)}
       >
         <div
-          className={`bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 ${isPaid ? 'border-2 border-amber-300' : ''}`}
+          className={`bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 ${isPaid ? 'border-2 border-amber-300' : 'border border-gray-200'}`}
           onClick={(e) => e.stopPropagation()}
         >
           {isPaid && (
@@ -142,6 +141,15 @@ export default function ContractorsList({ contractors = [] }) {
                   ⭐ Aina Certified
                 </span>
                 <span className="text-xs text-amber-700">Verified Professional</span>
+              </div>
+            </div>
+          )}
+          {!isPaid && (
+            <div className="border-b border-gray-200 px-6 py-4">
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {openContractor.company_name || openContractor.name || "Contractor"}
+                </h3>
               </div>
             </div>
           )}
@@ -163,11 +171,13 @@ export default function ContractorsList({ contractors = [] }) {
                     />
                   </div>
                 )}
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
-                  {openContractor.company_name || openContractor.name || "Contractor"}
-                </h3>
                 {isPaid && (
-                  <p className="text-xs text-gray-600">Trusted service provider</p>
+                  <>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">
+                      {openContractor.company_name || openContractor.name || "Contractor"}
+                    </h3>
+                    <p className="text-xs text-gray-600">Trusted service provider</p>
+                  </>
                 )}
               </div>
               <button
@@ -185,6 +195,17 @@ export default function ContractorsList({ contractors = [] }) {
                   <div>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Contact Person</span>
                     <div className="text-gray-900 font-medium">{openContractor.contact_person}</div>
+                  </div>
+                )}
+                
+                {openContractor.phone && (
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Phone</span>
+                    <div className="text-gray-900 font-medium">
+                      <a href={`tel:${openContractor.phone.replace(/\D/g, '')}`} className="text-blue-600 hover:text-blue-800">
+                        {formatPhone(openContractor.phone)}
+                      </a>
+                    </div>
                   </div>
                 )}
                 
@@ -209,13 +230,6 @@ export default function ContractorsList({ contractors = [] }) {
                   </div>
                 )}
               </div>
-              
-              {address && (
-                <div>
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Address</span>
-                  <div className="text-gray-900">{address}</div>
-                </div>
-              )}
               
               {openContractor.website && openContractor.website !== "string" && (
                 <div>
@@ -297,7 +311,7 @@ export default function ContractorsList({ contractors = [] }) {
         <div className="flex px-3 py-2 font-semibold text-gray-700">
           <div className="w-2/5">Name</div>
           <div className="w-1/3 pl-4">Role</div>
-          <div className="flex-1 pl-4">Total Events</div>
+          <div className="flex-1 pl-4 text-center">Total Events</div>
         </div>
         {sortedContractors.map(renderRow)}
       </div>
