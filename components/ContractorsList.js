@@ -111,8 +111,11 @@ export default function ContractorsList({ contractors = [] }) {
         onKeyDown={(e) => onKeyDown(e, c)}
       >
         {isPaid && (
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 bg-gray-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">
-            Premium Contractor — Verified by Aina Protocol
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10 border border-gray-200">
+            <div className="flex items-center gap-1.5">
+              <span className="text-amber-500 text-[10px]">⭐</span>
+              <span>Premium Contractor — Verified by Aina Protocol</span>
+            </div>
           </div>
         )}
         <div className="w-2/5 min-w-0 pr-4 relative">
