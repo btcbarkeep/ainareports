@@ -1,6 +1,8 @@
 "use client";
 
-export default function EventDocumentModal({ event, isOpen, onClose }) {
+import Link from "next/link";
+
+export default function EventDocumentModal({ event, isOpen, onClose, buildingSlug }) {
   if (!isOpen || !event) return null;
 
   // Check if there's a document attached (s3_key, download_url, document_url, or document_id)
@@ -32,8 +34,11 @@ export default function EventDocumentModal({ event, isOpen, onClose }) {
     }
   }
 
-  // Get unit number from event data
-  const unitNumber = event.unitNumber || event.unit_numbers?.[0] || null;
+  // Get unit numbers from event data
+  const unitNumbers = event.unitNumbers || event.unit_numbers || [];
+  const unitsAffected = event.units_affected ? event.units_affected.split(',').map(u => u.trim()) : [];
+  const allUnitNumbers = unitNumbers.length > 0 ? unitNumbers : (unitsAffected.length > 0 ? unitsAffected : [event.unitNumber || null].filter(Boolean));
+  const hasMultipleUnits = allUnitNumbers.length > 1;
 
   // Format occurred_at date
   const formatDate = (dateStr) => {
@@ -90,9 +95,42 @@ export default function EventDocumentModal({ event, isOpen, onClose }) {
                   <span className="font-medium">Type:</span> <span className="capitalize">{event.event_type}</span>
                 </div>
               )}
-              <div>
-                <span className="font-medium">Unit:</span> {unitNumber || "Building"}
-              </div>
+              {hasMultipleUnits ? (
+                <div>
+                  <span className="font-medium">Units Effected:</span>{" "}
+                  {allUnitNumbers.map((unitNum, idx) => (
+                    <span key={idx}>
+                      {buildingSlug && unitNum ? (
+                        <Link 
+                          href={`/${buildingSlug}/${unitNum}`}
+                          className="text-blue-600 hover:text-blue-800 underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {unitNum}
+                        </Link>
+                      ) : (
+                        unitNum
+                      )}
+                      {idx < allUnitNumbers.length - 1 && ", "}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  <span className="font-medium">Unit:</span>{" "}
+                  {buildingSlug && allUnitNumbers[0] ? (
+                    <Link 
+                      href={`/${buildingSlug}/${allUnitNumbers[0]}`}
+                      className="text-blue-600 hover:text-blue-800 underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {allUnitNumbers[0]}
+                    </Link>
+                  ) : (
+                    (allUnitNumbers[0] || "Building")
+                  )}
+                </div>
+              )}
               {event.occurred_at && (
                 <div>
                   <span className="font-medium">Occurred:</span> {formatDate(event.occurred_at)}
