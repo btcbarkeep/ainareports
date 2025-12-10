@@ -100,7 +100,7 @@ export default function ContractorsList({ contractors = [] }) {
     return (
       <div
         key={c.id || `contractor-${index}`}
-        className={`flex items-center px-3 py-2 cursor-pointer relative ${
+        className={`flex items-center px-3 py-2 cursor-pointer relative group ${
           isPaid 
             ? 'font-bold hover:bg-amber-50' 
             : 'hover:bg-gray-50'
@@ -110,6 +110,11 @@ export default function ContractorsList({ contractors = [] }) {
         onClick={() => setOpenContractor(c)}
         onKeyDown={(e) => onKeyDown(e, c)}
       >
+        {isPaid && (
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 bg-gray-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10">
+            Premium Contractor — Verified by Aina Protocol
+          </div>
+        )}
         <div className="w-2/5 min-w-0 pr-4 relative">
           {isPaid && (
             <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] leading-none">⭐</span>
@@ -338,6 +343,12 @@ export default function ContractorsList({ contractors = [] }) {
           <div className="flex-1 pl-4 text-center">Total Events</div>
         </div>
         {sortedContractors.map(renderRow)}
+        <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-200">
+          <div className="flex items-center gap-1.5">
+            <span className="text-amber-500 text-[10px]">⭐</span>
+            <span>Premium Contractor — Verified by Aina Protocol</span>
+          </div>
+        </div>
       </div>
       {renderModal()}
     </>
