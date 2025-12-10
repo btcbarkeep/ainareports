@@ -51,7 +51,7 @@ export default function PropertyManagementList({
 
   // Limit to 5 property managers for display
   const displayedPMs = sortedPMs.slice(0, 5);
-  const hasMorePMs = totalPropertyManagersCount > 5 || sortedPMs.length > 5;
+  const hasMorePMs = (totalPropertyManagersCount > 5) || (sortedPMs.length > 5);
 
   const renderRow = (pm, index) => {
     const isPaid = pm.subscription_tier === "paid";
