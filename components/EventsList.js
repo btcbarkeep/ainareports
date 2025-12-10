@@ -34,6 +34,24 @@ export default function EventsList({ events, userDisplayNames }) {
       ) : (
         events.map((e) => {
           const eventTitle = e.title || "—";
+          const severity = e.severity?.toLowerCase() || "";
+          
+          // Determine background color based on severity
+          let severityBgClass = "";
+          let severityHoverClass = "";
+          if (severity === "high") {
+            severityBgClass = "bg-red-50";
+            severityHoverClass = "hover:bg-red-100";
+          } else if (severity === "medium") {
+            severityBgClass = "bg-amber-50";
+            severityHoverClass = "hover:bg-amber-100";
+          } else if (severity === "low") {
+            severityBgClass = "bg-green-50";
+            severityHoverClass = "hover:bg-green-100";
+          } else {
+            severityBgClass = "";
+            severityHoverClass = "hover:bg-gray-50";
+          }
 
           const onKeyDown = (evt) => {
             if (evt.key === "Enter" || evt.key === " ") {
@@ -45,7 +63,7 @@ export default function EventsList({ events, userDisplayNames }) {
           return (
             <div
               key={e.id}
-              className="flex px-3 py-2 hover:bg-gray-50 cursor-pointer"
+              className={`flex px-3 py-2 cursor-pointer ${severityBgClass} ${severityHoverClass}`}
               role="button"
               tabIndex={0}
               onClick={() => handleEventClick(e)}
