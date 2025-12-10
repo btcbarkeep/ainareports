@@ -23,6 +23,11 @@ export default function PremiumUnlockSection({
       "All documents",
       "All events",
     ],
+    "property managers": [
+      "All property managers",
+      "All documents",
+      "All events",
+    ],
   };
 
   const items = unlockItems[itemTypeLower] || unlockItems.documents;
