@@ -10,7 +10,7 @@ function formatDate(dateStr) {
   return d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit" });
 }
 
-export default function EventsList({ events, userDisplayNames }) {
+export default function EventsList({ events, userDisplayNames, buildingSlug }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -114,6 +114,7 @@ export default function EventsList({ events, userDisplayNames }) {
         event={selectedEvent}
         isOpen={isModalOpen}
         onClose={closeModal}
+        buildingSlug={buildingSlug}
       />
     </>
   );
