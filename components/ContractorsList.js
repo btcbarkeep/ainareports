@@ -329,7 +329,9 @@ export default function ContractorsList({ contractors = [] }) {
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
           <div className="w-2/5">Name</div>
-          <div className="w-1/3 pl-4">Role</div>
+          <div className="w-1/3 pl-4 flex items-center">
+            <span className="ml-5">Role</span>
+          </div>
           <div className="flex-1 pl-4 text-center">Total Events</div>
         </div>
         {sortedContractors.map(renderRow)}
