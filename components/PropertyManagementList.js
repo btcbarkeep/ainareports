@@ -76,7 +76,7 @@ export default function PropertyManagementList({
             </div>
           </div>
         )}
-        <div className="w-1/2 min-w-0 pr-4 relative flex-shrink-0">
+        <div className="w-2/5 min-w-0 pr-4 relative flex-shrink-0">
           {isPaid && (
             <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] leading-none">⭐</span>
           )}
@@ -84,12 +84,12 @@ export default function PropertyManagementList({
             {pm.company_name || pm.name || "Property Manager"}
           </div>
         </div>
-        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center flex-shrink-0">
+        <div className="w-2/5 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center flex-shrink-0">
           <div className="truncate overflow-hidden" title={pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}>
             {pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}
           </div>
         </div>
-        <div className="w-1/6 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center flex-shrink-0">
+        <div className="w-1/5 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center flex-shrink-0">
           {pm.unit_count !== undefined && (
             <div className="truncate overflow-hidden" title={pm.unit_count?.toString() || "0"}>
               {pm.unit_count || 0}
@@ -270,10 +270,10 @@ export default function PropertyManagementList({
     <>
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
-          <div className="w-1/2">Name</div>
-          <div className="w-1/3 flex items-center justify-center">License</div>
+          <div className="w-2/5">Name</div>
+          <div className="w-2/5 flex items-center justify-center">License</div>
           {propertyManagers.some(pm => pm.unit_count !== undefined) && (
-            <div className="w-1/6 flex items-center justify-center">Units</div>
+            <div className="w-1/5 flex items-center justify-center">Units</div>
           )}
         </div>
         {displayedPMs.map(renderRow)}
