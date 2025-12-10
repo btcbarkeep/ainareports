@@ -96,15 +96,8 @@ export default function ContractorsList({ contractors = [] }) {
         onKeyDown={(e) => onKeyDown(e, c)}
       >
         <div className="w-2/5 min-w-0 pr-4">
-          <div className="flex items-center gap-2">
-            <div className="truncate" title={c.company_name || c.name || "Contractor"}>
-              {c.company_name || c.name || "Contractor"}
-            </div>
-            {isPaid && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-amber-500 text-white flex-shrink-0" title="Aina Certified">
-                ⭐
-              </span>
-            )}
+          <div className="truncate" title={c.company_name || c.name || "Contractor"}>
+            {c.company_name || c.name || "Contractor"}
           </div>
         </div>
         <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center">
