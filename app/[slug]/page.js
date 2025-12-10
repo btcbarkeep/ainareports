@@ -260,6 +260,8 @@ const fetchBuildingData = cache(async (slug) => {
       unit_count: pm.unit_count,
       subscription_tier: pm.subscription_tier,
       license_number: pm.license_number || pm.license,
+      logo_url: pm.logo_url,
+      created_at: pm.created_at,
     })),
     aoao,
     totalUnits: statistics.total_units ?? apiUnits.length ?? apiBuilding.units ?? null,
@@ -598,7 +600,13 @@ export default async function BuildingPage({ params, searchParams }) {
             {activeTab === "property_management" && (
               <>
                 <h2 className="font-semibold mb-3">Property Management</h2>
-                <PropertyManagementList propertyManagers={propertyManagers} />
+                <PropertyManagementList 
+                  propertyManagers={propertyManagers}
+                  totalPropertyManagersCount={apiPropertyManagers.length}
+                  buildingName={building.name}
+                  totalDocumentsCount={totalDocumentsCount}
+                  totalEventsCount={totalEventsCount}
+                />
               </>
             )}
 
