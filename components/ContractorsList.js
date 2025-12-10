@@ -102,7 +102,7 @@ export default function ContractorsList({ contractors = [] }) {
         key={c.id || `contractor-${index}`}
         className={`flex items-center px-3 py-2 cursor-pointer ${
           isPaid 
-            ? 'bg-amber-50 hover:bg-amber-100 border-l-4 border-amber-400' 
+            ? 'font-bold border-2 border-gray-300 hover:border-gray-400' 
             : 'hover:bg-gray-50'
         }`}
         role="button"
