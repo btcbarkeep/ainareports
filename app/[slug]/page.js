@@ -171,6 +171,7 @@ const fetchBuildingData = cache(async (slug) => {
       ...e,
       unitNumber: unitNumbers.length > 0 ? unitNumbers[0] : null,
       unitNumbers: unitNumbers, // Keep all unit numbers for reference
+      units_affected: e.units_affected, // Keep units_affected string for reference
       // Add document_id from associated document if available
       document_id: e.document_id || associatedDoc?.id || null,
     };
@@ -637,13 +638,14 @@ export default async function BuildingPage({ params, searchParams }) {
                     <div className="border rounded-md divide-y text-sm">
                       <div className="flex px-3 py-2 font-semibold text-gray-700">
                         <div className="w-2/5 min-w-0">Title</div>
-                        <div className="w-1/3 min-w-0 pl-14 flex items-center justify-center">Type</div>
+                        <div className="w-1/3 min-w-0 pl-14 pr-4 overflow-hidden flex items-center justify-center">Type</div>
                         <div className="flex-1 text-right min-w-0 pl-4">Date</div>
                       </div>
 
                       <EventsList
                         events={events.slice(0, 5)}
                         userDisplayNames={userDisplayNames}
+                        buildingSlug={building.slug}
                       />
                     </div>
                     {events.length >= 5 && totalEventsCount > Math.min(5, events.length) && (
