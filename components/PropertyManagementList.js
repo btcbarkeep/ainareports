@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PremiumUnlockSection from "./PremiumUnlockSection";
 
 function formatPhone(phone) {
   if (!phone) return "—";
@@ -17,7 +18,13 @@ function formatAddress(pm) {
   return parts.length > 0 ? parts.join(", ") : null;
 }
 
-export default function PropertyManagementList({ propertyManagers = [] }) {
+export default function PropertyManagementList({ 
+  propertyManagers = [],
+  totalPropertyManagersCount = 0,
+  buildingName = "",
+  totalDocumentsCount = 0,
+  totalEventsCount = 0,
+}) {
   const [openPM, setOpenPM] = useState(null);
 
   const onKeyDown = (evt, pm) => {
@@ -27,37 +34,64 @@ export default function PropertyManagementList({ propertyManagers = [] }) {
     }
   };
 
+  // Sort property managers: Paid first, then by unit count descending
+  const sortedPMs = [...propertyManagers].sort((a, b) => {
+    const aIsPaid = a.subscription_tier === "paid";
+    const bIsPaid = b.subscription_tier === "paid";
+    
+    // If one is paid and the other isn't, paid comes first
+    if (aIsPaid && !bIsPaid) return -1;
+    if (!aIsPaid && bIsPaid) return 1;
+    
+    // Both same certification status, sort by unit count descending
+    const aCount = a.unit_count || 0;
+    const bCount = b.unit_count || 0;
+    return bCount - aCount;
+  });
+
+  // Limit to 5 property managers for display
+  const displayedPMs = sortedPMs.slice(0, 5);
+  const hasMorePMs = totalPropertyManagersCount > 5 || sortedPMs.length > 5;
+
   const renderRow = (pm, index) => {
     const isPaid = pm.subscription_tier === "paid";
     return (
       <div
         key={pm.id || `pm-${index}`}
-        className="flex px-3 py-2 hover:bg-gray-50 cursor-pointer"
+        className={`flex items-center px-3 py-2 cursor-pointer relative group ${
+          isPaid 
+            ? 'font-bold hover:bg-amber-50' 
+            : 'hover:bg-gray-50'
+        }`}
         role="button"
         tabIndex={0}
         onClick={() => setOpenPM(pm)}
         onKeyDown={(e) => onKeyDown(e, pm)}
       >
-        <div className="w-1/2 min-w-0 pr-4 overflow-hidden">
-          <div className="flex items-center gap-2">
-            <div className="font-medium truncate" title={pm.company_name || pm.name || "Property Manager"}>
-              {pm.company_name || pm.name || "Property Manager"}
+        {isPaid && (
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10 border border-gray-200">
+            <div className="flex items-center gap-1.5">
+              <span className="text-amber-500 text-[10px]">⭐</span>
+              <span>Premium Property Manager — Verified by Aina Protocol</span>
             </div>
-            {isPaid && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 flex-shrink-0">
-                ✓ Certified
-              </span>
-            )}
+          </div>
+        )}
+        <div className="w-1/2 min-w-0 pr-4 relative flex-shrink-0">
+          {isPaid && (
+            <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] leading-none">⭐</span>
+          )}
+          <div className={`truncate overflow-hidden ${isPaid ? 'pl-3' : ''}`} title={pm.company_name || pm.name || "Property Manager"}>
+            {pm.company_name || pm.name || "Property Manager"}
           </div>
         </div>
-        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden">
-          <div className="truncate" title={pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}>
+        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex-shrink-0">
+          <div className="truncate overflow-hidden" title={pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}>
             {pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}
           </div>
         </div>
-        <div className="w-1/6 text-right text-xs min-w-0 pl-4 overflow-hidden">
+        <div className="w-1/6 text-right text-xs min-w-0 pl-4 overflow-hidden flex items-center justify-center flex-shrink-0">
           {pm.unit_count !== undefined && (
-            <div className="truncate" title={pm.unit_count?.toString() || "0"}>
+            <div className="truncate overflow-hidden" title={pm.unit_count?.toString() || "0"}>
               {pm.unit_count || 0}
             </div>
           )}
@@ -77,32 +111,51 @@ export default function PropertyManagementList({ propertyManagers = [] }) {
         onClick={() => setOpenPM(null)}
       >
         <div
-          className={`bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 ${isPaid ? 'border-2 border-amber-300' : ''}`}
+          className={`bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 ${isPaid ? 'border-2 border-amber-300' : 'border border-gray-200'}`}
           onClick={(e) => e.stopPropagation()}
         >
           {isPaid && (
-            <div className="bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200 px-6 py-3 rounded-t-lg">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-amber-500 text-white">
-                  ⭐ Aina Certified
-                </span>
-                <span className="text-xs text-amber-700">Verified Professional</span>
+            <div className="bg-gray-100 border-b border-gray-200 px-6 py-3 rounded-t-lg">
+              <div className="flex items-center justify-center gap-1.5 text-sm text-gray-700">
+                <span className="text-amber-500 text-[10px]">⭐</span>
+                <span>Premium Property Manager — Verified by Aina Protocol</span>
               </div>
             </div>
           )}
           <div className="p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
-                  {openPM.company_name || openPM.name || "Property Manager"}
-                </h3>
-                {isPaid && (
-                  <p className="text-xs text-gray-600">Trusted property management partner</p>
+            <div className="flex justify-center items-start mb-4 relative">
+              <div className="text-center flex-1">
+                {openPM.logo_url && openPM.logo_url !== "string" && (
+                  <div className="mb-3 flex justify-center">
+                    <img
+                      src={openPM.logo_url}
+                      alt={`${openPM.company_name || openPM.name} logo`}
+                      className="h-16 w-auto object-contain max-w-full"
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                {isPaid ? (
+                  <>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">
+                      {openPM.company_name || openPM.name || "Property Manager"}
+                    </h3>
+                    <p className="text-xs text-gray-600">Trusted property management partner</p>
+                  </>
+                ) : (
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">
+                    {openPM.company_name || openPM.name || "Property Manager"}
+                  </h3>
                 )}
               </div>
               <button
                 onClick={() => setOpenPM(null)}
-                className="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-4"
+                className="absolute top-0 right-0 text-gray-400 hover:text-gray-600 text-2xl leading-none"
                 aria-label="Close"
               >
                 ×
@@ -110,56 +163,33 @@ export default function PropertyManagementList({ propertyManagers = [] }) {
             </div>
             
             <div className="space-y-3 text-sm">
-              {openPM.contact_person && (
-                <div className="pb-2 border-b border-gray-100">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact Person</span>
-                  <div className="mt-1 text-gray-900 font-medium">{openPM.contact_person}</div>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                {openPM.contact_person && (
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Contact Person</span>
+                    <div className="text-gray-900 font-medium">{openPM.contact_person}</div>
+                  </div>
+                )}
+                
                 {openPM.phone && (
                   <div>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Phone</span>
-                    <a
-                      href={`tel:${openPM.phone.replace(/\D/g, '')}`}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      {formatPhone(openPM.phone)}
-                    </a>
+                    <div className="text-gray-900 font-medium">
+                      {isPaid ? (
+                        <a href={`tel:${openPM.phone.replace(/\D/g, '')}`} className="text-blue-600 hover:text-blue-800">
+                          {formatPhone(openPM.phone)}
+                        </a>
+                      ) : (
+                        formatPhone(openPM.phone)
+                      )}
+                    </div>
                   </div>
                 )}
                 
-                {openPM.email && (
+                {openPM.license_number && openPM.license_number !== "string" && (
                   <div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Email</span>
-                    <a
-                      href={`mailto:${openPM.email}`}
-                      className="text-blue-600 hover:text-blue-800 font-medium break-all"
-                    >
-                      {openPM.email}
-                    </a>
-                  </div>
-                )}
-                
-                {address && (
-                  <div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Address</span>
-                    <div className="text-gray-900">{address}</div>
-                  </div>
-                )}
-                
-                {openPM.website && openPM.website !== "string" && (
-                  <div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Website</span>
-                    <a
-                      href={openPM.website.startsWith('http') ? openPM.website : `https://${openPM.website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 font-medium break-all"
-                    >
-                      {openPM.website}
-                    </a>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">License</span>
+                    <div className="text-gray-900 font-medium">{openPM.license_number}</div>
                   </div>
                 )}
                 
@@ -169,26 +199,69 @@ export default function PropertyManagementList({ propertyManagers = [] }) {
                     <div className="text-gray-900 font-medium">{openPM.unit_count}</div>
                   </div>
                 )}
-                
-                {openPM.notes && openPM.notes !== "string" && (
-                  <div>
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Notes</span>
-                    <div className="text-gray-700">{openPM.notes}</div>
-                  </div>
-                )}
               </div>
+              
+              {isPaid && address && (
+                <div>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Address</span>
+                  <div className="text-gray-900">{address}</div>
+                </div>
+              )}
+              
+              {openPM.email && (
+                <div>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Email</span>
+                  <a
+                    href={`mailto:${openPM.email}`}
+                    className="text-blue-600 hover:text-blue-800 font-medium break-all"
+                  >
+                    {openPM.email}
+                  </a>
+                </div>
+              )}
+              
+              {openPM.website && openPM.website !== "string" && (
+                <div>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Website</span>
+                  <a
+                    href={openPM.website.startsWith('http') ? openPM.website : `https://${openPM.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 font-medium break-all"
+                  >
+                    {openPM.website}
+                  </a>
+                </div>
+              )}
+              
+              {openPM.notes && openPM.notes !== "string" && (
+                <div>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">About</span>
+                  <div className="text-gray-700">{openPM.notes}</div>
+                </div>
+              )}
             </div>
             
-            {isPaid && (
+            {isPaid && (openPM.phone || openPM.email) && (
               <div className="mt-6 pt-4 border-t border-gray-200">
-                <a
-                  href={`https://www.ainaprotocol.com/contact?pm=${encodeURIComponent(openPM.company_name || openPM.name || '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-center px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-md transition-colors shadow-sm"
-                >
-                  Contact This Professional
-                </a>
+                <div className="flex gap-2">
+                  {openPM.phone && (
+                    <a
+                      href={`tel:${openPM.phone.replace(/\D/g, '')}`}
+                      className="flex-1 text-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-md transition-colors shadow-sm"
+                    >
+                      📞 {formatPhone(openPM.phone)}
+                    </a>
+                  )}
+                  {openPM.email && (
+                    <a
+                      href={`mailto:${openPM.email}`}
+                      className="flex-1 text-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-md transition-colors shadow-sm"
+                    >
+                      ✉️ Email
+                    </a>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -215,10 +288,29 @@ export default function PropertyManagementList({ propertyManagers = [] }) {
             <div className="w-1/6 text-right">Units</div>
           )}
         </div>
-        {propertyManagers.map(renderRow)}
+        {displayedPMs.map(renderRow)}
+        <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-200">
+          <div className="flex items-center gap-1.5">
+            <span className="text-amber-500 text-[10px]">⭐</span>
+            <span>Premium Property Manager — Verified by Aina Protocol</span>
+          </div>
+        </div>
       </div>
+      {hasMorePMs && (
+        <>
+          <p className="text-gray-600 text-sm mt-3">
+            Showing 5 of {totalPropertyManagersCount || sortedPMs.length} property managers
+          </p>
+          <PremiumUnlockSection 
+            itemType="Property Managers" 
+            buildingName={buildingName}
+            totalDocumentsCount={totalDocumentsCount}
+            totalEventsCount={totalEventsCount}
+            totalContractorsCount={totalPropertyManagersCount || sortedPMs.length}
+          />
+        </>
+      )}
       {renderModal()}
     </>
   );
 }
-
