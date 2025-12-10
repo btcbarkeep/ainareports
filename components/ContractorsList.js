@@ -51,6 +51,21 @@ function formatRole(roles) {
   return roles.map(role => role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()).join(", ");
 }
 
+function getRoleIcon(role) {
+  const roleLower = role?.toLowerCase() || "";
+  const iconMap = {
+    plumber: "🔧",
+    electrician: "⚡",
+    handyman: "🛠️",
+    painter: "🎨",
+    landscaper: "🌿",
+    inspector: "🔍",
+    appraiser: "📊",
+    other: "📋",
+  };
+  return iconMap[roleLower] || "📋";
+}
+
 export default function ContractorsList({ contractors = [] }) {
   const [openContractor, setOpenContractor] = useState(null);
 
@@ -80,7 +95,7 @@ export default function ContractorsList({ contractors = [] }) {
     const isPaid = c.subscription_tier === "paid";
     const roles = c.roles || [];
     const roleText = formatRole(roles);
-    const licenseNumber = c.license_number && c.license_number !== "string" ? c.license_number : null;
+    const primaryRole = roles[0];
     
     return (
       <div
@@ -100,7 +115,10 @@ export default function ContractorsList({ contractors = [] }) {
             {c.company_name || c.name || "Contractor"}
           </div>
         </div>
-        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center">
+        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center gap-1.5">
+          {primaryRole && (
+            <span className="flex-shrink-0">{getRoleIcon(primaryRole)}</span>
+          )}
           <div className="truncate" title={roleText}>
             {roleText}
           </div>
@@ -250,8 +268,9 @@ export default function ContractorsList({ contractors = [] }) {
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Services</span>
                   <div className="flex flex-wrap gap-1">
                     {openContractor.roles.map((role, idx) => (
-                      <span key={idx} className="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium capitalize">
-                        {role}
+                      <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium capitalize">
+                        <span>{getRoleIcon(role)}</span>
+                        <span>{role}</span>
                       </span>
                     ))}
                   </div>
