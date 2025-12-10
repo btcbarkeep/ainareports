@@ -270,12 +270,12 @@ export default function PropertyManagementList({
     <>
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
-          <div className="w-2/5">Name</div>
-          <div className="w-1/3 pl-4 flex items-center">
+          <div className="w-2/5 min-w-0">Name</div>
+          <div className="w-1/3 min-w-0 pl-4 pr-4 overflow-hidden flex items-center">
             <span className="ml-5">License</span>
           </div>
           {propertyManagers.some(pm => pm.unit_count !== undefined) && (
-            <div className="flex-1 pl-4 text-center">Units</div>
+            <div className="flex-1 min-w-0 pl-4 overflow-hidden text-center">Units</div>
           )}
         </div>
         {displayedPMs.map(renderRow)}
