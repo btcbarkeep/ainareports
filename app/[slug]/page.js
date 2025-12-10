@@ -602,7 +602,7 @@ export default async function BuildingPage({ params, searchParams }) {
                 <h2 className="font-semibold mb-3">Property Management</h2>
                 <PropertyManagementList 
                   propertyManagers={propertyManagers}
-                  totalPropertyManagersCount={apiPropertyManagers.length}
+                  totalPropertyManagersCount={propertyManagers?.length || 0}
                   buildingName={building.name}
                   totalDocumentsCount={totalDocumentsCount}
                   totalEventsCount={totalEventsCount}
