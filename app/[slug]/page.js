@@ -259,6 +259,7 @@ const fetchBuildingData = cache(async (slug) => {
       notes: pm.notes,
       unit_count: pm.unit_count,
       subscription_tier: pm.subscription_tier,
+      license_number: pm.license_number,
     })),
     aoao,
     totalUnits: statistics.total_units ?? apiUnits.length ?? apiBuilding.units ?? null,
