@@ -100,27 +100,23 @@ export default function ContractorsList({ contractors = [] }) {
     return (
       <div
         key={c.id || `contractor-${index}`}
-        className={`flex items-center px-3 py-2 cursor-pointer relative ${
-          isPaid 
-            ? 'bg-amber-50 hover:bg-amber-100' 
-            : 'hover:bg-gray-50'
-        }`}
+        className="flex items-center px-3 py-2 cursor-pointer relative hover:bg-gray-50"
         role="button"
         tabIndex={0}
         onClick={() => setOpenContractor(c)}
         onKeyDown={(e) => onKeyDown(e, c)}
       >
         {isPaid && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center">
+          <div className="absolute left-1 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center border-2 border-amber-500 rounded p-0.5">
             <img 
               src="/aina-logo-dark.png" 
               alt="Aina Certified" 
-              className="w-5 h-5 object-contain"
+              className="w-full h-full object-contain"
             />
           </div>
         )}
         <div className="w-2/5 min-w-0 pr-4">
-          <div className={`truncate ${isPaid ? 'pl-7' : ''}`} title={c.company_name || c.name || "Contractor"}>
+          <div className={`truncate ${isPaid ? 'pl-8' : ''}`} title={c.company_name || c.name || "Contractor"}>
             {c.company_name || c.name || "Contractor"}
           </div>
         </div>
