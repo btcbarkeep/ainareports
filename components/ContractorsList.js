@@ -118,24 +118,24 @@ export default function ContractorsList({ contractors = [] }) {
             </div>
           </div>
         )}
-        <div className="w-2/5 min-w-0 pr-4 relative">
+        <div className="w-2/5 min-w-0 pr-4 relative flex-shrink-0">
           {isPaid && (
             <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] leading-none">⭐</span>
           )}
-          <div className={`truncate ${isPaid ? 'pl-3' : ''}`} title={c.company_name || c.name || "Contractor"}>
+          <div className={`truncate overflow-hidden ${isPaid ? 'pl-3' : ''}`} title={c.company_name || c.name || "Contractor"}>
             {c.company_name || c.name || "Contractor"}
           </div>
         </div>
-        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center gap-1.5">
+        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center gap-1.5 flex-shrink-0">
           {primaryRole && (
             <span className="flex-shrink-0">{getRoleIcon(primaryRole)}</span>
           )}
-          <div className="truncate" title={roleText}>
+          <div className="truncate overflow-hidden min-w-0" title={roleText}>
             {roleText}
           </div>
         </div>
-        <div className="flex-1 text-xs min-w-0 pl-4 overflow-hidden flex items-center justify-center">
-          <div className="truncate" title={c.count !== undefined ? String(c.count) : "—"}>
+        <div className="flex-1 text-xs min-w-0 pl-4 overflow-hidden flex items-center justify-center flex-shrink-0">
+          <div className="truncate overflow-hidden" title={c.count !== undefined ? String(c.count) : "—"}>
             {c.count !== undefined ? c.count : "—"}
           </div>
         </div>
