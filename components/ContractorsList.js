@@ -123,6 +123,7 @@ export default function ContractorsList({ contractors = [] }) {
 
   const renderModal = () => {
     if (!openContractor) return null;
+    const address = formatAddress(openContractor);
     const isPaid = openContractor.subscription_tier === "paid";
     
     return (
@@ -230,6 +231,13 @@ export default function ContractorsList({ contractors = [] }) {
                   </div>
                 )}
               </div>
+              
+              {isPaid && address && (
+                <div>
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Address</span>
+                  <div className="text-gray-900">{address}</div>
+                </div>
+              )}
               
               {openContractor.website && openContractor.website !== "string" && (
                 <div>
