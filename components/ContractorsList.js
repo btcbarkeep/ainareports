@@ -100,7 +100,7 @@ export default function ContractorsList({
 
   // Limit to 5 contractors for display
   const displayedContractors = sortedContractors.slice(0, 5);
-  const hasMoreContractors = totalContractorsCount > 5 || sortedContractors.length > 5;
+  const hasMoreContractors = (totalContractorsCount > 5) || (sortedContractors.length > 5);
 
   const renderRow = (c, index) => {
     const isPaid = c.subscription_tier === "paid";
