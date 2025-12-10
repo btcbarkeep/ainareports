@@ -21,6 +21,25 @@ function formatCategory(category) {
     .join(' ');
 }
 
+function getCategoryIcon(category) {
+  if (!category) return "📋";
+  const categoryLower = category.toLowerCase();
+  const iconMap = {
+    unit_level: "🏠",
+    legal: "⚖️",
+    insurance: "🛡️",
+    other: "📋",
+    governance: "📜",
+    maintenance: "🔧",
+    financial: "💰",
+    media: "📷",
+    safety: "⚠️",
+    projects: "🏗️",
+    public_documents: "📄",
+  };
+  return iconMap[categoryLower] || "📋";
+}
+
 export default function DocumentsList({ documents = [], userDisplayNames = {} }) {
   const [openDoc, setOpenDoc] = useState(null);
 
@@ -67,7 +86,10 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
               {openDoc.category && (
                 <div>
                   <span className="font-medium">Category:</span>{" "}
-                  {formatCategory(openDoc.category)}
+                  <span className="flex items-center gap-1.5">
+                    <span>{getCategoryIcon(openDoc.category)}</span>
+                    <span>{formatCategory(openDoc.category)}</span>
+                  </span>
                   {openDoc.subcategory && (
                     <span className="text-gray-500"> / {formatCategory(openDoc.subcategory)}</span>
                   )}
@@ -158,8 +180,9 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
           </div>
         </div>
         <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">
-          <div className="truncate" title={category}>
-            {category}
+          <div className="truncate flex items-center gap-1.5" title={category}>
+            <span>{getCategoryIcon(doc.category)}</span>
+            <span>{category}</span>
           </div>
         </div>
         <div className="flex-1 text-right min-w-0 pl-4 overflow-hidden">
