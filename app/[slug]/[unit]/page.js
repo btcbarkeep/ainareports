@@ -196,7 +196,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     const totalContractorsCount = statistics.total_contractors ?? apiContractors.length ?? 0;
     const totalDocumentsCount = statistics.total_documents ?? apiDocuments.length ?? 0;
     const totalEventsCount = statistics.total_events ?? apiEvents.length ?? 0;
-    const totalPropertyManagersCount = statistics.total_property_managers ?? apiBuildingContractors.length ?? 0;
+    const totalPropertyManagersCount = statistics.total_pm_companies ?? apiBuildingContractors.length ?? 0;
 
     return {
       building: apiBuilding,
