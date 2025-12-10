@@ -186,6 +186,11 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     // USER DISPLAY NAMES
     const userDisplayNames = {};
 
+    // Calculate totals for unlock section
+    const totalContractorsCount = apiContractors.length;
+    const totalDocumentsCount = apiDocuments.length;
+    const totalEventsCount = apiEvents.length;
+
     return {
       building: apiBuilding,
       unit: apiUnit,
@@ -195,6 +200,9 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       buildingContractors,
       unitContractors,
       userDisplayNames,
+      totalContractorsCount,
+      totalDocumentsCount,
+      totalEventsCount,
     };
   } catch (error) {
     console.error("Error in fetchUnitWithRelations:", error);
@@ -297,6 +305,9 @@ export default async function UnitPage({ params, searchParams }) {
     buildingContractors,
     unitContractors,
     userDisplayNames,
+    totalContractorsCount,
+    totalDocumentsCount,
+    totalEventsCount,
   } = result;
 
   const addressLine = formatAddress(building);
@@ -470,7 +481,13 @@ export default async function UnitPage({ params, searchParams }) {
             {activeTab === "contractors" && (
               <>
                 <h2 className="font-semibold mb-3">Contractors</h2>
-                <ContractorsList contractors={unitContractors} />
+                <ContractorsList 
+                  contractors={unitContractors}
+                  totalContractorsCount={totalContractorsCount}
+                  buildingName={building.name}
+                  totalDocumentsCount={totalDocumentsCount}
+                  totalEventsCount={totalEventsCount}
+                />
               </>
             )}
           </div>
