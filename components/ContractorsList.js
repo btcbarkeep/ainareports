@@ -145,15 +145,6 @@ export default function ContractorsList({ contractors = [] }) {
               </div>
             </div>
           )}
-          {!isPaid && (
-            <div className="border-b border-gray-200 px-6 py-4">
-              <div className="text-center">
-                <h3 className="text-xl font-bold text-gray-900">
-                  {openContractor.company_name || openContractor.name || "Contractor"}
-                </h3>
-              </div>
-            </div>
-          )}
           <div className="p-6">
             <div className="flex justify-center items-start mb-4 relative">
               <div className="text-center flex-1">
@@ -172,13 +163,17 @@ export default function ContractorsList({ contractors = [] }) {
                     />
                   </div>
                 )}
-                {isPaid && (
+                {isPaid ? (
                   <>
                     <h3 className="text-xl font-bold text-gray-900 mb-1">
                       {openContractor.company_name || openContractor.name || "Contractor"}
                     </h3>
                     <p className="text-xs text-gray-600">Trusted service provider</p>
                   </>
+                ) : (
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">
+                    {openContractor.company_name || openContractor.name || "Contractor"}
+                  </h3>
                 )}
               </div>
               <button
@@ -203,9 +198,13 @@ export default function ContractorsList({ contractors = [] }) {
                   <div>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Phone</span>
                     <div className="text-gray-900 font-medium">
-                      <a href={`tel:${openContractor.phone.replace(/\D/g, '')}`} className="text-blue-600 hover:text-blue-800">
-                        {formatPhone(openContractor.phone)}
-                      </a>
+                      {isPaid ? (
+                        <a href={`tel:${openContractor.phone.replace(/\D/g, '')}`} className="text-blue-600 hover:text-blue-800">
+                          {formatPhone(openContractor.phone)}
+                        </a>
+                      ) : (
+                        formatPhone(openContractor.phone)
+                      )}
                     </div>
                   </div>
                 )}
