@@ -70,7 +70,7 @@ export default function EventsList({ events, userDisplayNames, buildingSlug }) {
               onClick={() => handleEventClick(e)}
               onKeyDown={onKeyDown}
             >
-              <div className="w-1/2 min-w-0 pr-4 overflow-hidden">
+              <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
                 <div
                   className="font-medium text-blue-600 truncate"
                   title={eventTitle}
@@ -78,7 +78,7 @@ export default function EventsList({ events, userDisplayNames, buildingSlug }) {
                   {eventTitle}
                 </div>
               </div>
-              <div className="w-1/4 min-w-0 pl-8 pr-4 overflow-hidden flex items-center justify-center">
+              <div className="w-1/3 min-w-0 pl-6 pr-4 overflow-hidden flex items-center justify-center">
                 <div className="truncate capitalize" title={e.event_type || "—"}>
                   {e.event_type || "—"}
                 </div>
