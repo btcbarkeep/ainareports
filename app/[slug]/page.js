@@ -271,6 +271,7 @@ const fetchBuildingData = cache(async (slug) => {
     totalDocumentsCount: statistics.total_documents ?? apiDocuments.length ?? 0,
     totalEventsCount: statistics.total_events ?? apiEvents.length ?? 0,
     totalContractorsCount: statistics.total_contractors ?? mostActiveContractors.length ?? 0,
+    totalPropertyManagersCount: statistics.total_property_managers ?? apiPropertyManagers.length ?? 0,
   };
 });
 
@@ -355,6 +356,7 @@ export default async function BuildingPage({ params, searchParams }) {
     totalDocumentsCount,
     totalEventsCount,
     totalContractorsCount,
+    totalPropertyManagersCount,
   } = data;
 
   // Get unit search query from URL params
@@ -603,7 +605,7 @@ export default async function BuildingPage({ params, searchParams }) {
                 <h2 className="font-semibold mb-3">Property Management</h2>
                 <PropertyManagementList 
                   propertyManagers={propertyManagers}
-                  totalPropertyManagersCount={propertyManagers?.length || 0}
+                  totalPropertyManagersCount={totalPropertyManagersCount}
                   buildingName={building.name}
                   totalDocumentsCount={totalDocumentsCount}
                   totalEventsCount={totalEventsCount}
