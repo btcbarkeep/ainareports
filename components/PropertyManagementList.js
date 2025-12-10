@@ -84,12 +84,12 @@ export default function PropertyManagementList({
             {pm.company_name || pm.name || "Property Manager"}
           </div>
         </div>
-        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex-shrink-0">
+        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center flex-shrink-0">
           <div className="truncate overflow-hidden" title={pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}>
             {pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}
           </div>
         </div>
-        <div className="w-1/6 text-right text-xs min-w-0 pl-4 overflow-hidden flex items-center justify-center flex-shrink-0">
+        <div className="w-1/6 text-xs min-w-0 pl-4 overflow-hidden flex items-center justify-center flex-shrink-0">
           {pm.unit_count !== undefined && (
             <div className="truncate overflow-hidden" title={pm.unit_count?.toString() || "0"}>
               {pm.unit_count || 0}
@@ -283,9 +283,9 @@ export default function PropertyManagementList({
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
           <div className="w-1/2">Name</div>
-          <div className="w-1/3">License</div>
+          <div className="w-1/3 text-center">License</div>
           {propertyManagers.some(pm => pm.unit_count !== undefined) && (
-            <div className="w-1/6 text-right">Units</div>
+            <div className="w-1/6 text-center">Units</div>
           )}
         </div>
         {displayedPMs.map(renderRow)}
