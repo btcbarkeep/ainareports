@@ -3,6 +3,7 @@ import EventsList from "@/components/EventsList";
 import DocumentsList from "@/components/DocumentsList";
 import ContractorsList from "@/components/ContractorsList";
 import PropertyManagementList from "@/components/PropertyManagementList";
+import MostActiveContractorBox from "@/components/MostActiveContractorBox";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -104,6 +105,8 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     const apiContractors = publicData.contractors || [];
     const apiBuildingContractors = publicData.property_management_companies || [];
     const statistics = publicData.statistics || {};
+    // Extract most active contractor events
+    const mostActiveContractorEvents = publicData.most_active_contractor_events || [];
 
     if (!apiUnit || !apiBuilding) {
       return null;
@@ -165,6 +168,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
     }));
 
     const mostActiveContractor = unitContractors.length > 0 ? unitContractors[0] : null;
+    const contractorEvents = mostActiveContractorEvents.slice(0, 5); // Limit to 5 events
 
     // Building contractors (property management companies)
     // The API endpoint already filters to only return PM companies with access to this unit
@@ -211,6 +215,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
       totalDocumentsCount,
       totalEventsCount,
       totalPropertyManagersCount,
+      contractorEvents,
     };
   } catch (error) {
     console.error("Error in fetchUnitWithRelations:", error);
@@ -317,6 +322,7 @@ export default async function UnitPage({ params, searchParams }) {
     totalDocumentsCount,
     totalEventsCount,
     totalPropertyManagersCount,
+    contractorEvents,
   } = result;
 
   const addressLine = formatAddress(building);
@@ -529,21 +535,11 @@ export default async function UnitPage({ params, searchParams }) {
             {/* MOST ACTIVE CONTRACTOR */}
             <h2 className="font-semibold mb-3 text-center">Most Active Contractor</h2>
 
-            <div className="border rounded-md text-sm p-3">
-              {!mostActiveContractor ? (
-                <div className="text-gray-500 text-center text-xs">
-                  No contractor activity recorded for this unit yet.
-                </div>
-              ) : (
-                <div className="text-center">
-                  <div className="font-medium">{mostActiveContractor.name}</div>
-                  <div className="text-gray-500 text-xs">
-                    {mostActiveContractor.count} recent event
-                    {mostActiveContractor.count > 1 ? "s" : ""}
-                  </div>
-                </div>
-              )}
-            </div>
+            <MostActiveContractorBox
+              contractor={mostActiveContractor}
+              events={contractorEvents}
+              buildingSlug={building.slug}
+            />
 
             {/* CTA */}
             <div className="mt-8">
