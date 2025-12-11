@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ContractorEventsModel from "./ContractorEventsModel";
+import ContractorEventsModal from "./ContractorEventsModal";
 
 export default function MostActiveContractorBox({ contractor, events = [], buildingSlug }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,7 +38,7 @@ export default function MostActiveContractorBox({ contractor, events = [], build
         </div>
       </div>
 
-      <ContractorEventsModel
+      <ContractorEventsModal
         contractor={contractor}
         events={events}
         isOpen={isModalOpen}
