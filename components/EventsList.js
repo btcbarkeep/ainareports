@@ -70,9 +70,9 @@ export default function EventsList({ events, userDisplayNames, buildingSlug }) {
               onClick={() => handleEventClick(e)}
               onKeyDown={onKeyDown}
             >
-              <div className="w-2/5 min-w-0 px-4 overflow-hidden flex items-center justify-center">
+              <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
                 <div
-                  className="font-medium text-blue-600 truncate text-center w-full"
+                  className="font-medium text-blue-600 truncate"
                   title={eventTitle}
                 >
                   {eventTitle}
