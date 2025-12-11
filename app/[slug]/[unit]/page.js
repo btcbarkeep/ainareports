@@ -359,9 +359,8 @@ export default async function UnitPage({ params, searchParams }) {
               {unit.unit_number}
             </h1>
             {hasVerifiedOwner && (
-              <div className="inline-flex items-center gap-1.5 ml-3 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-md">
-                <span className="text-amber-500 text-xs">⭐</span>
-                <span className="text-xs font-medium text-gray-700">Aina Verified</span>
+              <div className="inline-flex items-center gap-1 ml-2">
+                <span className="text-amber-500 text-lg" title="Aina Verified Unit">✓</span>
               </div>
             )}
           </div>
