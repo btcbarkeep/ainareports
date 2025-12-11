@@ -407,16 +407,12 @@ export default async function BuildingPage({ params, searchParams }) {
       ? searchParams.tab
       : "overview";
 
-  // Remove the old singleMostActive definition since it's now in data
-  // const singleMostActive = mostActiveContractors[0] || null;
-
   // Description
   const description =
     building.description ||
     "Description coming soon. This building is connected to live data through Aina Protocol.";
 
   const addressLine = formatAddress(building);
-  const singleMostActive = mostActiveContractors[0] || null;
 
   // -------------------------------------------------------------
   // HTML OUTPUT
