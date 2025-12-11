@@ -14,6 +14,14 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
+function getSeverityBadgeClass(severity) {
+  const severityLower = severity?.toLowerCase() || "";
+  if (severityLower === "high") return "bg-red-100 text-red-800";
+  if (severityLower === "medium") return "bg-amber-100 text-amber-800";
+  if (severityLower === "low") return "bg-green-100 text-green-800";
+  return "bg-gray-100 text-gray-800";
+}
+
 export default function ContractorEventsModal({ contractor, events = [], isOpen, onClose, buildingSlug }) {
   const [expandedEvents, setExpandedEvents] = useState(new Set());
 
@@ -138,16 +146,22 @@ export default function ContractorEventsModal({ contractor, events = [], isOpen,
                             {event.status && (
                               <div>
                                 <span className="font-medium">Status:</span>{" "}
-                                <span className={event.status.toLowerCase() === "open" ? "text-red-600" : event.status.toLowerCase() === "resolved" ? "text-green-600" : ""}>
-                                  {capitalize(event.status)}
+                                <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium capitalize ${
+                                  event.status.toLowerCase() === "open" 
+                                    ? "bg-red-100 text-red-800" 
+                                    : event.status.toLowerCase() === "resolved"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                }`}>
+                                  {event.status}
                                 </span>
                               </div>
                             )}
                             {event.severity && (
                               <div>
                                 <span className="font-medium">Severity:</span>{" "}
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                  {capitalize(event.severity)}
+                                <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium capitalize ${getSeverityBadgeClass(event.severity)}`}>
+                                  {event.severity}
                                 </span>
                               </div>
                             )}
