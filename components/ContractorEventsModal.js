@@ -14,7 +14,7 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-export default function ContractorEventsModel({ contractor, events = [], isOpen, onClose, buildingSlug }) {
+export default function ContractorEventsModal({ contractor, events = [], isOpen, onClose, buildingSlug }) {
   const [expandedEvents, setExpandedEvents] = useState(new Set());
 
   if (!isOpen || !contractor) return null;
