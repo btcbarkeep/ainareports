@@ -71,77 +71,88 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">{title}</h3>
-              <button
-                onClick={() => setOpenDoc(null)}
-                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-                aria-label="Close"
-              >
-                ×
-              </button>
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex-1"></div>
+              <h3 className="text-lg font-semibold text-center flex-1">{title}</h3>
+              <div className="flex-1 flex justify-end">
+                <button
+                  onClick={() => setOpenDoc(null)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-3 text-sm text-gray-700">
+            <div className="space-y-4 text-sm text-gray-700">
               {openDoc.category && (
-                <div>
-                  <span className="font-medium">Category:</span>{" "}
-                  <span className="flex items-center gap-1.5">
-                    <span>{getCategoryIcon(openDoc.category)}</span>
-                    <span>{formatCategory(openDoc.category)}</span>
-                  </span>
-                  {openDoc.subcategory && (
-                    <span className="text-gray-500"> / {formatCategory(openDoc.subcategory)}</span>
-                  )}
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Category</div>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span className="text-lg">{getCategoryIcon(openDoc.category)}</span>
+                    <span className="font-medium">{formatCategory(openDoc.category)}</span>
+                    {openDoc.subcategory && (
+                      <span className="text-gray-500"> / {formatCategory(openDoc.subcategory)}</span>
+                    )}
+                  </div>
                 </div>
               )}
-              {openDoc.source && (
-                <div>
-                  <span className="font-medium">Source:</span>{" "}
-                  {openDoc.source}
-                </div>
-              )}
-              <div>
-                <span className="font-medium">Uploaded:</span>{" "}
-                {formatDate(openDoc.created_at)}
-              </div>
-              <div>
-                <span className="font-medium">Uploaded By:</span>{" "}
-                {openDoc.uploaded_by_role ? (
-                  <span className="capitalize">{openDoc.uploaded_by_role}</span>
-                ) : (
-                  "—"
+              
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                {openDoc.source && (
+                  <div className="text-center">
+                    <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Source</div>
+                    <div className="font-medium">{openDoc.source}</div>
+                  </div>
                 )}
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Uploaded</div>
+                  <div className="font-medium">{formatDate(openDoc.created_at)}</div>
+                </div>
               </div>
+
+              {openDoc.uploaded_by_role && (
+                <div className="text-center pt-2">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Uploaded By</div>
+                  <div className="font-medium capitalize">{openDoc.uploaded_by_role}</div>
+                </div>
+              )}
+
               {openDoc.description && (
-                <div>
-                  <span className="font-medium">Description:</span>
-                  <p className="mt-1 whitespace-pre-wrap">
+                <div className="pt-2">
+                  <div className="text-xs text-gray-500 uppercase tracking-wide mb-2 text-center">Description</div>
+                  <p className="text-center whitespace-pre-wrap text-gray-600 leading-relaxed">
                     {openDoc.description}
                   </p>
                 </div>
               )}
-              {openDoc.permit_number && (
-                <div>
-                  <span className="font-medium">Permit Number:</span>{" "}
-                  {openDoc.permit_number}
-                </div>
-              )}
-              {openDoc.permit_type && (
-                <div>
-                  <span className="font-medium">Permit Type:</span>{" "}
-                  {openDoc.permit_type}
+
+              {(openDoc.permit_number || openDoc.permit_type) && (
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  {openDoc.permit_number && (
+                    <div className="text-center">
+                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Permit Number</div>
+                      <div className="font-medium">{openDoc.permit_number}</div>
+                    </div>
+                  )}
+                  {openDoc.permit_type && (
+                    <div className="text-center">
+                      <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Permit Type</div>
+                      <div className="font-medium">{openDoc.permit_type}</div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             {downloadLink && (
-              <div className="pt-4 border-t mt-4">
+              <div className="pt-6 mt-6 border-t">
                 <a
                   href={downloadLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="inline-block w-full text-center px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
                 >
                   View / Download
                 </a>
