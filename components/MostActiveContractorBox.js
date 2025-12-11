@@ -3,8 +3,27 @@
 import { useState } from "react";
 import ContractorEventsModal from "./ContractorEventsModal";
 
+function getRoleIcon(role) {
+  const roleLower = role?.toLowerCase() || "";
+  const iconMap = {
+    plumber: "🔧",
+    electrician: "⚡",
+    handyman: "🛠️",
+    painter: "🎨",
+    landscaper: "🌿",
+    inspector: "🔍",
+    appraiser: "📊",
+    other: "📋",
+  };
+  return iconMap[roleLower] || "📋";
+}
+
 export default function MostActiveContractorBox({ contractor, events = [], buildingSlug }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const roles = contractor?.roles || [];
+  const primaryRole = roles[0];
+  const roleIcon = primaryRole ? getRoleIcon(primaryRole) : "📋";
 
   if (!contractor) {
     return (
@@ -32,7 +51,7 @@ export default function MostActiveContractorBox({ contractor, events = [], build
       >
         <div className="text-center">
           <div className="font-medium flex items-center justify-center gap-2">
-            <span>🔥</span>
+            <span>{roleIcon}</span>
             <span>{contractor.name}</span>
           </div>
           <div className="text-gray-600 text-xs mt-1">
