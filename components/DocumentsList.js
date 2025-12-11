@@ -185,19 +185,19 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
         onClick={() => setOpenDoc(doc)}
         onKeyDown={onKeyDown}
       >
-        <div className="w-2/5 min-w-0 pr-4 overflow-hidden flex items-center justify-center">
-          <div className="font-medium text-blue-600 truncate" title={title}>
+        <div className="w-2/5 min-w-0 px-4 overflow-hidden flex items-center justify-center">
+          <div className="font-medium text-blue-600 truncate text-center w-full" title={title}>
             {title}
           </div>
         </div>
-        <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">
-          <div className="truncate flex items-center gap-1.5" title={category}>
+        <div className="w-2/5 min-w-0 px-4 overflow-hidden flex items-center justify-center">
+          <div className="truncate flex items-center justify-center gap-1.5 w-full" title={category}>
             <span>{getCategoryIcon(doc.category)}</span>
             <span>{category}</span>
           </div>
         </div>
-        <div className="flex-1 min-w-0 pl-4 overflow-hidden flex items-center justify-center">
-          <div className="truncate" title={updatedDate}>
+        <div className="flex-1 min-w-0 px-4 overflow-hidden flex items-center justify-center">
+          <div className="truncate text-center w-full" title={updatedDate}>
             {updatedDate}
           </div>
         </div>
