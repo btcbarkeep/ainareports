@@ -185,7 +185,7 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
         onClick={() => setOpenDoc(doc)}
         onKeyDown={onKeyDown}
       >
-        <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
+        <div className="w-2/5 min-w-0 pr-4 overflow-hidden flex items-center justify-center">
           <div className="font-medium text-blue-600 truncate" title={title}>
             {title}
           </div>
@@ -196,7 +196,7 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
             <span>{category}</span>
           </div>
         </div>
-        <div className="flex-1 text-right min-w-0 pl-4 overflow-hidden">
+        <div className="flex-1 min-w-0 pl-4 overflow-hidden flex items-center justify-center">
           <div className="truncate" title={updatedDate}>
             {updatedDate}
           </div>
@@ -209,9 +209,9 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
     <>
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
-          <div className="w-2/5 min-w-0">Title</div>
+          <div className="w-2/5 min-w-0 flex items-center justify-center">Title</div>
           <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">Category</div>
-          <div className="flex-1 text-right min-w-0 pl-4">Date</div>
+          <div className="flex-1 min-w-0 pl-4 flex items-center justify-center">Date</div>
         </div>
         {documents.map(renderRow)}
       </div>
