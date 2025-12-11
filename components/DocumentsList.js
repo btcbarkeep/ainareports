@@ -197,7 +197,7 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
           </div>
         </div>
         <div className="flex-1 min-w-0 px-4 overflow-hidden flex items-center justify-center">
-          <div className="truncate text-center w-full" title={updatedDate}>
+          <div className="w-full text-center" title={updatedDate}>
             {updatedDate}
           </div>
         </div>
@@ -211,7 +211,7 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
         <div className="flex px-3 py-2 font-semibold text-gray-700">
           <div className="w-2/5 min-w-0">Title</div>
           <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">Category</div>
-          <div className="flex-1 min-w-0 pl-4 flex items-center justify-center">Date</div>
+          <div className="flex-1 min-w-0 px-4 flex items-center justify-center text-center">Date</div>
         </div>
         {documents.map(renderRow)}
       </div>
