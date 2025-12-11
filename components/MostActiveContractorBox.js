@@ -32,9 +32,23 @@ export default function MostActiveContractorBox({ contractor, events = [], build
       >
         <div className="text-center">
           <div className="font-medium">{contractor.name}</div>
-          <div className="text-gray-600 text-xs">
+          <div className="text-gray-600 text-xs mt-1">
             {events.length} recent event{events.length !== 1 ? "s" : ""}
           </div>
+          {(contractor.phone || contractor.license_number) && (
+            <div className="mt-2 pt-2 border-t border-amber-200 space-y-1">
+              {contractor.phone && (
+                <div className="text-xs text-gray-600">
+                  📞 {contractor.phone}
+                </div>
+              )}
+              {contractor.license_number && (
+                <div className="text-xs text-gray-600">
+                  🪪 License: {contractor.license_number}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
