@@ -414,6 +414,13 @@ export default async function BuildingPage({ params, searchParams }) {
 
   const addressLine = formatAddress(building);
 
+  // Check if building has verified access (PM with full access and paid tier, or AOAO with paid tier)
+  const hasVerifiedPM = propertyManagers.some(
+    (pm) => pm.subscription_tier === "paid" && pm.unit_count === totalUnits
+  );
+  const hasVerifiedAOAO = aoao && aoao.subscription_tier === "paid";
+  const showVerifiedBadge = hasVerifiedPM || hasVerifiedAOAO;
+
   // -------------------------------------------------------------
   // HTML OUTPUT
   // -------------------------------------------------------------
@@ -443,9 +450,17 @@ export default async function BuildingPage({ params, searchParams }) {
         </header>
 
         {/* TITLE */}
-        <h1 className="text-3xl md:text-4xl font-semibold text-center mb-1">
-          {building.name}
-        </h1>
+        <div className="text-center mb-1">
+          <h1 className="text-3xl md:text-4xl font-semibold inline-block">
+            {building.name}
+          </h1>
+          {showVerifiedBadge && (
+            <div className="inline-flex items-center gap-1.5 ml-3 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-md">
+              <span className="text-amber-500 text-xs">⭐</span>
+              <span className="text-xs font-medium text-gray-700">Aina Verified</span>
+            </div>
+          )}
+        </div>
 
         {/* ADDRESS */}
         {addressLine && (
