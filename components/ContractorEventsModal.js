@@ -40,19 +40,36 @@ export default function ContractorEventsModal({ contractor, events = [], isOpen,
       >
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <div>
+            <div className="flex-1"></div>
+            <div className="flex-1 text-center">
               <h3 className="text-lg font-semibold">{contractor.name}</h3>
               <p className="text-sm text-gray-500">
                 {events.length} recent event{events.length !== 1 ? "s" : ""}
               </p>
+              {(contractor.phone || contractor.license_number) && (
+                <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
+                  {contractor.phone && (
+                    <div className="text-sm text-gray-700">
+                      <span className="font-medium">Phone:</span> {contractor.phone}
+                    </div>
+                  )}
+                  {contractor.license_number && (
+                    <div className="text-sm text-gray-700">
+                      <span className="font-medium">License:</span> {contractor.license_number}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-              aria-label="Close"
-            >
-              ×
-            </button>
+            <div className="flex-1 flex justify-end">
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
           </div>
 
           <div className="border rounded-md divide-y text-sm">
