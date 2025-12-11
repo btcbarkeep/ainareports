@@ -327,6 +327,10 @@ export default async function UnitPage({ params, searchParams }) {
 
   const addressLine = formatAddress(building);
 
+  // Check if unit has verified owner (owner with paid subscription tier)
+  const hasVerifiedOwner = unit.owners && Array.isArray(unit.owners) && 
+    unit.owners.some(owner => owner.subscription_tier === "paid");
+
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 py-10">
@@ -350,9 +354,17 @@ export default async function UnitPage({ params, searchParams }) {
         <section className="text-center mb-6">
 
           {/* TOP LINE — UNIT NUMBER ONLY */}
-          <h1 className="text-4xl md:text-5xl font-semibold mb-1">
-            {unit.unit_number}
-          </h1>
+          <div className="mb-1">
+            <h1 className="text-4xl md:text-5xl font-semibold inline-block">
+              {unit.unit_number}
+            </h1>
+            {hasVerifiedOwner && (
+              <div className="inline-flex items-center gap-1.5 ml-3 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-md">
+                <span className="text-amber-500 text-xs">⭐</span>
+                <span className="text-xs font-medium text-gray-700">Aina Verified</span>
+              </div>
+            )}
+          </div>
 
           {/* SECOND LINE — BUILDING NAME ONLY */}
           <Link
