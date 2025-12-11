@@ -70,7 +70,7 @@ export default function EventsList({ events, userDisplayNames, buildingSlug }) {
               onClick={() => handleEventClick(e)}
               onKeyDown={onKeyDown}
             >
-              <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
+              <div className="w-2/5 min-w-0 pr-4 overflow-hidden flex items-center justify-center">
                 <div
                   className="font-medium text-blue-600 truncate"
                   title={eventTitle}
@@ -83,7 +83,7 @@ export default function EventsList({ events, userDisplayNames, buildingSlug }) {
                   {e.event_type || "—"}
                 </div>
               </div>
-              <div className="flex-1 text-right min-w-0 pl-4 overflow-hidden">
+              <div className="flex-1 min-w-0 pl-4 overflow-hidden flex items-center justify-center">
                 <div className="truncate" title={formatDate(e.occurred_at)}>
                   {formatDate(e.occurred_at)}
                 </div>
