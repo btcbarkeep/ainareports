@@ -84,7 +84,7 @@ export default function EventsList({ events, userDisplayNames, buildingSlug }) {
                 </div>
               </div>
               <div className="flex-1 min-w-0 px-4 overflow-hidden flex items-center justify-center">
-                <div className="truncate text-center w-full" title={formatDate(e.occurred_at)}>
+                <div className="w-full text-center" title={formatDate(e.occurred_at)}>
                   {formatDate(e.occurred_at)}
                 </div>
               </div>
