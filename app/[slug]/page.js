@@ -517,9 +517,9 @@ export default async function BuildingPage({ params, searchParams }) {
                 <h2 className="font-semibold mb-3">Units</h2>
                 <div className="border rounded-md divide-y text-sm">
                   <div className="flex px-3 py-2 font-semibold text-gray-700">
-                    <div className="w-1/4 min-w-0 pl-4 text-center">Unit</div>
-                    <div className="w-1/4 min-w-0 pl-4 text-center">Floor</div>
-                    <div className="flex-1 min-w-0 pl-4 text-center">Owner</div>
+                    <div className="w-1/4 min-w-0 pl-4 pr-4 flex items-center justify-center">Unit</div>
+                    <div className="w-1/4 min-w-0 pl-4 pr-4 flex items-center justify-center">Floor</div>
+                    <div className="flex-1 min-w-0 pl-4 flex items-center justify-center">Owner</div>
                   </div>
 
                   {filteredUnits.length === 0 ? (
