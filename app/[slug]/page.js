@@ -557,7 +557,7 @@ export default async function BuildingPage({ params, searchParams }) {
                             {u.floor ?? "—"}
                           </div>
                         </div>
-                        <div className="flex-1 min-w-0 pl-4 overflow-hidden">
+                        <div className="flex-1 min-w-0 pl-4 overflow-hidden flex items-center justify-center">
                           <div className="truncate flex items-center gap-1.5" title={u.owner_name || "—"}>
                             {u.hasPaidOwner && (
                               <span className="text-amber-500 text-[10px] leading-none flex-shrink-0">⭐</span>
