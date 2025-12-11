@@ -6,6 +6,7 @@ import ContractorsList from "@/components/ContractorsList";
 import PropertyManagementList from "@/components/PropertyManagementList";
 import PremiumUnlockSection from "@/components/PremiumUnlockSection";
 import AOAOBox from "@/components/AOAOBox";
+import MostActiveContractorBox from "@/components/MostActiveContractorBox";
 
 const ROLE_LABELS = {
   super_admin: "Admin",
@@ -142,6 +143,8 @@ const fetchBuildingData = cache(async (slug) => {
   const aoao = aoaoOrganizations.length > 0 ? aoaoOrganizations[0] : null;
   // Extract property management companies (all from report)
   const apiPropertyManagers = publicData.property_management_companies || [];
+  // Extract most active contractor events
+  const mostActiveContractorEvents = publicData.most_active_contractor_events || [];
 
   // Create a map of unit_id -> unit_number for looking up unit numbers
   const unitMap = new Map();
@@ -227,6 +230,10 @@ const fetchBuildingData = cache(async (slug) => {
     return b.count - a.count;
   });
 
+  // Get the most active contractor and their events
+  const singleMostActive = mostActiveContractors.length > 0 ? mostActiveContractors[0] : null;
+  const contractorEvents = mostActiveContractorEvents.slice(0, 5); // Limit to 5 events
+
   // USER DISPLAY NAMES
   const userDisplayNames = {};
 
@@ -278,6 +285,8 @@ const fetchBuildingData = cache(async (slug) => {
     totalEventsCount: statistics.total_events ?? apiEvents.length ?? 0,
     totalContractorsCount: statistics.total_contractors ?? apiContractors.length ?? 0,
     totalPropertyManagersCount: statistics.total_pm_companies ?? apiPropertyManagers.length ?? 0,
+    singleMostActive,
+    contractorEvents,
   };
 });
 
@@ -363,6 +372,8 @@ export default async function BuildingPage({ params, searchParams }) {
     totalEventsCount,
     totalContractorsCount,
     totalPropertyManagersCount,
+    singleMostActive,
+    contractorEvents,
   } = data;
 
   // Get unit search query from URL params
@@ -395,6 +406,9 @@ export default async function BuildingPage({ params, searchParams }) {
     TABS.some((t) => t.id === searchParams.tab)
       ? searchParams.tab
       : "overview";
+
+  // Remove the old singleMostActive definition since it's now in data
+  // const singleMostActive = mostActiveContractors[0] || null;
 
   // Description
   const description =
@@ -739,23 +753,11 @@ export default async function BuildingPage({ params, searchParams }) {
               <h2 className="font-semibold text-center mb-3">
                 Most Active Contractor
               </h2>
-              <div className="border rounded-md text-sm p-3">
-                {!singleMostActive ? (
-                  <div className="text-gray-500 text-center text-xs">
-                    No contractor activity recorded for this building yet.
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <div className="font-medium">
-                      {singleMostActive.name}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {singleMostActive.count} recent event
-                      {singleMostActive.count > 1 ? "s" : ""}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <MostActiveContractorBox
+                contractor={singleMostActive}
+                events={contractorEvents}
+                buildingSlug={building.slug}
+              />
 
               {/* MANAGE CTA */}
               <div className="mt-8">
