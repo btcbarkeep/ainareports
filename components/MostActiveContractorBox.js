@@ -19,7 +19,7 @@ export default function MostActiveContractorBox({ contractor, events = [], build
   return (
     <>
       <div
-        className="border rounded-md text-sm p-3 bg-amber-50 hover:bg-amber-100 cursor-pointer transition-colors"
+        className="border rounded-md text-sm p-3 bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors border-blue-200"
         onClick={() => setIsModalOpen(true)}
         role="button"
         tabIndex={0}
@@ -31,24 +31,13 @@ export default function MostActiveContractorBox({ contractor, events = [], build
         }}
       >
         <div className="text-center">
-          <div className="font-medium">{contractor.name}</div>
+          <div className="font-medium flex items-center justify-center gap-2">
+            <span>🔥</span>
+            <span>{contractor.name}</span>
+          </div>
           <div className="text-gray-600 text-xs mt-1">
             {events.length} recent event{events.length !== 1 ? "s" : ""}
           </div>
-          {(contractor.phone || contractor.license_number) && (
-            <div className="mt-2 pt-2 border-t border-amber-200 space-y-1">
-              {contractor.phone && (
-                <div className="text-xs text-gray-600">
-                  📞 {contractor.phone}
-                </div>
-              )}
-              {contractor.license_number && (
-                <div className="text-xs text-gray-600">
-                  🪪 License: {contractor.license_number}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
