@@ -70,21 +70,21 @@ export default function EventsList({ events, userDisplayNames, buildingSlug }) {
               onClick={() => handleEventClick(e)}
               onKeyDown={onKeyDown}
             >
-              <div className="w-2/5 min-w-0 pr-4 overflow-hidden flex items-center justify-center">
+              <div className="w-2/5 min-w-0 px-4 overflow-hidden flex items-center justify-center">
                 <div
-                  className="font-medium text-blue-600 truncate"
+                  className="font-medium text-blue-600 truncate text-center w-full"
                   title={eventTitle}
                 >
                   {eventTitle}
                 </div>
               </div>
-              <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">
-                <div className="truncate capitalize" title={e.event_type || "—"}>
+              <div className="w-2/5 min-w-0 px-4 overflow-hidden flex items-center justify-center">
+                <div className="truncate capitalize text-center w-full" title={e.event_type || "—"}>
                   {e.event_type || "—"}
                 </div>
               </div>
-              <div className="flex-1 min-w-0 pl-4 overflow-hidden flex items-center justify-center">
-                <div className="truncate" title={formatDate(e.occurred_at)}>
+              <div className="flex-1 min-w-0 px-4 overflow-hidden flex items-center justify-center">
+                <div className="truncate text-center w-full" title={formatDate(e.occurred_at)}>
                   {formatDate(e.occurred_at)}
                 </div>
               </div>
