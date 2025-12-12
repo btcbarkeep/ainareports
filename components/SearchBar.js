@@ -68,7 +68,7 @@ export default function SearchBar({ initialQuery = "" }) {
 
   return (
     <div className="relative w-full max-w-xl">
-      <form method="GET" action="/search">
+      <form method="GET">
         <div className="flex items-stretch border border-gray-300 rounded-md overflow-hidden">
           <input
             type="text"
