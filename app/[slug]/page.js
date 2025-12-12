@@ -792,6 +792,20 @@ export default async function BuildingPage({ params, searchParams }) {
                   Register with Aina Protocol
                 </a>
               </div>
+
+              {/* PRINT BUTTON */}
+              <BuildingPrintButton
+                building={building}
+                totalUnits={totalUnits}
+                totalEvents={totalEventsCount}
+                totalDocuments={totalDocumentsCount}
+                totalContractors={totalContractorsCount}
+                propertyManagers={propertyManagers}
+                events={events}
+                documents={documents}
+                units={units}
+                aoao={aoao}
+              />
             </div>
           </div>
         </div>
@@ -810,20 +824,6 @@ export default async function BuildingPage({ params, searchParams }) {
         </a>
         .
       </div>
-
-      {/* PRINT BUTTON */}
-      <BuildingPrintButton
-        building={building}
-        totalUnits={totalUnits}
-        totalEvents={totalEventsCount}
-        totalDocuments={totalDocumentsCount}
-        totalContractors={totalContractorsCount}
-        propertyManagers={propertyManagers}
-        events={events}
-        documents={documents}
-        units={units}
-        aoao={aoao}
-      />
     </main>
   );
 }
