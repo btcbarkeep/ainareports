@@ -455,12 +455,12 @@ export default async function BuildingPage({ params, searchParams }) {
 
         {/* TITLE */}
         <div className="text-center mb-1 relative">
-          {showVerifiedBadge && (
-            <div className="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-full -mr-2">
-              <VerifiedBadge type="building" />
-            </div>
-          )}
-          <h1 className="text-3xl md:text-4xl font-semibold inline-block">
+          <h1 className="text-3xl md:text-4xl font-semibold inline-block relative">
+            {showVerifiedBadge && (
+              <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2">
+                <VerifiedBadge type="building" />
+              </div>
+            )}
             {building.name}
           </h1>
         </div>
