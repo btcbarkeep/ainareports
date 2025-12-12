@@ -376,9 +376,9 @@ export default async function UnitPage({ params, searchParams }) {
 
           {/* TOP LINE — UNIT NUMBER ONLY */}
           <div className="mb-1 text-center">
-            <div className="relative inline-block">
+            <div className="relative inline-flex items-center justify-center">
               {hasVerifiedOwner && (
-                <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2">
+                <div className="absolute right-full mr-2">
                   <VerifiedBadge type="unit" />
                 </div>
               )}
