@@ -4,6 +4,7 @@ import DocumentsList from "@/components/DocumentsList";
 import ContractorsList from "@/components/ContractorsList";
 import PropertyManagementList from "@/components/PropertyManagementList";
 import MostActiveContractorBox from "@/components/MostActiveContractorBox";
+import VerifiedBadge from "@/components/VerifiedBadge";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -378,11 +379,7 @@ export default async function UnitPage({ params, searchParams }) {
             <h1 className="text-4xl md:text-5xl font-semibold inline-block">
               {unit.unit_number}
             </h1>
-            {hasVerifiedOwner && (
-              <div className="inline-flex items-center gap-1 ml-2">
-                <span className="text-amber-500 text-lg" title="Aina Verified Unit">✓</span>
-              </div>
-            )}
+            {hasVerifiedOwner && <VerifiedBadge type="unit" />}
           </div>
 
           {/* SECOND LINE — BUILDING NAME ONLY */}
