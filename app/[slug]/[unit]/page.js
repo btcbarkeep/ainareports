@@ -243,6 +243,23 @@ function formatDate(dateStr) {
   return d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit" });
 }
 
+function formatZoning(zoning) {
+  if (!zoning) return "—";
+  
+  const firstLetter = zoning.trim().charAt(0).toUpperCase();
+  let type = "";
+  
+  if (firstLetter === "H") {
+    type = "Hotel";
+  } else if (firstLetter === "A") {
+    type = "Apartment";
+  } else if (firstLetter === "R") {
+    type = "Residential";
+  }
+  
+  return type ? `${zoning} - ${type}` : zoning;
+}
+
 // -------------------------------------------------------------
 // METADATA
 // -------------------------------------------------------------
@@ -451,7 +468,7 @@ export default async function UnitPage({ params, searchParams }) {
                 <div className="border rounded-md divide-y text-sm mb-8">
                   <div className="flex px-3 py-2">
                     <div className="w-1/2">Zoning:</div>
-                    <div className="w-1/2">{building.zoning || "—"}</div>
+                    <div className="w-1/2">{formatZoning(building.zoning)}</div>
                   </div>
                   <div className="flex px-3 py-2">
                     <div className="w-1/2">Year Built:</div>
