@@ -53,6 +53,7 @@ export default function PropertyManagementList({
   buildingName = "",
   totalDocumentsCount = 0,
   totalEventsCount = 0,
+  totalUnits = null,
 }) {
   const [openPM, setOpenPM] = useState(null);
 
@@ -63,16 +64,26 @@ export default function PropertyManagementList({
     }
   };
 
-  // Sort property managers: Paid first, then by unit count descending
+  // Sort property managers: Paid + full access first, then paid, then full access (non-paid), then by unit count descending
   const sortedPMs = [...propertyManagers].sort((a, b) => {
     const aIsPaid = a.subscription_tier === "paid";
     const bIsPaid = b.subscription_tier === "paid";
+    const aHasFullAccess = totalUnits !== null && a.unit_count === totalUnits;
+    const bHasFullAccess = totalUnits !== null && b.unit_count === totalUnits;
     
-    // If one is paid and the other isn't, paid comes first
-    if (aIsPaid && !bIsPaid) return -1;
-    if (!aIsPaid && bIsPaid) return 1;
+    // Priority 1: Paid + Full Access
+    if (aIsPaid && aHasFullAccess && !(bIsPaid && bHasFullAccess)) return -1;
+    if (bIsPaid && bHasFullAccess && !(aIsPaid && aHasFullAccess)) return 1;
     
-    // Both same certification status, sort by unit count descending
+    // Priority 2: Paid (but not full access)
+    if (aIsPaid && !bIsPaid && !bHasFullAccess) return -1;
+    if (bIsPaid && !aIsPaid && !aHasFullAccess) return 1;
+    
+    // Priority 3: Full Access (non-paid)
+    if (aHasFullAccess && !bHasFullAccess && !bIsPaid) return -1;
+    if (bHasFullAccess && !aHasFullAccess && !aIsPaid) return 1;
+    
+    // Priority 4: Both same status, sort by unit count descending
     const aCount = a.unit_count || 0;
     const bCount = b.unit_count || 0;
     return bCount - aCount;
@@ -121,8 +132,18 @@ export default function PropertyManagementList({
           </div>
         </div>
         <div className="flex-1 text-xs min-w-0 pl-4 overflow-hidden flex items-center justify-center flex-shrink-0">
-          <div className="truncate overflow-hidden" title={pm.unit_count !== undefined ? pm.unit_count?.toString() : "—"}>
-            {pm.unit_count !== undefined ? pm.unit_count : "—"}
+          <div className="truncate overflow-hidden" title={
+            totalUnits !== null && pm.unit_count === totalUnits 
+              ? "all" 
+              : pm.unit_count !== undefined 
+                ? pm.unit_count?.toString() 
+                : "—"
+          }>
+            {totalUnits !== null && pm.unit_count === totalUnits 
+              ? "all" 
+              : pm.unit_count !== undefined 
+                ? pm.unit_count 
+                : "—"}
           </div>
         </div>
       </div>
@@ -218,7 +239,11 @@ export default function PropertyManagementList({
                 {openPM.unit_count !== undefined && (
                   <div>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Units Managed</span>
-                    <div className="text-gray-900 font-medium">{openPM.unit_count}</div>
+                    <div className="text-gray-900 font-medium">
+                      {totalUnits !== null && openPM.unit_count === totalUnits 
+                        ? "all" 
+                        : openPM.unit_count}
+                    </div>
                   </div>
                 )}
                 
