@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import VerifiedBadgeInline from "./VerifiedBadgeInline";
 
 function formatDate(dateStr) {
   if (!dateStr) return "";
@@ -27,6 +28,8 @@ export default function ContractorEventsModal({ contractor, events = [], isOpen,
 
   if (!isOpen || !contractor) return null;
 
+  const isPaid = contractor?.subscription_tier === "paid";
+
   const toggleEvent = (eventId) => {
     const newExpanded = new Set(expandedEvents);
     if (newExpanded.has(eventId)) {
@@ -50,7 +53,12 @@ export default function ContractorEventsModal({ contractor, events = [], isOpen,
           <div className="flex justify-between items-center mb-4">
             <div className="flex-1"></div>
             <div className="flex-1 text-center">
-              <h3 className="text-lg font-semibold">{contractor.name}</h3>
+              <div className="flex items-center justify-center gap-2">
+                {isPaid && (
+                  <VerifiedBadgeInline />
+                )}
+                <h3 className="text-lg font-semibold">{contractor.name}</h3>
+              </div>
               <p className="text-sm text-gray-500">
                 {events.length} recent event{events.length !== 1 ? "s" : ""}
               </p>
