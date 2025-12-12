@@ -2,8 +2,9 @@
 
 export default function BuildingPrintButton({ building, totalUnits, totalEvents, totalDocuments, totalContractors, propertyManagers, events, documents, units, aoao }) {
   const generatePDF = async () => {
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF();
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 20;
@@ -264,32 +265,28 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       );
     }
 
-    // Save the PDF
-    doc.save(`${building.name || "Building"}_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+      // Save the PDF
+      doc.save(`${building.name || "Building"}_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Error generating PDF. Please try again.");
+    }
   };
 
   return (
-    <button
-      onClick={generatePDF}
-      className="fixed bottom-6 right-6 bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm transition-colors z-50 flex items-center gap-2"
-      aria-label="Print Building Report"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
+    <div className="border rounded-md p-4 bg-gray-50 text-sm mt-8 text-center">
+      <h3 className="font-semibold mb-1">Print Basic Report</h3>
+      <p className="text-gray-700 text-xs mb-3">
+        Generate a PDF with all building level data organized and clean.
+      </p>
+      <button
+        onClick={generatePDF}
+        className="block w-full text-center border border-gray-800 rounded-md py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 transition-colors"
+        aria-label="Print Building Report"
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-        />
-      </svg>
-      Print Report
-    </button>
+        Print Report
+      </button>
+    </div>
   );
 }
 
