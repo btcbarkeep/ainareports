@@ -116,7 +116,7 @@ export default function PropertyManagementList({
             {pm.company_name || pm.name || "Property Manager"}
           </div>
         </div>
-        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center gap-1.5 flex-shrink-0">
+        <div className="w-1/3 text-xs min-w-0 pl-4 pr-4 overflow-hidden flex items-center flex-shrink-0">
           <div className="truncate overflow-hidden min-w-0" title={pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}>
             {pm.license_number && pm.license_number !== "string" ? pm.license_number : "—"}
           </div>
@@ -316,9 +316,7 @@ export default function PropertyManagementList({
         <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
           <div className="w-2/5 min-w-0">Name</div>
-          <div className="w-1/3 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">
-            <span>License</span>
-          </div>
+          <div className="w-1/3 min-w-0 pl-4 pr-4 overflow-hidden">License</div>
           <div className="flex-1 min-w-0 pl-4 overflow-hidden text-center">Units</div>
         </div>
         {displayedPMs.map(renderRow)}
