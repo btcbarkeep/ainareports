@@ -4,7 +4,8 @@ import BuildingsList from "@/components/BuildingsList";
 import UnitsList from "@/components/UnitsList";
 
 export default async function Home({ searchParams }) {
-  const query = (searchParams?.q || "").trim();
+  const resolvedSearchParams = await searchParams;
+  const query = (resolvedSearchParams?.q || "").trim();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
 
   let buildingResults = [];
