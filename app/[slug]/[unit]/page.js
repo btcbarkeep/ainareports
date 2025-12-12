@@ -248,7 +248,8 @@ function formatDate(dateStr) {
 // -------------------------------------------------------------
 export async function generateMetadata({ params }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.ainareports.com";
-  const result = await fetchUnitWithRelations(params.slug, params.unit);
+  const { slug, unit: unitNumber } = await params;
+  const result = await fetchUnitWithRelations(slug, unitNumber);
   
   if (!result || !result.unit || !result.building) {
     return {
@@ -298,9 +299,11 @@ export async function generateMetadata({ params }) {
 // PAGE
 // -------------------------------------------------------------
 export default async function UnitPage({ params, searchParams }) {
-  const activeTab = searchParams?.tab || "overview";
+  const { slug, unit: unitNumber } = await params;
+  const resolvedSearchParams = await searchParams;
+  const activeTab = resolvedSearchParams?.tab || "overview";
 
-  const result = await fetchUnitWithRelations(params.slug, params.unit);
+  const result = await fetchUnitWithRelations(slug, unitNumber);
   if (!result) {
     return (
       <main className="min-h-screen flex items-center justify-center">
