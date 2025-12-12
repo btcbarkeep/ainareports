@@ -1,7 +1,9 @@
 import UnitsList from "./UnitsList";
+import SearchBar from "@/components/SearchBar";
 
 export async function generateMetadata({ searchParams }) {
-  const q = searchParams?.q?.trim() || "";
+  const resolvedSearchParams = await searchParams;
+  const q = resolvedSearchParams?.q?.trim() || "";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.ainareports.com";
   
   if (q) {
@@ -33,7 +35,8 @@ export async function generateMetadata({ searchParams }) {
 }
 
 export default async function SearchResultsPage({ searchParams }) {
-  const q = searchParams.q?.trim() || "";
+  const resolvedSearchParams = await searchParams;
+  const q = resolvedSearchParams?.q?.trim() || "";
 
   if (!q || q.length < 2) {
     return (
@@ -85,6 +88,11 @@ export default async function SearchResultsPage({ searchParams }) {
   return (
     <main className="max-w-3xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-semibold mb-6">Search Results</h1>
+
+      {/* SEARCH BAR */}
+      <div className="mb-6">
+        <SearchBar initialQuery={q} />
+      </div>
 
       <p className="uppercase text-xs tracking-wide text-gray-500 mb-4">
         Results for: <span className="font-bold">"{q.toUpperCase()}"</span>
