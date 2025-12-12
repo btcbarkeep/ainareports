@@ -454,9 +454,13 @@ export default async function BuildingPage({ params, searchParams }) {
         </header>
 
         {/* TITLE */}
-        <div className="text-center mb-1 flex items-center justify-center gap-2">
-          {showVerifiedBadge && <VerifiedBadge type="building" />}
-          <h1 className="text-3xl md:text-4xl font-semibold">
+        <div className="text-center mb-1 relative">
+          {showVerifiedBadge && (
+            <div className="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-full -mr-2">
+              <VerifiedBadge type="building" />
+            </div>
+          )}
+          <h1 className="text-3xl md:text-4xl font-semibold inline-block">
             {building.name}
           </h1>
         </div>
