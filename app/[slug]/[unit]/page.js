@@ -530,6 +530,7 @@ export default async function UnitPage({ params, searchParams }) {
                   totalDocumentsCount={totalDocumentsCount}
                   totalEventsCount={totalEventsCount}
                   totalUnits={building.units ?? null}
+                  isUnitPage={true}
                 />
               </>
             )}
