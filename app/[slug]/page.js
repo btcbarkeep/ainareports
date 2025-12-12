@@ -9,6 +9,7 @@ import AOAOBox from "@/components/AOAOBox";
 import MostActiveContractorBox from "@/components/MostActiveContractorBox";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import VerifiedBadgeInline from "@/components/VerifiedBadgeInline";
+import BuildingPrintButton from "@/components/BuildingPrintButton";
 
 const ROLE_LABELS = {
   super_admin: "Admin",
@@ -809,6 +810,20 @@ export default async function BuildingPage({ params, searchParams }) {
         </a>
         .
       </div>
+
+      {/* PRINT BUTTON */}
+      <BuildingPrintButton
+        building={building}
+        totalUnits={totalUnits}
+        totalEvents={totalEventsCount}
+        totalDocuments={totalDocumentsCount}
+        totalContractors={totalContractorsCount}
+        propertyManagers={propertyManagers}
+        events={events}
+        documents={documents}
+        units={units}
+        aoao={aoao}
+      />
     </main>
   );
 }
