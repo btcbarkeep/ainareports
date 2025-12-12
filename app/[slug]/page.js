@@ -548,9 +548,9 @@ export default async function BuildingPage({ params, searchParams }) {
                 <h2 className="font-semibold mb-3">Units</h2>
                 <div className="border rounded-md divide-y text-sm">
                   <div className="flex px-3 py-2 font-semibold text-gray-700">
-                    <div className="w-1/4 min-w-0 pl-4 pr-4 flex items-center justify-center">Unit</div>
-                    <div className="w-1/4 min-w-0 pl-4 pr-4 flex items-center justify-center">Floor</div>
-                    <div className="flex-1 min-w-0 pl-4 flex items-center justify-center">Owner</div>
+                    <div className="w-1/4 min-w-0">Unit</div>
+                    <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden">Owner</div>
+                    <div className="flex-1 min-w-0 pl-4 overflow-hidden text-center">Floor</div>
                   </div>
 
                   {filteredUnits.length === 0 ? (
@@ -578,7 +578,7 @@ export default async function BuildingPage({ params, searchParams }) {
                             </div>
                           </div>
                         )}
-                        <div className="w-1/4 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">
+                        <div className="w-1/4 min-w-0 pr-4 overflow-hidden">
                           <div className="font-medium text-blue-600 hover:text-blue-800 truncate flex items-center gap-1.5" title={u.unit_number}>
                             {u.hasPaidOwner && (
                               <VerifiedBadgeInline />
@@ -586,14 +586,14 @@ export default async function BuildingPage({ params, searchParams }) {
                             <span>{u.unit_number}</span>
                           </div>
                         </div>
-                        <div className="w-1/4 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">
-                          <div className="truncate" title={u.floor?.toString() || "—"}>
-                            {u.floor ?? "—"}
+                        <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden">
+                          <div className="truncate" title={u.owner_name || "—"}>
+                            {u.owner_name || "—"}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0 pl-4 overflow-hidden flex items-center justify-center">
-                          <div className="truncate" title={u.owner_name || "—"}>
-                            {u.owner_name || "—"}
+                          <div className="truncate text-center" title={u.floor?.toString() || "—"}>
+                            {u.floor ?? "—"}
                           </div>
                         </div>
                       </Link>
