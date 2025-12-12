@@ -8,6 +8,7 @@ import PremiumUnlockSection from "@/components/PremiumUnlockSection";
 import AOAOBox from "@/components/AOAOBox";
 import MostActiveContractorBox from "@/components/MostActiveContractorBox";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import VerifiedBadgeInline from "@/components/VerifiedBadgeInline";
 
 const ROLE_LABELS = {
   super_admin: "Admin",
@@ -572,7 +573,7 @@ export default async function BuildingPage({ params, searchParams }) {
                         {u.hasPaidOwner && (
                           <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10 border border-gray-200">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-amber-500 text-[10px]">⭐</span>
+                              <VerifiedBadgeInline />
                               <span>Premium Unit Owner — Verified by Aina Protocol</span>
                             </div>
                           </div>
@@ -580,7 +581,7 @@ export default async function BuildingPage({ params, searchParams }) {
                         <div className="w-1/4 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">
                           <div className="font-medium text-blue-600 hover:text-blue-800 truncate flex items-center gap-1.5" title={u.unit_number}>
                             {u.hasPaidOwner && (
-                              <span className="text-amber-500 text-[10px] leading-none flex-shrink-0">⭐</span>
+                              <VerifiedBadgeInline />
                             )}
                             <span>{u.unit_number}</span>
                           </div>
@@ -602,7 +603,7 @@ export default async function BuildingPage({ params, searchParams }) {
                 {filteredUnits.some(u => u.hasPaidOwner) && (
                   <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-200 mt-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-amber-500 text-[10px]">⭐</span>
+                      <VerifiedBadgeInline />
                       <span>Premium Unit Owner — Verified by Aina Protocol</span>
                     </div>
                   </div>
