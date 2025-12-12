@@ -454,11 +454,11 @@ export default async function BuildingPage({ params, searchParams }) {
         </header>
 
         {/* TITLE */}
-        <div className="text-center mb-1">
-          <h1 className="text-3xl md:text-4xl font-semibold inline-block">
+        <div className="text-center mb-1 flex items-center justify-center gap-2">
+          {showVerifiedBadge && <VerifiedBadge type="building" />}
+          <h1 className="text-3xl md:text-4xl font-semibold">
             {building.name}
           </h1>
-          {showVerifiedBadge && <VerifiedBadge type="building" />}
         </div>
 
         {/* ADDRESS */}
