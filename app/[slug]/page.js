@@ -575,8 +575,11 @@ export default async function BuildingPage({ params, searchParams }) {
                           </div>
                         )}
                         <div className="w-1/4 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">
-                          <div className="font-medium text-blue-600 hover:text-blue-800 truncate" title={u.unit_number}>
-                            {u.unit_number}
+                          <div className="font-medium text-blue-600 hover:text-blue-800 truncate flex items-center gap-1.5" title={u.unit_number}>
+                            {u.hasPaidOwner && (
+                              <span className="text-amber-500 text-[10px] leading-none flex-shrink-0">⭐</span>
+                            )}
+                            <span>{u.unit_number}</span>
                           </div>
                         </div>
                         <div className="w-1/4 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">
@@ -585,11 +588,8 @@ export default async function BuildingPage({ params, searchParams }) {
                           </div>
                         </div>
                         <div className="flex-1 min-w-0 pl-4 overflow-hidden flex items-center justify-center">
-                          <div className="truncate flex items-center gap-1.5" title={u.owner_name || "—"}>
-                            {u.hasPaidOwner && (
-                              <span className="text-amber-500 text-[10px] leading-none flex-shrink-0">⭐</span>
-                            )}
-                            <span className="min-w-0">{u.owner_name || "—"}</span>
+                          <div className="truncate" title={u.owner_name || "—"}>
+                            {u.owner_name || "—"}
                           </div>
                         </div>
                       </Link>
