@@ -40,7 +40,7 @@ export default function MostActiveContractorBox({ contractor, events = [], build
   return (
     <>
       <div
-        className="border-l-4 border-amber-400 bg-gray-50 rounded-md text-sm p-4 hover:bg-amber-50 cursor-pointer transition-colors shadow-sm"
+        className="bg-white border-2 border-amber-200 rounded-lg text-sm p-4 hover:border-amber-300 hover:shadow-md cursor-pointer transition-all shadow-sm"
         onClick={() => setIsModalOpen(true)}
         role="button"
         tabIndex={0}
