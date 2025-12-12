@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import PremiumUnlockSection from "./PremiumUnlockSection";
+import VerifiedBadgeInline from "./VerifiedBadgeInline";
 
 function formatPhone(phone) {
   if (!phone) return "—";
@@ -124,14 +125,16 @@ export default function ContractorsList({
         {isPaid && (
           <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10 border border-gray-200">
             <div className="flex items-center gap-1.5">
-              <span className="text-amber-500 text-[10px]">⭐</span>
+              <VerifiedBadgeInline />
               <span>Premium Contractor — Verified by Aina Protocol</span>
             </div>
           </div>
         )}
         <div className="w-2/5 min-w-0 pr-4 relative flex-shrink-0">
           {isPaid && (
-            <span className="absolute -left-1.5 top-1/2 -translate-y-1/2 text-amber-500 text-[10px] leading-none">⭐</span>
+            <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 leading-none">
+              <VerifiedBadgeInline />
+            </div>
           )}
           <div className={`truncate overflow-hidden ${isPaid ? 'pl-3' : ''}`} title={c.company_name || c.name || "Contractor"}>
             {c.company_name || c.name || "Contractor"}
@@ -171,7 +174,7 @@ export default function ContractorsList({
           {isPaid && (
             <div className="bg-gray-100 border-b border-gray-200 px-6 py-3 rounded-t-lg">
               <div className="flex items-center justify-center gap-1.5 text-sm text-gray-700">
-                <span className="text-amber-500 text-[10px]">⭐</span>
+                <VerifiedBadgeInline />
                 <span>Premium Contractor — Verified by Aina Protocol</span>
               </div>
             </div>
@@ -357,7 +360,7 @@ export default function ContractorsList({
         {displayedContractors.map(renderRow)}
         <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-200">
           <div className="flex items-center gap-1.5">
-            <span className="text-amber-500 text-[10px]">⭐</span>
+            <VerifiedBadgeInline />
             <span>Premium Contractor — Verified by Aina Protocol</span>
           </div>
         </div>
