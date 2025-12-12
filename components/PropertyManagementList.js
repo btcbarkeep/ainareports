@@ -161,7 +161,7 @@ export default function PropertyManagementList({
         onClick={() => setOpenPM(null)}
       >
         <div
-          className={`bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 ${isPaid ? 'border-2 border-amber-300' : 'border border-gray-200'}`}
+          className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 border border-gray-200"
           onClick={(e) => e.stopPropagation()}
         >
           {isPaid && (
