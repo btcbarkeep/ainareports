@@ -376,14 +376,16 @@ export default async function UnitPage({ params, searchParams }) {
 
           {/* TOP LINE — UNIT NUMBER ONLY */}
           <div className="mb-1 text-center">
-            <h1 className="text-4xl md:text-5xl font-semibold inline-block relative">
+            <div className="relative inline-block">
               {hasVerifiedOwner && (
                 <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2">
                   <VerifiedBadge type="unit" />
                 </div>
               )}
-              {unit.unit_number}
-            </h1>
+              <h1 className="text-4xl md:text-5xl font-semibold">
+                {unit.unit_number}
+              </h1>
+            </div>
           </div>
 
           {/* SECOND LINE — BUILDING NAME ONLY */}
