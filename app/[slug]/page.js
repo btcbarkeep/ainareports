@@ -295,7 +295,8 @@ const fetchBuildingData = cache(async (slug) => {
 // -------------------------------------------------------------
 export async function generateMetadata({ params }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.ainareports.com";
-  const data = await fetchBuildingData(params.slug);
+  const { slug } = await params;
+  const data = await fetchBuildingData(slug);
   
   if (!data || !data.building) {
     return {
@@ -347,7 +348,9 @@ export async function generateMetadata({ params }) {
 // PAGE
 // -------------------------------------------------------------
 export default async function BuildingPage({ params, searchParams }) {
-  const data = await fetchBuildingData(params.slug);
+  const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const data = await fetchBuildingData(slug);
 
   if (!data) {
     return (
@@ -377,7 +380,7 @@ export default async function BuildingPage({ params, searchParams }) {
   } = data;
 
   // Get unit search query from URL params
-  const unitSearchQuery = (searchParams?.unitSearch || "").trim().toLowerCase();
+  const unitSearchQuery = (resolvedSearchParams?.unitSearch || "").trim().toLowerCase();
 
   // Filter units based on search query
   const filteredUnits = unitSearchQuery
@@ -402,9 +405,9 @@ export default async function BuildingPage({ params, searchParams }) {
     : units.slice(0, 5); // Show first 5 units when no search
 
   const activeTab =
-    typeof searchParams?.tab === "string" &&
-    TABS.some((t) => t.id === searchParams.tab)
-      ? searchParams.tab
+    typeof resolvedSearchParams?.tab === "string" &&
+    TABS.some((t) => t.id === resolvedSearchParams.tab)
+      ? resolvedSearchParams.tab
       : "overview";
 
   // Description
