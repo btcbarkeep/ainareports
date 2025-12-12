@@ -69,8 +69,9 @@ export default function AOAOBox({ aoao }) {
               {isPaid && (
                 <div className="bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200 px-6 py-3 rounded-t-lg sticky top-0 z-10">
                   <div className="flex items-center justify-center gap-2">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-amber-500 text-white">
-                      ⭐ Aina Certified Partner
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-amber-500 text-white gap-1.5">
+                      <img src="/verified-badge.png" alt="Verified" width={16} height={16} className="w-4 h-4" />
+                      Aina Certified Partner
                     </span>
                     <span className="text-xs text-amber-700">Verified Organization</span>
                   </div>
