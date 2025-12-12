@@ -4,13 +4,13 @@ export default function VerifiedBadge({ type = "building" }) {
   const label = type === "building" ? "Aina Verified Building" : "Aina Verified Unit";
   
   return (
-    <div className="inline-flex items-center ml-2" title={label}>
+    <div className="flex items-center" title={label}>
       <Image
         src="/verified-badge.png"
         alt={label}
-        width={40}
-        height={40}
-        className="w-10 h-10"
+        width={32}
+        height={32}
+        className="w-8 h-8"
       />
     </div>
   );
