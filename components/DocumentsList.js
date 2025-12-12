@@ -190,8 +190,8 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
             {title}
           </div>
         </div>
-        <div className="w-2/5 min-w-0 px-4 overflow-hidden flex items-center justify-center">
-          <div className="truncate flex items-center justify-center gap-1.5 w-full" title={category}>
+        <div className="w-2/5 min-w-0 px-4 overflow-hidden flex items-center">
+          <div className="truncate flex items-center gap-1.5" title={category}>
             <span>{getCategoryIcon(doc.category)}</span>
             <span>{category}</span>
           </div>
@@ -210,7 +210,7 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
       <div className="border rounded-md divide-y text-sm">
         <div className="flex px-3 py-2 font-semibold text-gray-700">
           <div className="w-2/5 min-w-0">Title</div>
-          <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">Category</div>
+          <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden">Category</div>
           <div className="flex-1 min-w-0 px-4 flex items-center justify-center text-center">Date</div>
         </div>
         {documents.map(renderRow)}
