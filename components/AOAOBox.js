@@ -85,9 +85,9 @@ export default function AOAOBox({ aoao }) {
               <div className="p-6">
                 <div className="flex justify-center items-center mb-6 relative">
                   <div className="text-center">
-                    <h2 className="text-xl font-bold text-gray-900 mb-1">AOAO Information</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">{aoao.organization_name}</h2>
                     {isPaid && (
-                      <p className="text-xs text-gray-600">Trusted association partner</p>
+                      <p className="text-sm text-gray-600">Trusted association partner</p>
                     )}
                   </div>
                   <button
@@ -100,10 +100,6 @@ export default function AOAOBox({ aoao }) {
                 </div>
 
                 <div className="space-y-4 text-sm">
-                  <div className="pb-3 border-b border-gray-100 text-center">
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Organization Name</span>
-                    <div className="text-gray-900 font-medium text-base">{aoao.organization_name}</div>
-                  </div>
 
                   {address && (
                     <div className="text-center">
