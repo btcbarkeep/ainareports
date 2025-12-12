@@ -679,6 +679,7 @@ export default async function BuildingPage({ params, searchParams }) {
                   buildingName={building.name}
                   totalDocumentsCount={totalDocumentsCount}
                   totalEventsCount={totalEventsCount}
+                  totalUnits={totalUnits}
                 />
               </>
             )}
