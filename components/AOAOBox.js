@@ -71,17 +71,14 @@ export default function AOAOBox({ aoao }) {
             onClick={() => setIsOpen(false)}
           >
             <div
-              className={`bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto ${isPaid ? 'border-2 border-amber-300' : ''}`}
+              className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {isPaid && (
-                <div className="bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200 px-6 py-3 rounded-t-lg sticky top-0 z-10">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <img src="/verified-badge.png" alt="Verified" width={20} height={20} className="w-5 h-5" />
-                      <span className="text-sm font-semibold text-amber-800">Aina Certified Partner</span>
-                    </div>
-                    <span className="text-xs text-amber-700">Verified Organization</span>
+                <div className="bg-gray-100 border-b border-gray-200 px-6 py-3 rounded-t-lg sticky top-0 z-10">
+                  <div className="flex items-center justify-center gap-1.5 text-sm text-gray-700">
+                    <img src="/verified-badge.png" alt="Verified" width={16} height={16} className="w-4 h-4" />
+                    <span>Aina Certified Partner — Verified by Aina Protocol</span>
                   </div>
                 </div>
               )}
