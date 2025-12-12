@@ -321,7 +321,7 @@ export default function ContractorsList({
                   {openContractor.phone && (
                     <a
                       href={`tel:${openContractor.phone.replace(/\D/g, '')}`}
-                      className="flex-1 text-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-md transition-colors shadow-sm"
+                      className="flex-1 text-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-md transition-colors shadow-sm whitespace-nowrap"
                     >
                       📞 {formatPhone(openContractor.phone)}
                     </a>
