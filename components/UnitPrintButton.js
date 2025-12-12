@@ -1,624 +1,362 @@
-import Link from "next/link";
-import EventsList from "@/components/EventsList";
-import DocumentsList from "@/components/DocumentsList";
-import ContractorsList from "@/components/ContractorsList";
-import PropertyManagementList from "@/components/PropertyManagementList";
-import MostActiveContractorBox from "@/components/MostActiveContractorBox";
-import VerifiedBadge from "@/components/VerifiedBadge";
-import UnitPrintButton from "@/components/UnitPrintButton";
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+"use client";
 
-// -------------------------------------------------------------
-// ROLE LABEL MAP
-// -------------------------------------------------------------
-const ROLE_LABELS = {
-  super_admin: "Admin",
-  admin: "Admin",
-  property_manager: "Property Manager",
-  hoa: "HOA Manager",
-  contractor: "Contractor",
-};
+export default function UnitPrintButton({ building, unit, totalEvents, totalDocuments, totalContractors, buildingContractors, unitContractors, events, documents }) {
+  const generatePDF = async () => {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    let yPosition = margin;
 
-// -------------------------------------------------------------
-// FETCH UNIT + BUILDING + EVENTS + CONTRACTORS + AUTH USERS
-// -------------------------------------------------------------
-async function fetchUnitWithRelations(buildingSlug, unitNumber) {
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL;
+    // Helper function to add a new page if needed
+    const checkPageBreak = (requiredSpace) => {
+      if (yPosition + requiredSpace > pageHeight - margin) {
+        doc.addPage();
+        yPosition = margin;
+        return true;
+      }
+      return false;
+    };
 
-    if (!apiUrl) {
-      console.error("API URL not configured");
-      return null;
+    // Title
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Unit ${unit.unit_number || "Report"}`, pageWidth / 2, yPosition, { align: "center" });
+    yPosition += 10;
+
+    // Building Name
+    if (building.name) {
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "normal");
+      doc.text(building.name, pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 10;
     }
 
-    // Fetch all data from public API endpoint using building_slug and unit_number
-    let publicData = null;
-    try {
-      const apiEndpoint = `${apiUrl}/reports/public/unit/${unitNumber}?building_slug=${buildingSlug}&format=json`;
+    // Building Address
+    if (building.address || building.city || building.state) {
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      const addressParts = [
+        building.address,
+        building.city,
+        building.state,
+        building.zip
+      ].filter(Boolean);
+      doc.text(addressParts.join(", "), pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 15;
+    }
+
+    // Unit Details
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Unit Details", margin, yPosition);
+    yPosition += 10;
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    
+    const unitDetails = [];
+    if (unit.unit_number) unitDetails.push(`Unit Number: ${unit.unit_number}`);
+    if (unit.owner_name) unitDetails.push(`Owner: ${unit.owner_name}`);
+    if (unit.floor !== null && unit.floor !== undefined) unitDetails.push(`Floor: ${unit.floor}`);
+    if (unit.bedrooms) unitDetails.push(`Bedrooms: ${unit.bedrooms}`);
+    if (unit.bathrooms) unitDetails.push(`Bathrooms: ${unit.bathrooms}`);
+    if (unit.square_feet) unitDetails.push(`Square Feet: ${unit.square_feet.toLocaleString()}`);
+
+    unitDetails.forEach((detail, index) => {
+      checkPageBreak(8);
+      doc.text(detail, margin + 5, yPosition);
+      yPosition += 8;
+    });
+
+    // Owners
+    if (unit.owners && Array.isArray(unit.owners) && unit.owners.length > 0) {
+      yPosition += 5;
+      checkPageBreak(15);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Owners", margin, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
       
-      const response = await fetch(
-        apiEndpoint,
-        {
-          headers: {
-            accept: "application/json",
-          },
-          next: { revalidate: 300 }, // Cache for 5 minutes
+      unit.owners.forEach((owner, index) => {
+        checkPageBreak(15);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${index + 1}. ${owner.name || owner.owner_name || "Owner"}`, margin + 5, yPosition);
+        yPosition += 7;
+        
+        doc.setFont("helvetica", "normal");
+        if (owner.email) {
+          doc.text(`   Email: ${owner.email}`, margin + 5, yPosition);
+          yPosition += 6;
         }
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        publicData = result;
-      } else {
-        const errorText = await response.text().catch(() => '');
-        console.error(`Error fetching unit data from API: ${response.status}`, errorText);
-        return null;
-      }
-    } catch (apiError) {
-      console.error("Error calling unit API:", apiError);
-      return null;
+        if (owner.phone) {
+          doc.text(`   Phone: ${owner.phone}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
+        yPosition += 3;
+      });
     }
 
-    if (!publicData) {
-      return null;
-    }
+    // Building Details
+    yPosition += 5;
+    checkPageBreak(25);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Building Details", margin, yPosition);
+    yPosition += 10;
 
-    // Extract data from API response
-    // Handle different possible response structures:
-    // 1. { unit: {...}, building: {...}, events: [...], ... }
-    // 2. { data: { unit: {...}, building: {...}, ... } }
-    // 3. Unit/building data at root level
-    let apiUnit = null;
-    let apiBuilding = null;
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
     
-    // Check for nested data structure first
-    if (publicData.data) {
-      apiUnit = publicData.data.unit;
-      apiBuilding = publicData.data.building;
-      publicData = {
-        ...publicData.data,
-        unit: apiUnit,
-        building: apiBuilding,
-      };
-    } else if (publicData.unit && publicData.building) {
-      // Standard structure: { unit: {...}, building: {...}, events: [...], ... }
-      apiUnit = publicData.unit;
-      apiBuilding = publicData.building;
-    } else if (publicData.id && publicData.unit_number) {
-      // The response might be the unit object itself
-      apiUnit = publicData;
-      // Try to get building from the response
-      apiBuilding = publicData.building || null;
-      // Extract other data if present, or create structure
-      publicData = {
-        unit: apiUnit,
-        building: apiBuilding,
-        units: publicData.units || [],
-        events: publicData.events || [],
-        documents: publicData.documents || [],
-        contractors: publicData.contractors || [],
-        property_management_companies: publicData.property_management_companies || [],
-      };
+    const buildingDetails = [];
+    if (building.units) buildingDetails.push(`Total Units: ${building.units}`);
+    if (building.floors) buildingDetails.push(`Floors: ${building.floors}`);
+    if (building.zoning) {
+      const zoningDesc = building.zoning.charAt(0).toUpperCase() === "H" ? `${building.zoning} - Hotel` :
+                        building.zoning.charAt(0).toUpperCase() === "A" ? `${building.zoning} - Apartment` :
+                        building.zoning.charAt(0).toUpperCase() === "R" ? `${building.zoning} - Residential` :
+                        building.zoning;
+      buildingDetails.push(`Zoning: ${zoningDesc}`);
     }
-    
-    const apiEvents = publicData.events || [];
-    const apiDocuments = publicData.documents || [];
-    const apiContractors = publicData.contractors || [];
-    const apiBuildingContractors = publicData.property_management_companies || [];
-    const statistics = publicData.statistics || {};
-    // Extract most active contractor events
-    const mostActiveContractorEvents = publicData.most_active_contractor_events || [];
+    if (building.bedrooms) buildingDetails.push(`Total Bedrooms: ${building.bedrooms}`);
+    if (building.bathrooms) buildingDetails.push(`Total Bathrooms: ${building.bathrooms}`);
+    if (building.square_feet) buildingDetails.push(`Total Square Feet: ${building.square_feet.toLocaleString()}`);
 
-    if (!apiUnit || !apiBuilding) {
-      return null;
-    }
-
-    // Create a map of event_id -> document for quick lookup
-    const eventDocumentMap = new Map();
-    apiDocuments.forEach((doc) => {
-      if (doc.event_id) {
-        eventDocumentMap.set(doc.event_id, doc);
-      }
+    buildingDetails.forEach((detail, index) => {
+      checkPageBreak(8);
+      doc.text(detail, margin + 5, yPosition);
+      yPosition += 8;
     });
 
-    // Events: use unit_ids array (for unit page, events should already be filtered to this unit)
-    const events = apiEvents.map((e) => {
-      // Find associated document if it exists
-      const associatedDoc = eventDocumentMap.get(e.id);
+    // Statistics
+    yPosition += 5;
+    checkPageBreak(20);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Statistics", margin, yPosition);
+    yPosition += 10;
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    
+    if (totalEvents !== null && totalEvents !== undefined) {
+      checkPageBreak(8);
+      doc.text(`Total Events: ${totalEvents}`, margin + 5, yPosition);
+      yPosition += 8;
+    }
+    if (totalDocuments !== null && totalDocuments !== undefined) {
+      checkPageBreak(8);
+      doc.text(`Total Documents: ${totalDocuments}`, margin + 5, yPosition);
+      yPosition += 8;
+    }
+    if (totalContractors !== null && totalContractors !== undefined) {
+      checkPageBreak(8);
+      doc.text(`Total Contractors: ${totalContractors}`, margin + 5, yPosition);
+      yPosition += 8;
+    }
+    if (buildingContractors && buildingContractors.length > 0) {
+      checkPageBreak(8);
+      doc.text(`Property Management Companies: ${buildingContractors.length}`, margin + 5, yPosition);
+      yPosition += 8;
+    }
+
+    // Property Management Companies
+    if (buildingContractors && buildingContractors.length > 0) {
+      yPosition += 5;
+      checkPageBreak(25);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Property Management Companies", margin, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
       
-      // Events have unit_ids array - for unit page, we can just use the unit number
-      // But also preserve units_affected if it exists for multi-unit events
-      const unitNumbers = e.units_affected ? e.units_affected.split(',').map(u => u.trim()) : [apiUnit.unit_number];
-      return {
-        ...e,
-        unitNumber: apiUnit.unit_number,
-        unitNumbers: unitNumbers, // Keep all unit numbers for reference
-        units_affected: e.units_affected, // Keep units_affected string for reference
-        // Add document_id from associated document if available
-        document_id: e.document_id || associatedDoc?.id || null,
-      };
-    });
+      buildingContractors.slice(0, 10).forEach((pm, index) => {
+        checkPageBreak(20);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${index + 1}. ${pm.company_name || pm.name || "Property Manager"}`, margin + 5, yPosition);
+        yPosition += 7;
+        
+        doc.setFont("helvetica", "normal");
+        if (pm.license_number && pm.license_number !== "string") {
+          doc.text(`   License: ${pm.license_number}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
+        if (pm.phone) {
+          doc.text(`   Phone: ${pm.phone}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
+        yPosition += 3;
+      });
+    }
 
-    // Documents: use unit_ids array
-    const documents = apiDocuments.map((d) => ({
-      ...d,
-      // Documents have unit_ids array
-    }));
+    // Unit Contractors
+    if (unitContractors && unitContractors.length > 0) {
+      yPosition += 5;
+      checkPageBreak(25);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Unit Contractors", margin, yPosition);
+      yPosition += 10;
 
-    // Map contractors from API response
-    const unitContractors = apiContractors.map((c, index) => ({
-      id: c.id || `contractor-${index}`,
-      name: c.company_name || c.name || "Contractor",
-      company_name: c.company_name || c.name || "Contractor",
-      phone: c.contact_phone || c.phone || "",
-      count: c.event_count || c.count || 0,
-      address: c.address,
-      city: c.city,
-      state: c.state,
-      zip_code: c.zip_code || c.zip,
-      email: c.contact_email || c.email,
-      contact_person: c.contact_person,
-      website: c.website,
-      license_number: c.license_number,
-      insurance_info: c.insurance_info,
-      notes: c.notes,
-      roles: c.roles,
-      subscription_tier: c.subscription_tier,
-      created_at: c.created_at,
-      logo_url: c.logo_url,
-    }));
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      
+      unitContractors.slice(0, 10).forEach((contractor, index) => {
+        checkPageBreak(20);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${index + 1}. ${contractor.company_name || contractor.name || "Contractor"}`, margin + 5, yPosition);
+        yPosition += 7;
+        
+        doc.setFont("helvetica", "normal");
+        if (contractor.roles && Array.isArray(contractor.roles) && contractor.roles.length > 0) {
+          doc.text(`   Role: ${contractor.roles.join(", ")}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
+        if (contractor.phone) {
+          doc.text(`   Phone: ${contractor.phone}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
+        if (contractor.license_number) {
+          doc.text(`   License: ${contractor.license_number}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
+        yPosition += 3;
+      });
+    }
 
-    const mostActiveContractor = unitContractors.length > 0 ? unitContractors[0] : null;
-    const contractorEvents = mostActiveContractorEvents.slice(0, 5); // Limit to 5 events
+    // Unit Events
+    if (events && events.length > 0) {
+      yPosition += 5;
+      checkPageBreak(25);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Unit Events", margin, yPosition);
+      yPosition += 10;
 
-    // Building contractors (property management companies)
-    // The API endpoint already filters to only return PM companies with access to this unit
-    const buildingContractors = apiBuildingContractors
-      .map((c) => ({
-        id: c.id,
-        company_name: c.company_name || c.name,
-        name: c.company_name || c.name,
-        phone: c.contact_phone || c.phone || "",
-        address: c.address,
-        city: c.city,
-        state: c.state,
-        zip_code: c.zip_code || c.zip,
-        email: c.contact_email || c.email,
-        contact_person: c.contact_person,
-        website: c.website,
-        notes: c.notes,
-        unit_count: c.unit_count,
-        subscription_tier: c.subscription_tier,
-        license_number: c.license_number || c.license,
-        logo_url: c.logo_url,
-        created_at: c.created_at,
-      }));
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      
+      events.slice(0, 25).forEach((event, index) => {
+        checkPageBreak(25);
+        const eventDate = event.occurred_at ? new Date(event.occurred_at).toLocaleDateString() : "—";
+        doc.setFont("helvetica", "bold");
+        doc.text(`${index + 1}. ${event.title || "Event"}`, margin + 5, yPosition);
+        yPosition += 7;
+        
+        doc.setFont("helvetica", "normal");
+        doc.text(`   Date: ${eventDate}`, margin + 5, yPosition);
+        yPosition += 6;
+        if (event.event_type) {
+          doc.text(`   Type: ${event.event_type}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
+        if (event.severity) {
+          doc.text(`   Severity: ${event.severity}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
+        if (event.status) {
+          doc.text(`   Status: ${event.status}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
+        if (event.body) {
+          const bodyLines = doc.splitTextToSize(`   ${event.body}`, pageWidth - margin * 2 - 10);
+          bodyLines.forEach((line) => {
+            checkPageBreak(6);
+            doc.text(line, margin + 5, yPosition);
+            yPosition += 6;
+          });
+        }
+        yPosition += 3;
+      });
+    }
 
-    // USER DISPLAY NAMES
-    const userDisplayNames = {};
+    // Unit Documents
+    if (documents && documents.length > 0) {
+      yPosition += 5;
+      checkPageBreak(25);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Unit Documents", margin, yPosition);
+      yPosition += 10;
 
-    // Calculate totals for unlock section (use statistics if available, otherwise use array lengths)
-    const totalContractorsCount = statistics.total_contractors ?? apiContractors.length ?? 0;
-    const totalDocumentsCount = statistics.total_documents ?? apiDocuments.length ?? 0;
-    const totalEventsCount = statistics.total_events ?? apiEvents.length ?? 0;
-    const totalPropertyManagersCount = statistics.total_pm_companies ?? apiBuildingContractors.length ?? 0;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      
+      documents.slice(0, 20).forEach((doc, index) => {
+        checkPageBreak(20);
+        const docDate = doc.created_at ? new Date(doc.created_at).toLocaleDateString() : "—";
+        doc.setFont("helvetica", "bold");
+        doc.text(`${index + 1}. ${doc.title || doc.filename || "Document"}`, margin + 5, yPosition);
+        yPosition += 7;
+        
+        doc.setFont("helvetica", "normal");
+        if (doc.category) {
+          doc.text(`   Category: ${doc.category}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
+        if (doc.document_type) {
+          doc.text(`   Type: ${doc.document_type}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
+        doc.text(`   Uploaded: ${docDate}`, margin + 5, yPosition);
+        yPosition += 6;
+        yPosition += 3;
+      });
+    }
 
-    return {
-      building: apiBuilding,
-      unit: apiUnit,
-      events,
-      documents,
-      mostActiveContractor,
-      buildingContractors,
-      unitContractors,
-      userDisplayNames,
-      totalContractorsCount,
-      totalDocumentsCount,
-      totalEventsCount,
-      totalPropertyManagersCount,
-      contractorEvents,
-    };
-  } catch (error) {
-    console.error("Error in fetchUnitWithRelations:", error);
-    return null;
-  }
-}
+    // Footer
+    const totalPages = doc.internal.pages.length - 1;
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Generated by AinaReports on ${new Date().toLocaleDateString()}`,
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: "center" }
+      );
+      doc.text(
+        `Page ${i} of ${totalPages}`,
+        pageWidth / 2,
+        pageHeight - 5,
+        { align: "center" }
+      );
+    }
 
-// -------------------------------------------------------------
-function formatAddress(building) {
-  if (!building) return "";
-  const parts = [
-    building.address,
-    building.city,
-    building.state ? building.state.toUpperCase() : null,
-    building.zip,
-  ].filter(Boolean);
-
-  return parts.join(", ");
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return "";
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit" });
-}
-
-function formatZoning(zoning) {
-  if (!zoning) return "—";
-  
-  const firstLetter = zoning.trim().charAt(0).toUpperCase();
-  let type = "";
-  
-  if (firstLetter === "H") {
-    type = "Hotel";
-  } else if (firstLetter === "A") {
-    type = "Apartment";
-  } else if (firstLetter === "R") {
-    type = "Residential";
-  }
-  
-  return type ? `${zoning} - ${type}` : zoning;
-}
-
-// -------------------------------------------------------------
-// METADATA
-// -------------------------------------------------------------
-export async function generateMetadata({ params }) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.ainareports.com";
-  const { slug, unit: unitNumber } = await params;
-  const result = await fetchUnitWithRelations(slug, unitNumber);
-  
-  if (!result || !result.unit || !result.building) {
-    return {
-      title: "Unit Not Found",
-    };
-  }
-
-  const { unit, building } = result;
-  const address = [building.address, building.city, building.state, building.zip]
-    .filter(Boolean)
-    .join(", ");
-  
-  const title = `Unit ${unit.unit_number} - ${building.name} | AinaReports`;
-  const description = `Unit report for Unit ${unit.unit_number} at ${building.name}${address ? ` located at ${address}` : ""}. View events, documents, contractor activity, and unit details.`;
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      url: `${siteUrl}/${building.slug}/${unit.unit_number}`,
-      siteName: "AinaReports",
-      type: "website",
-      images: [
-        {
-          url: "/aina-logo-dark.png",
-          width: 1200,
-          height: 630,
-          alt: `Unit ${unit.unit_number} - ${building.name} - AinaReports`,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: ["/aina-logo-dark.png"],
-    },
-    alternates: {
-      canonical: `${siteUrl}/${building.slug}/${unit.unit_number}`,
-    },
+    // Save the PDF
+    const filename = `${building.name || "Building"}_Unit_${unit.unit_number || "Report"}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(filename);
   };
-}
-
-// -------------------------------------------------------------
-// PAGE
-// -------------------------------------------------------------
-export default async function UnitPage({ params, searchParams }) {
-  const { slug, unit: unitNumber } = await params;
-  const resolvedSearchParams = await searchParams;
-  const activeTab = resolvedSearchParams?.tab || "overview";
-
-  const result = await fetchUnitWithRelations(slug, unitNumber);
-  if (!result) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600 text-sm">Unit not found.</p>
-      </main>
-    );
-  }
-
-  const {
-    building,
-    unit,
-    events,
-    documents,
-    mostActiveContractor,
-    buildingContractors,
-    unitContractors,
-    userDisplayNames,
-    totalContractorsCount,
-    totalDocumentsCount,
-    totalEventsCount,
-    totalPropertyManagersCount,
-    contractorEvents,
-  } = result;
-
-  const addressLine = formatAddress(building);
-
-  // Check if unit has verified owner (owner with paid subscription tier)
-  const hasVerifiedOwner = unit.owners && Array.isArray(unit.owners) && 
-    unit.owners.some(owner => owner.subscription_tier === "paid");
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 py-10">
-        {/* LOGO */}
-        <header className="relative mb-10">
-          <Link
-            href="/"
-            className="absolute top-0 left-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
-          >
-            <span>←</span> New Search
-          </Link>
-          <div className="text-center">
-            <Link href="/" className="inline-block cursor-pointer">
-              <img src="/aina-logo-dark.png" className="w-14 mx-auto mb-4" alt="Aina Logo" />
-            </Link>
-            <div className="text-xs tracking-[0.25em] uppercase">AINAREPORTS</div>
-          </div>
-        </header>
-
-        {/* TITLE SECTION */}
-        <section className="text-center mb-6">
-
-          {/* TOP LINE — UNIT NUMBER ONLY */}
-          <div className="mb-1 text-center">
-            <div className="relative inline-flex items-center justify-center">
-              {hasVerifiedOwner && (
-                <div className="absolute -left-10 mr-2">
-                  <VerifiedBadge type="unit" />
-                </div>
-              )}
-              <h1 className="text-4xl md:text-5xl font-semibold">
-                {unit.unit_number}
-              </h1>
-            </div>
-          </div>
-
-          {/* SECOND LINE — BUILDING NAME ONLY */}
-          <Link
-            href={`/${building.slug}`}
-            className="text-lg md:text-xl text-gray-700 hover:text-gray-900 underline hover:no-underline"
-          >
-            {building.name}
-          </Link>
-
-          {/* ADDRESS */}
-          {addressLine && (
-            <p className="text-gray-600 text-sm md:text-base mt-2">{addressLine}</p>
-          )}
-
-          {/* PARCEL */}
-          {unit.parcel_number && (
-            <p className="text-gray-600 text-sm mt-1">
-              Parcel #: {unit.parcel_number}
-            </p>
-          )}
-        </section>
-
-        {/* TABS */}
-        <nav className="border-b mb-6 text-sm md:text-base">
-          <ul className="flex gap-6">
-            {[
-              { id: "overview", label: "Overview" },
-              { id: "documents", label: "Docs" },
-              { id: "events", label: "Events" },
-              { id: "property_management", label: "Mgmt" },
-              { id: "contractors", label: "Vendors" },
-            ].map((tab) => (
-              <li key={tab.id}>
-                <a
-                  href={`/${building.slug}/${unit.unit_number}?tab=${tab.id}`}
-                  className={
-                    activeTab === tab.id
-                      ? "pb-2 border-b-2 border-black"
-                      : "pb-2 text-gray-500 hover:text-black"
-                  }
-                >
-                  {tab.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {/* GRID */}
-        <div className="grid md:grid-cols-[3fr,2fr] gap-10">
-          <div>
-            {/* ---------------- OVERVIEW TAB ---------------- */}
-            {activeTab === "overview" && (
-              <>
-                <h2 className="font-semibold mb-3">Unit Details</h2>
-
-                <div className="border rounded-md divide-y text-sm mb-8">
-                  <div className="flex px-3 py-2">
-                    <div className="w-1/2">Owner Name:</div>
-                    <div className="w-1/2">{unit.owner_name || "—"}</div>
-                  </div>
-                  <div className="flex px-3 py-2">
-                    <div className="w-1/2">Beds:</div>
-                    <div className="w-1/2">{unit.bedrooms ?? "—"}</div>
-                  </div>
-                  <div className="flex px-3 py-2">
-                    <div className="w-1/2">Baths:</div>
-                    <div className="w-1/2">{unit.bathrooms ?? "—"}</div>
-                  </div>
-                  <div className="flex px-3 py-2">
-                    <div className="w-1/2">Floor:</div>
-                    <div className="w-1/2">{unit.floor ?? "—"}</div>
-                  </div>
-                  <div className="flex px-3 py-2">
-                    <div className="w-1/2">Square Feet:</div>
-                    <div className="w-1/2">{unit.square_feet ?? "—"}</div>
-                  </div>
-                </div>
-
-                {/* BUILDING DETAILS */}
-                <h2 className="font-semibold mb-3">Building Details</h2>
-                <div className="border rounded-md divide-y text-sm mb-8">
-                  <div className="flex px-3 py-2">
-                    <div className="w-1/2">Zoning:</div>
-                    <div className="w-1/2">{formatZoning(building.zoning)}</div>
-                  </div>
-                  <div className="flex px-3 py-2">
-                    <div className="w-1/2">Year Built:</div>
-                    <div className="w-1/2">{building.year_built || "—"}</div>
-                  </div>
-                  <div className="flex px-3 py-2">
-                    <div className="w-1/2">Total Units:</div>
-                    <div className="w-1/2">{building.units ?? "—"}</div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* ---------------- DOCUMENTS TAB ---------------- */}
-            {activeTab === "documents" && (
-              <>
-                <h2 className="font-semibold mb-3">Documents</h2>
-                {documents.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No documents available.</p>
-                ) : (
-                  <DocumentsList documents={documents} userDisplayNames={userDisplayNames} />
-                )}
-              </>
-            )}
-
-            {/* ---------------- EVENTS TAB ---------------- */}
-            {activeTab === "events" && (
-              <>
-                <h2 className="font-semibold mb-3">Events</h2>
-
-                <div className="border rounded-md divide-y text-sm">
-                  <div className="flex px-3 py-2 font-semibold text-gray-700">
-                    <div className="w-2/5 min-w-0">Title</div>
-                    <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden">Type</div>
-                    <div className="flex-1 min-w-0 px-4 flex items-center justify-center text-center">Date</div>
-                  </div>
-
-                  <EventsList
-                    events={events}
-                    userDisplayNames={userDisplayNames}
-                    buildingSlug={building.slug}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* ---------------- PROPERTY MANAGEMENT TAB ---------------- */}
-            {activeTab === "property_management" && (
-              <>
-                <h2 className="font-semibold mb-3">Property Management</h2>
-                <PropertyManagementList 
-                  propertyManagers={buildingContractors}
-                  totalPropertyManagersCount={totalPropertyManagersCount}
-                  buildingName={building.name}
-                  totalDocumentsCount={totalDocumentsCount}
-                  totalEventsCount={totalEventsCount}
-                  totalUnits={building.units ?? null}
-                />
-              </>
-            )}
-
-            {/* ---------------- CONTRACTORS TAB ---------------- */}
-            {activeTab === "contractors" && (
-              <>
-                <h2 className="font-semibold mb-3">Contractors</h2>
-                <ContractorsList 
-                  contractors={unitContractors}
-                  totalContractorsCount={totalContractorsCount}
-                  buildingName={building.name}
-                  totalDocumentsCount={totalDocumentsCount}
-                  totalEventsCount={totalEventsCount}
-                />
-              </>
-            )}
-          </div>
-
-          {/* ---------------- RIGHT SIDEBAR ---------------- */}
-          <div>
-            {/* PDF CTA - TODO: Implement PDF download API route */}
-            <div className="border rounded-md p-4 bg-gray-50 text-sm mb-8 text-center">
-              <h3 className="font-semibold mb-1">Premium Building Report (PDF)</h3>
-              <p className="text-gray-700 text-xs mb-3">
-                Download a full report with complete event history, all documents,
-                contractor activity, and unit details for{" "}
-                <span className="font-medium">{building.name}</span>.
-              </p>
-              <button
-                disabled
-                className="block w-full text-center border border-gray-400 rounded-md py-2 text-xs font-medium text-gray-500 cursor-not-allowed"
-                title="PDF download coming soon"
-              >
-                Download Full Report (PDF) - Coming Soon
-              </button>
-            </div>
-
-            {/* MOST ACTIVE CONTRACTOR */}
-            <h2 className="font-semibold mb-3 text-center">Most Active Contractor</h2>
-
-            <MostActiveContractorBox
-              contractor={mostActiveContractor}
-              events={contractorEvents}
-              buildingSlug={building.slug}
-            />
-
-            {/* CTA */}
-            <div className="mt-8">
-                <p className="text-sm text-center mb-3">Owner or manager of this unit?</p>
-                <a
-                  href="https://www.ainaprotocol.com/signup/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-center border border-black rounded-md py-2 text-sm"
-                >
-                  Register with Aina Protocol
-                </a>
-              </div>
-          </div>
-        </div>
-
-        {/* FOOTER */}
-        <div className="mt-20 pb-10 text-center text-xs text-gray-400">
-          This building is connected to live data through{" "}
-          <a
-            href="https://ainaprotocol.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-gray-900 underline"
-          >
-            Aina Protocol
-          </a>
-          .
-        </div>
-      </div>
-
-      {/* PRINT BUTTON */}
-      <UnitPrintButton
-        building={building}
-        unit={unit}
-        totalEvents={totalEventsCount}
-        totalDocuments={totalDocumentsCount}
-        totalContractors={totalContractorsCount}
-        buildingContractors={buildingContractors}
-        unitContractors={unitContractors}
-        events={events}
-        documents={documents}
-      />
-    </main>
+    <button
+      onClick={generatePDF}
+      className="fixed bottom-6 right-6 bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm transition-colors z-50 flex items-center gap-2"
+      aria-label="Print Unit Report"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-5 w-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+        />
+      </svg>
+      Print Report
+    </button>
   );
 }
+
