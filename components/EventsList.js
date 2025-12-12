@@ -92,9 +92,9 @@ export default function EventsList({ events, userDisplayNames, buildingSlug }) {
                   {eventTitle}
                 </div>
               </div>
-              <div className="w-2/5 min-w-0 px-4 overflow-hidden flex items-center justify-center gap-1.5">
+              <div className="w-2/5 min-w-0 px-4 overflow-hidden flex items-center gap-1.5">
                 <span className="flex-shrink-0">{getEventTypeIcon(e.event_type)}</span>
-                <div className="truncate capitalize text-center" title={e.event_type || "—"}>
+                <div className="truncate capitalize" title={e.event_type || "—"}>
                   {e.event_type || "—"}
                 </div>
               </div>
