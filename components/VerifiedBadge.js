@@ -11,10 +11,6 @@ export default function VerifiedBadge({ type = "building" }) {
         width={32}
         height={32}
         className="w-8 h-8"
-        onError={(e) => {
-          // Fallback if image doesn't exist - show a placeholder
-          e.target.style.display = 'none';
-        }}
       />
     </div>
   );
