@@ -85,24 +85,34 @@ export default async function Home({ searchParams }) {
       {/* RESULTS BELOW SEARCH BAR */}
       {query && (
         <section className="w-full max-w-3xl mt-4 mb-16">
-          <p className="text-xs uppercase tracking-wide text-gray-500 mb-3">
-            Search results for:{" "}
-            <span className="font-semibold">"{query}"</span>
-          </p>
-
-          <div className="space-y-6 text-sm">
-            {/* BUILDINGS */}
-            <div>
-              <h2 className="font-semibold mb-2">Buildings</h2>
-              <BuildingsList buildings={buildingResults} />
+          {query.length < 2 ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-500">
+                Please enter at least 2 characters to search.
+              </p>
             </div>
+          ) : (
+            <>
+              <p className="text-xs uppercase tracking-wide text-gray-500 mb-3">
+                Search results for:{" "}
+                <span className="font-semibold">"{query}"</span>
+              </p>
 
-            {/* UNITS */}
-            <div>
-              <h2 className="font-semibold mb-2">Units</h2>
-              <UnitsList units={unitResults} />
-            </div>
-          </div>
+              <div className="space-y-6 text-sm">
+                {/* BUILDINGS */}
+                <div>
+                  <h2 className="font-semibold mb-2">Buildings</h2>
+                  <BuildingsList buildings={buildingResults} />
+                </div>
+
+                {/* UNITS */}
+                <div>
+                  <h2 className="font-semibold mb-2">Units</h2>
+                  <UnitsList units={unitResults} />
+                </div>
+              </div>
+            </>
+          )}
         </section>
       )}
     </main>
