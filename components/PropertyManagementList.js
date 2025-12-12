@@ -203,11 +203,11 @@ export default function PropertyManagementList({
             </div>
             
             <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {openPM.phone && (
                   <div>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Phone</span>
-                    <div className="text-gray-900 font-medium">
+                    <div className="text-gray-900 font-medium break-words">
                       {isPaid ? (
                         <a href={`tel:${openPM.phone.replace(/\D/g, '')}`} className="text-blue-600 hover:text-blue-800">
                           {formatPhone(openPM.phone)}
@@ -222,7 +222,7 @@ export default function PropertyManagementList({
                 {openPM.license_number && openPM.license_number !== "string" && (
                   <div>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">License</span>
-                    <div className="text-gray-900 font-medium">{openPM.license_number}</div>
+                    <div className="text-gray-900 font-medium break-words">{openPM.license_number}</div>
                   </div>
                 )}
                 
