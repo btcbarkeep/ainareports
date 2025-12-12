@@ -5,6 +5,7 @@ import ContractorsList from "@/components/ContractorsList";
 import PropertyManagementList from "@/components/PropertyManagementList";
 import MostActiveContractorBox from "@/components/MostActiveContractorBox";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import UnitPrintButton from "@/components/UnitPrintButton";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -605,6 +606,19 @@ export default async function UnitPage({ params, searchParams }) {
           .
         </div>
       </div>
+
+      {/* PRINT BUTTON */}
+      <UnitPrintButton
+        building={building}
+        unit={unit}
+        totalEvents={totalEventsCount}
+        totalDocuments={totalDocumentsCount}
+        totalContractors={totalContractorsCount}
+        buildingContractors={buildingContractors}
+        unitContractors={unitContractors}
+        events={events}
+        documents={documents}
+      />
     </main>
   );
 }
