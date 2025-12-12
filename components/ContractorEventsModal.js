@@ -71,7 +71,7 @@ export default function ContractorEventsModal({ contractor, events = [], isOpen,
                 {isPaid && (
                   <VerifiedBadgeInline />
                 )}
-                <h3 className="text-lg font-semibold">{contractor.name}</h3>
+                <h3 className="text-lg font-semibold whitespace-nowrap">{contractor.name}</h3>
               </div>
               <p className="text-sm text-gray-500">
                 {events.length} recent event{events.length !== 1 ? "s" : ""}
@@ -80,12 +80,12 @@ export default function ContractorEventsModal({ contractor, events = [], isOpen,
                 <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
                   {contractor.phone && (
                     <div className="text-sm text-gray-700">
-                      <span className="font-medium">Phone:</span> {contractor.phone}
+                      <span className="font-medium whitespace-nowrap block sm:inline">Phone:</span> <span className="whitespace-nowrap">{contractor.phone}</span>
                     </div>
                   )}
                   {contractor.license_number && (
                     <div className="text-sm text-gray-700">
-                      <span className="font-medium">License:</span> {contractor.license_number}
+                      <span className="font-medium whitespace-nowrap block sm:inline">License:</span> <span className="whitespace-nowrap">{contractor.license_number}</span>
                     </div>
                   )}
                 </div>
