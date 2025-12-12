@@ -50,6 +50,21 @@ export default function EventDocumentModal({ event, isOpen, onClose, buildingSlu
     }
   };
 
+  // Get event type icon
+  const getEventTypeIcon = (eventType) => {
+    if (!eventType) return "📋";
+    const typeLower = eventType.toLowerCase();
+    const iconMap = {
+      maintenance: "🔧",
+      renovation: "🔨",
+      emergency: "🚨",
+      violation: "⚠️",
+      general: "📋",
+      inspection: "🔍",
+    };
+    return iconMap[typeLower] || "📋";
+  };
+
   // Get severity styling
   const severity = event.severity?.toLowerCase() || "";
   const getSeverityBadgeClass = () => {
@@ -91,8 +106,10 @@ export default function EventDocumentModal({ event, isOpen, onClose, buildingSlu
             {/* Event Type, Unit Number, Occurred At, Status, and Severity */}
             <div className="flex flex-wrap gap-4 text-sm text-gray-600">
               {event.event_type && (
-                <div>
-                  <span className="font-medium">Type:</span> <span className="capitalize">{event.event_type}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium">Type:</span>
+                  <span className="flex-shrink-0">{getEventTypeIcon(event.event_type)}</span>
+                  <span className="capitalize">{event.event_type}</span>
                 </div>
               )}
               {hasMultipleUnits ? (
