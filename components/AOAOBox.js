@@ -39,15 +39,23 @@ export default function AOAOBox({ aoao }) {
           <div className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-medium">
             AOAO Organization
           </div>
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            <div className="font-semibold text-gray-900 text-lg">
-              {aoao.organization_name}
+          <div className="flex items-center justify-center">
+            <div className="relative inline-flex items-center">
+              {aoao.subscription_tier === "paid" && (
+                <div className="absolute -left-10 mr-2">
+                  <img
+                    src="/verified-badge.png"
+                    alt="Verified"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6"
+                  />
+                </div>
+              )}
+              <div className="font-semibold text-gray-900 text-lg">
+                {aoao.organization_name}
+              </div>
             </div>
-            {aoao.subscription_tier === "paid" && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
-                ✓ Certified Partner
-              </span>
-            )}
           </div>
           <div className="mt-3 text-xs text-gray-500">
             Click to view details →
@@ -69,10 +77,10 @@ export default function AOAOBox({ aoao }) {
               {isPaid && (
                 <div className="bg-gradient-to-r from-amber-50 to-amber-100 border-b border-amber-200 px-6 py-3 rounded-t-lg sticky top-0 z-10">
                   <div className="flex items-center justify-center gap-2">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-amber-500 text-white gap-1.5">
-                      <img src="/verified-badge.png" alt="Verified" width={16} height={16} className="w-4 h-4" />
-                      Aina Certified Partner
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <img src="/verified-badge.png" alt="Verified" width={20} height={20} className="w-5 h-5" />
+                      <span className="text-sm font-semibold text-amber-800">Aina Certified Partner</span>
+                    </div>
                     <span className="text-xs text-amber-700">Verified Organization</span>
                   </div>
                 </div>
