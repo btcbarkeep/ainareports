@@ -505,7 +505,7 @@ export default async function UnitPage({ params, searchParams }) {
                 <div className="border rounded-md divide-y text-sm">
                   <div className="flex px-3 py-2 font-semibold text-gray-700">
                     <div className="w-2/5 min-w-0">Title</div>
-                    <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">Type</div>
+                    <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden">Type</div>
                     <div className="flex-1 min-w-0 px-4 flex items-center justify-center text-center">Date</div>
                   </div>
 
