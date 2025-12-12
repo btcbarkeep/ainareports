@@ -457,7 +457,7 @@ export default async function BuildingPage({ params, searchParams }) {
         <div className="text-center mb-1">
           <div className="relative inline-flex items-center justify-center">
             {showVerifiedBadge && (
-              <div className="absolute right-full mr-2">
+              <div className="absolute -left-10 mr-2">
                 <VerifiedBadge type="building" />
               </div>
             )}
