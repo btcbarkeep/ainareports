@@ -10,6 +10,20 @@ function formatDate(dateStr) {
   return d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit" });
 }
 
+function getEventTypeIcon(eventType) {
+  if (!eventType) return "📋";
+  const typeLower = eventType.toLowerCase();
+  const iconMap = {
+    maintenance: "🔧",
+    renovation: "🔨",
+    emergency: "🚨",
+    violation: "⚠️",
+    general: "📋",
+    inspection: "🔍",
+  };
+  return iconMap[typeLower] || "📋";
+}
+
 function capitalize(str) {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -126,7 +140,8 @@ export default function ContractorEventsModal({ contractor, events = [], isOpen,
                           {eventTitle}
                         </div>
                       </div>
-                      <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center">
+                      <div className="w-2/5 min-w-0 pl-4 pr-4 overflow-hidden flex items-center justify-center gap-1.5">
+                        <span className="flex-shrink-0">{getEventTypeIcon(event.event_type)}</span>
                         <div className="truncate capitalize" title={event.event_type || "—"}>
                           {event.event_type || "—"}
                         </div>
