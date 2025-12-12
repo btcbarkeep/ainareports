@@ -5,7 +5,7 @@ export const revalidate = 0;
 
 export async function GET(req, { params }) {
   try {
-    const documentId = params.id;
+    const { id: documentId } = await params;
 
     if (!documentId) {
       return NextResponse.json(
