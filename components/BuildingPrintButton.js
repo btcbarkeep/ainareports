@@ -1,9 +1,8 @@
 "use client";
 
-import { jsPDF } from "jspdf";
-
 export default function BuildingPrintButton({ building, totalUnits, totalEvents, totalDocuments, totalContractors, propertyManagers, events, documents, units, aoao }) {
-  const generatePDF = () => {
+  const generatePDF = async () => {
+    const { jsPDF } = await import("jspdf");
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
