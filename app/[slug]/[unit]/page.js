@@ -375,11 +375,11 @@ export default async function UnitPage({ params, searchParams }) {
         <section className="text-center mb-6">
 
           {/* TOP LINE — UNIT NUMBER ONLY */}
-          <div className="mb-1">
-            <h1 className="text-4xl md:text-5xl font-semibold inline-block">
+          <div className="mb-1 flex items-center justify-center gap-2">
+            {hasVerifiedOwner && <VerifiedBadge type="unit" />}
+            <h1 className="text-4xl md:text-5xl font-semibold">
               {unit.unit_number}
             </h1>
-            {hasVerifiedOwner && <VerifiedBadge type="unit" />}
           </div>
 
           {/* SECOND LINE — BUILDING NAME ONLY */}
