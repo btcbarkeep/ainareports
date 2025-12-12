@@ -220,7 +220,7 @@ export default function ContractorsList({
             </div>
             
             <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {openContractor.contact_person && (
                   <div>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Contact Person</span>
@@ -231,7 +231,7 @@ export default function ContractorsList({
                 {openContractor.phone && (
                   <div>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Phone</span>
-                    <div className="text-gray-900 font-medium">
+                    <div className="text-gray-900 font-medium break-words">
                       {isPaid ? (
                         <a href={`tel:${openContractor.phone.replace(/\D/g, '')}`} className="text-blue-600 hover:text-blue-800">
                           {formatPhone(openContractor.phone)}
@@ -246,7 +246,7 @@ export default function ContractorsList({
                 {openContractor.license_number && openContractor.license_number !== "string" && (
                   <div>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">License</span>
-                    <div className="text-gray-900 font-medium">{openContractor.license_number}</div>
+                    <div className="text-gray-900 font-medium break-words">{openContractor.license_number}</div>
                   </div>
                 )}
                 
