@@ -7,6 +7,7 @@ import PropertyManagementList from "@/components/PropertyManagementList";
 import PremiumUnlockSection from "@/components/PremiumUnlockSection";
 import AOAOBox from "@/components/AOAOBox";
 import MostActiveContractorBox from "@/components/MostActiveContractorBox";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 const ROLE_LABELS = {
   super_admin: "Admin",
@@ -457,11 +458,7 @@ export default async function BuildingPage({ params, searchParams }) {
           <h1 className="text-3xl md:text-4xl font-semibold inline-block">
             {building.name}
           </h1>
-          {showVerifiedBadge && (
-            <div className="inline-flex items-center gap-1 ml-2">
-              <span className="text-amber-500 text-lg" title="Aina Verified Building">✓</span>
-            </div>
-          )}
+          {showVerifiedBadge && <VerifiedBadge type="building" />}
         </div>
 
         {/* ADDRESS */}
