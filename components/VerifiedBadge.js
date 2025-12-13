@@ -17,14 +17,14 @@ export default function VerifiedBadge({ type = "building" }) {
   return (
     <div className="relative group">
       <div className="flex items-center">
-        <img
-          src="/verified-badge.png"
-          alt={label}
-          width={32}
-          height={32}
-          className="w-8 h-8"
-          onError={() => setImageError(true)}
-        />
+      <img
+        src="/verified-badge.png"
+        alt={label}
+        width={24}
+        height={24}
+        className="w-6 h-6"
+        onError={() => setImageError(true)}
+      />
       </div>
       {/* Hover tooltip */}
       <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-10 border border-gray-200">
