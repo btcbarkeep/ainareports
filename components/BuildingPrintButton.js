@@ -3,7 +3,12 @@
 export default function BuildingPrintButton({ building, totalUnits, totalEvents, totalDocuments, totalContractors, propertyManagers, events, documents, units, aoao }) {
   const generatePDF = async () => {
     try {
-      const { jsPDF } = await import("jspdf");
+      // Dynamic import for jsPDF - it uses default export in v3
+      const jsPDFModule = await import("jspdf");
+      const jsPDF = jsPDFModule.default;
+      if (!jsPDF) {
+        throw new Error("jsPDF default export not found");
+      }
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
@@ -269,7 +274,7 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       doc.save(`${building.name || "Building"}_Report_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Error generating PDF. Please try again.");
+      alert(`Error generating PDF: ${error.message || error.toString()}. Please check the console for details.`);
     }
   };
 
