@@ -152,7 +152,7 @@ export default function DocumentsList({ documents = [], userDisplayNames = {} })
                   href={downloadLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block w-full text-center px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+                  className="inline-block w-full text-center px-4 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium"
                 >
                   View / Download
                 </a>
