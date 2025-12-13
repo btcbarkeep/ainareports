@@ -2,8 +2,23 @@
 
 export default function UnitPrintButton({ building, unit, totalEvents, totalDocuments, totalContractors, buildingContractors, unitContractors, events, documents }) {
   const generatePDF = async () => {
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF();
+    try {
+      const jsPDFModule = await import("jspdf");
+      // jsPDF v3: try default export first, then named export
+      let JsPDF;
+      if (jsPDFModule.default) {
+        JsPDF = jsPDFModule.default;
+      } else if (jsPDFModule.jsPDF) {
+        JsPDF = jsPDFModule.jsPDF;
+      } else {
+        JsPDF = jsPDFModule;
+      }
+      
+      if (typeof JsPDF !== 'function') {
+        throw new Error(`jsPDF constructor not found. Module keys: ${Object.keys(jsPDFModule).join(', ')}`);
+      }
+      
+      const doc = new JsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 20;
@@ -288,20 +303,20 @@ export default function UnitPrintButton({ building, unit, totalEvents, totalDocu
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       
-      documents.slice(0, 20).forEach((doc, index) => {
+      documents.slice(0, 20).forEach((documentItem, index) => {
         checkPageBreak(20);
-        const docDate = doc.created_at ? new Date(doc.created_at).toLocaleDateString() : "—";
+        const docDate = documentItem.created_at ? new Date(documentItem.created_at).toLocaleDateString() : "—";
         doc.setFont("helvetica", "bold");
-        doc.text(`${index + 1}. ${doc.title || doc.filename || "Document"}`, margin + 5, yPosition);
+        doc.text(`${index + 1}. ${documentItem.title || documentItem.filename || "Document"}`, margin + 5, yPosition);
         yPosition += 7;
         
         doc.setFont("helvetica", "normal");
-        if (doc.category) {
-          doc.text(`   Category: ${doc.category}`, margin + 5, yPosition);
+        if (documentItem.category) {
+          doc.text(`   Category: ${documentItem.category}`, margin + 5, yPosition);
           yPosition += 6;
         }
-        if (doc.document_type) {
-          doc.text(`   Type: ${doc.document_type}`, margin + 5, yPosition);
+        if (documentItem.document_type) {
+          doc.text(`   Type: ${documentItem.document_type}`, margin + 5, yPosition);
           yPosition += 6;
         }
         doc.text(`   Uploaded: ${docDate}`, margin + 5, yPosition);
@@ -330,9 +345,13 @@ export default function UnitPrintButton({ building, unit, totalEvents, totalDocu
       );
     }
 
-    // Save the PDF
-    const filename = `${building.name || "Building"}_Unit_${unit.unit_number || "Report"}_${new Date().toISOString().split('T')[0]}.pdf`;
-    doc.save(filename);
+      // Save the PDF
+      const filename = `${building.name || "Building"}_Unit_${unit.unit_number || "Report"}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert(`Error generating PDF: ${error.message || error.toString()}. Please check the console for details.`);
+    }
   };
 
   return (
