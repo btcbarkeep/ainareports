@@ -25,51 +25,66 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       const margin = 15;
       let yPosition = margin;
       
-      // Load logo image once at the start
+      // Load logo and badge images once at the start
       let logoImage = null;
+      let badgeImage = null;
       try {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = '/aina-logo-dark.png';
+        const logoImg = new Image();
+        logoImg.crossOrigin = 'anonymous';
+        logoImg.src = '/aina-logo-dark.png';
         logoImage = await new Promise((resolve, reject) => {
-          img.onload = () => resolve(img);
-          img.onerror = reject;
-          setTimeout(() => reject(new Error('Image load timeout')), 1000);
+          logoImg.onload = () => resolve(logoImg);
+          logoImg.onerror = reject;
+          setTimeout(() => reject(new Error('Logo load timeout')), 1000);
         });
       } catch (error) {
         console.log('Logo image could not be loaded, using text-only fallback');
       }
+      
+      try {
+        const badgeImg = new Image();
+        badgeImg.crossOrigin = 'anonymous';
+        badgeImg.src = '/verified-badge.png';
+        badgeImage = await new Promise((resolve, reject) => {
+          badgeImg.onload = () => resolve(badgeImg);
+          badgeImg.onerror = reject;
+          setTimeout(() => reject(new Error('Badge load timeout')), 1000);
+        });
+      } catch (error) {
+        console.log('Badge image could not be loaded, using star fallback');
+      }
 
       // Helper function to add header with logo and branding
       const addHeader = (pdfDoc, width, marginLeft) => {
+        const headerY = 5;
         if (logoImage) {
           // Add logo (small size) at top
-          const logoSize = 10;
-          pdfDoc.addImage(logoImage, 'PNG', marginLeft, 5, logoSize, logoSize);
+          const logoSize = 8;
+          pdfDoc.addImage(logoImage, 'PNG', marginLeft, headerY, logoSize, logoSize);
           
-          // Text branding next to logo
+          // Text branding next to logo (with more spacing)
           pdfDoc.setFontSize(9);
           pdfDoc.setFont("helvetica", "bold");
           pdfDoc.setTextColor(0, 0, 0);
-          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 5, 12);
+          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 8, headerY + 6);
         } else {
           // Fallback to text-only if image didn't load
           pdfDoc.setFontSize(9);
           pdfDoc.setFont("helvetica", "bold");
           pdfDoc.setTextColor(0, 0, 0);
-          pdfDoc.text("AINAREPORTS", marginLeft, 12);
+          pdfDoc.text("AINAREPORTS", marginLeft, headerY + 6);
         }
         
         // Generation date on right
         pdfDoc.setFontSize(8);
         pdfDoc.setFont("helvetica", "normal");
         const genDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        pdfDoc.text(`Generated ${genDate}`, width - marginLeft, 12, { align: "right" });
+        pdfDoc.text(`Generated ${genDate}`, width - marginLeft, headerY + 6, { align: "right" });
       };
 
       // Add header to first page
       addHeader(doc, pageWidth, margin);
-      yPosition = 18; // Start below header
+      yPosition = 16; // Start below header (logo is 8px + spacing)
 
       // Building Name
       doc.setFontSize(18);
@@ -143,6 +158,15 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const severity = event.severity ? event.severity.charAt(0).toUpperCase() + event.severity.slice(1).toLowerCase() : "—";
           const status = event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1).toLowerCase() : "—";
           
+          // Color code by severity
+          if (severity.toLowerCase() === "high" || severity.toLowerCase() === "critical") {
+            doc.setTextColor(220, 38, 38); // Red for high/critical
+          } else if (severity.toLowerCase() === "medium") {
+            doc.setTextColor(245, 158, 11); // Amber for medium
+          } else {
+            doc.setTextColor(0, 0, 0); // Black for low/normal
+          }
+          
           // Event title with bullet
           doc.setFont("helvetica", "bold");
           doc.text(`■ ${event.title || "Event"}`, margin, yPosition);
@@ -151,6 +175,9 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const details = [eventType, severity, status].filter(d => d !== "—").join(" · ");
           doc.setFont("helvetica", "normal");
           doc.text(details, margin + 75, yPosition);
+          
+          // Reset color
+          doc.setTextColor(0, 0, 0);
           
           // Date on right
           doc.text(eventDate, pageWidth - margin - 10, yPosition, { align: "right" });
@@ -177,9 +204,15 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         if (isVerified) {
           doc.setTextColor(245, 158, 11); // Amber color
         }
+        const aoaoNameWidth = doc.getTextWidth(aoaoName);
         doc.text(aoaoName, margin, yPosition);
-        if (isVerified) {
-          doc.text("★", margin + doc.getTextWidth(aoaoName) + 2, yPosition);
+        if (isVerified && badgeImage) {
+          // Add verified badge image next to name
+          const badgeSize = 6;
+          doc.addImage(badgeImage, 'PNG', margin + aoaoNameWidth + 3, yPosition - 5, badgeSize, badgeSize);
+        } else if (isVerified) {
+          // Fallback to star if badge image didn't load
+          doc.text("★", margin + aoaoNameWidth + 2, yPosition);
         }
         doc.setTextColor(0, 0, 0); // Reset to black
         yPosition += 5;
@@ -228,14 +261,20 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const license = pm.license_number && pm.license_number !== "string" ? pm.license_number : "—";
           const unitCount = pm.building_count > 0 ? "ALL" : (pm.unit_count > 0 ? `${pm.unit_count} Units` : "—");
           
-          // Name with star if paid - use amber color for paid
+          // Name with badge if paid - use amber color for paid
           doc.setFont("helvetica", "bold");
           if (isPaid) {
             doc.setTextColor(245, 158, 11); // Amber color for paid
           }
+          const pmNameWidth = doc.getTextWidth(pmName);
           doc.text(pmName, margin, yPosition);
-          if (isPaid) {
-            doc.text("★", margin + doc.getTextWidth(pmName) + 2, yPosition);
+          if (isPaid && badgeImage) {
+            // Add verified badge image next to name
+            const badgeSize = 6;
+            doc.addImage(badgeImage, 'PNG', margin + pmNameWidth + 3, yPosition - 5, badgeSize, badgeSize);
+          } else if (isPaid) {
+            // Fallback to star if badge image didn't load
+            doc.text("★", margin + pmNameWidth + 2, yPosition);
           }
           doc.setTextColor(0, 0, 0); // Reset to black
           
@@ -315,14 +354,20 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const eventCount = contractor.count || contractor.event_count || 0;
           const eventText = eventCount === 1 ? "1 Event" : `${eventCount} Events`;
           
-          // Name with star if paid - use amber color for paid
+          // Name with badge if paid - use amber color for paid
           doc.setFont("helvetica", "bold");
           if (isPaid) {
             doc.setTextColor(245, 158, 11); // Amber color for paid
           }
+          const contractorNameWidth = doc.getTextWidth(contractorName);
           doc.text(contractorName, margin, yPosition);
-          if (isPaid) {
-            doc.text("★", margin + doc.getTextWidth(contractorName) + 2, yPosition);
+          if (isPaid && badgeImage) {
+            // Add verified badge image next to name
+            const badgeSize = 6;
+            doc.addImage(badgeImage, 'PNG', margin + contractorNameWidth + 3, yPosition - 5, badgeSize, badgeSize);
+          } else if (isPaid) {
+            // Fallback to star if badge image didn't load
+            doc.text("★", margin + contractorNameWidth + 2, yPosition);
           }
           doc.setTextColor(0, 0, 0); // Reset to black
           
@@ -339,24 +384,35 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       }
 
       // Premium AinaReport Available section
-      if (yPosition > pageHeight - 30) {
-        // If we're too low, we can't fit this section
-      } else {
-        yPosition += 5;
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("Premium AinaReport Available", margin, yPosition);
-        yPosition += 5;
+      yPosition += 5;
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("Premium AinaReport Available", margin, yPosition);
+      yPosition += 5;
 
-        doc.setFontSize(7);
-        doc.setFont("helvetica", "normal");
-        const premiumText = "Unlock full building and unit history, downloadable documents, contractor analytics, and AOAO transparency. This report reflects information recorded in Aina Protocol as of the generation date and may not include off-platform activity or historical records prior to onboarding. AinaReports.com";
-        const premiumLines = doc.splitTextToSize(premiumText, pageWidth - margin * 2);
-        premiumLines.forEach((line) => {
-          doc.text(line, margin, yPosition);
-          yPosition += 4;
-        });
-      }
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "normal");
+      const premiumText = "Unlock full building and unit history, downloadable documents, contractor analytics, and AOAO transparency. This report reflects information recorded in Aina Protocol as of the generation date and may not include off-platform activity or historical records prior to onboarding. AinaReports.com";
+      const premiumLines = doc.splitTextToSize(premiumText, pageWidth - margin * 2);
+      premiumLines.forEach((line) => {
+        if (yPosition > pageHeight - 20) return;
+        doc.text(line, margin, yPosition);
+        yPosition += 4;
+      });
+      
+      // Disclaimer section
+      yPosition += 5;
+      doc.setFontSize(6);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(100, 100, 100);
+      const disclaimerText = "This report is provided for informational purposes only. Data accuracy is dependent on information recorded in Aina Protocol. AinaReports.com and Aina Protocol are not responsible for errors or omissions. For official records, please consult with property management or AOAO directly.";
+      const disclaimerLines = doc.splitTextToSize(disclaimerText, pageWidth - margin * 2);
+      disclaimerLines.forEach((line) => {
+        if (yPosition > pageHeight - 15) return;
+        doc.text(line, margin, yPosition);
+        yPosition += 3.5;
+      });
+      doc.setTextColor(0, 0, 0);
 
       // Footer
       doc.setFontSize(7);
