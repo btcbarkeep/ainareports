@@ -97,6 +97,28 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         yPosition += 10;
       }
 
+      // TMK
+      if (building.tmk) {
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        doc.text(`TMK: ${building.tmk}`, pageWidth / 2, yPosition, { align: "center" });
+        yPosition += 10;
+      }
+
+      // Intro paragraph
+      yPosition += 5;
+      checkPageBreak(30);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      const introText = "This is a FREE Building Report brought to you by AinaReports.com. This report includes the 5 most recent Documents and Events, along with the top 5 Property Managers and Contractors for this property. For complete historical data, detailed analytics, and unlimited access to all events and documents, upgrade to our Premium Report at AinaReports.com.";
+      const maxWidth = pageWidth - margin * 2;
+      const introLines = doc.splitTextToSize(introText, maxWidth);
+      introLines.forEach((line) => {
+        doc.text(line, margin, yPosition);
+        yPosition += 5;
+      });
+      yPosition += 5;
+
       // Building Details
       yPosition += 5;
       doc.setFontSize(14);
@@ -154,7 +176,7 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       }
 
       // AOAO Organization
-      if (aoao) {
+      if (aoao && (aoao.company_name || aoao.name || aoao.phone || aoao.email)) {
         yPosition += 5;
         checkPageBreak(20);
         doc.setFontSize(14);
@@ -181,20 +203,20 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         }
       }
 
-      // Property Management
+      // Property Management (Top 5)
       if (propertyManagers && propertyManagers.length > 0) {
         yPosition += 5;
         checkPageBreak(25);
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
-        doc.text("Property Management Companies", margin, yPosition);
+        doc.text("Top 5 Property Management Companies", margin, yPosition);
         yPosition += 10;
 
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         
-        propertyManagers.slice(0, 10).forEach((pm, index) => {
-          checkPageBreak(20);
+        propertyManagers.slice(0, 5).forEach((pm, index) => {
+          checkPageBreak(15);
           doc.setFont("helvetica", "bold");
           doc.text(`${index + 1}. ${pm.company_name || pm.name || "Property Manager"}`, margin + 5, yPosition);
           yPosition += 7;
@@ -208,23 +230,22 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
             doc.text(`   Phone: ${pm.phone}`, margin + 5, yPosition);
             yPosition += 6;
           }
-          yPosition += 3;
         });
       }
 
-      // Recent Events
+      // 5 Most Recent Events
       if (events && events.length > 0) {
         yPosition += 5;
         checkPageBreak(25);
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
-        doc.text("Recent Events", margin, yPosition);
+        doc.text("5 Most Recent Events", margin, yPosition);
         yPosition += 10;
 
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         
-        events.slice(0, 20).forEach((event, index) => {
+        events.slice(0, 5).forEach((event, index) => {
           checkPageBreak(25);
           const eventDate = event.occurred_at ? new Date(event.occurred_at).toLocaleDateString() : "—";
           doc.setFont("helvetica", "bold");
@@ -254,23 +275,22 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
             doc.text(lines, margin + 5, yPosition);
             yPosition += lines.length * 5;
           }
-          yPosition += 3;
         });
       }
 
-      // Recent Documents
+      // 5 Most Recent Documents
       if (documents && documents.length > 0) {
         yPosition += 5;
         checkPageBreak(25);
         doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
-        doc.text("Recent Documents", margin, yPosition);
+        doc.text("5 Most Recent Documents", margin, yPosition);
         yPosition += 10;
 
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         
-        documents.slice(0, 15).forEach((documentItem, index) => {
+        documents.slice(0, 5).forEach((documentItem, index) => {
           checkPageBreak(20);
           const docDate = documentItem.created_at ? new Date(documentItem.created_at).toLocaleDateString() : "—";
           doc.setFont("helvetica", "bold");
@@ -294,7 +314,6 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           }
           doc.text(`   Uploaded: ${docDate}`, margin + 5, yPosition);
           yPosition += 6;
-          yPosition += 3;
         });
       }
 
@@ -311,7 +330,7 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         doc.setFont("helvetica", "normal");
         
         // Create a table-like structure
-        units.slice(0, 30).forEach((unit, index) => {
+        units.forEach((unit, index) => {
           checkPageBreak(10);
           const unitInfo = [
             unit.unit_number || "—",
@@ -319,6 +338,7 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
             unit.owner_name || "—"
           ].filter(item => item !== "—").join(" • ");
           
+          doc.setFont("helvetica", "normal");
           doc.text(`${index + 1}. ${unitInfo}`, margin + 5, yPosition);
           yPosition += 7;
         });
