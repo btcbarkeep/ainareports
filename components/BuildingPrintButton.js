@@ -1,6 +1,6 @@
 "use client";
 
-export default function BuildingPrintButton({ building, totalUnits, totalEvents, totalDocuments, totalContractors, propertyManagers, events, documents, units, aoao }) {
+export default function BuildingPrintButton({ building, totalUnits, totalEvents, totalDocuments, totalContractors, propertyManagers, events, documents, units, aoao, contractors }) {
   const generatePDF = async () => {
     try {
       // Dynamic import for jsPDF - handle both default and named exports
@@ -22,7 +22,7 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       const doc = new JsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 20;
+      const margin = 15;
       let yPosition = margin;
       
       // Load logo image once at the start
@@ -44,428 +44,320 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       const addHeader = (pdfDoc, width, marginLeft) => {
         if (logoImage) {
           // Add logo (small size)
-          const logoSize = 12;
-          pdfDoc.addImage(logoImage, 'PNG', marginLeft + 5, 4, logoSize, logoSize);
+          const logoSize = 10;
+          pdfDoc.addImage(logoImage, 'PNG', marginLeft, yPosition, logoSize, logoSize);
           
           // Text branding next to logo
-          pdfDoc.setFontSize(10);
+          pdfDoc.setFontSize(9);
           pdfDoc.setFont("helvetica", "bold");
           pdfDoc.setTextColor(0, 0, 0);
-          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 10, 12);
+          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 5, yPosition + 7);
         } else {
           // Fallback to text-only if image didn't load
-          pdfDoc.setFontSize(10);
+          pdfDoc.setFontSize(9);
           pdfDoc.setFont("helvetica", "bold");
           pdfDoc.setTextColor(0, 0, 0);
-          pdfDoc.text("AINAREPORTS", marginLeft + 5, 12);
+          pdfDoc.text("AINAREPORTS", marginLeft, yPosition + 7);
         }
-      };
-
-      // Helper function to add a new page if needed
-      const checkPageBreak = (requiredSpace) => {
-        if (yPosition + requiredSpace > pageHeight - margin - 50) { // Leave space for footer and CTA
-          doc.addPage();
-          yPosition = margin + 25; // Leave space for header
-          addHeader(doc, pageWidth, margin);
-          return true;
-        }
-        return false;
-      };
-      
-      // Helper function to ensure we have space, add page if needed
-      const ensureSpace = (requiredSpace) => {
-        if (yPosition + requiredSpace > pageHeight - margin - 50) {
-          doc.addPage();
-          yPosition = margin + 25;
-          addHeader(doc, pageWidth, margin);
-        }
+        
+        // Generation date on right
+        pdfDoc.setFontSize(8);
+        pdfDoc.setFont("helvetica", "normal");
+        const genDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        pdfDoc.text(`Generated ${genDate}`, width - marginLeft, yPosition + 7, { align: "right" });
       };
 
       // Add header to first page
       addHeader(doc, pageWidth, margin);
-      yPosition = margin + 25;
+      yPosition += 12;
 
-      // Title
-      doc.setFontSize(24);
+      // Building Name
+      doc.setFontSize(18);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 0, 0);
-      doc.text(building.name || "Building Report", pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 15;
+      doc.text(building.name || "Building Report", margin, yPosition);
+      yPosition += 8;
 
-      // Building Address
-      if (building.address || building.city || building.state) {
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "normal");
-        const addressParts = [
-          building.address,
-          building.city,
-          building.state,
-          building.zip
-        ].filter(Boolean);
-        doc.text(addressParts.join(", "), pageWidth / 2, yPosition, { align: "center" });
-        yPosition += 10;
-      }
-
-      // TMK
-      if (building.tmk) {
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "normal");
-        doc.text(`TMK: ${building.tmk}`, pageWidth / 2, yPosition, { align: "center" });
-        yPosition += 10;
-      }
-
-      // Intro paragraph
-      yPosition += 5;
-      checkPageBreak(30);
-      doc.setFontSize(10);
+      // Address and TMK on one line
+      doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
-      const introText = "This is a FREE Building Report brought to you by AinaReports.com. This report includes the 5 most recent Documents and Events, along with the top 5 Property Managers and Contractors for this property. For complete historical data, detailed analytics, and unlimited access to all events and documents, upgrade to our Premium Report at AinaReports.com.";
+      const addressParts = [
+        building.address,
+        building.city,
+        building.state,
+        building.zip
+      ].filter(Boolean);
+      let addressLine = addressParts.join(", ");
+      if (building.tmk) {
+        addressLine += ` TMK ${building.tmk}`;
+      }
+      doc.text(addressLine, margin, yPosition);
+      yPosition += 6;
+
+      // Building Health Status (if available)
+      // For now, we'll skip this as it's not in our data model
+      
+      // Intro paragraph
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "normal");
+      const introText = "This FREE Building Report provides a snapshot of recorded building activity, including recent events, documents, AOAO governance, property management, and vendor involvement. For complete historical records, unit-level detail, and analytics, upgrade to the Premium AinaReport.";
       const maxWidth = pageWidth - margin * 2;
       const introLines = doc.splitTextToSize(introText, maxWidth);
       introLines.forEach((line) => {
         doc.text(line, margin, yPosition);
-        yPosition += 5;
+        yPosition += 4;
       });
-      yPosition += 5;
+      yPosition += 4;
 
-      // Building Details
-      yPosition += 5;
-      doc.setFontSize(14);
+      // Quick Stats Table
+      doc.setFontSize(8);
       doc.setFont("helvetica", "bold");
-      doc.text("Building Details", margin, yPosition);
-      yPosition += 10;
-
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "normal");
+      const statsY = yPosition;
+      doc.text("Units", margin, statsY);
+      doc.text("Floors", margin + 30, statsY);
+      doc.text("Events", margin + 60, statsY);
+      doc.text("Documents", margin + 90, statsY);
       
-      const details = [];
-      if (totalUnits) details.push(`Total Units: ${totalUnits}`);
-      if (building.floors) details.push(`Floors: ${building.floors}`);
-      if (building.zoning) details.push(`Zoning: ${building.zoning}`);
-      if (building.bedrooms) details.push(`Bedrooms: ${building.bedrooms}`);
-      if (building.bathrooms) details.push(`Bathrooms: ${building.bathrooms}`);
-      if (building.square_feet) details.push(`Square Feet: ${building.square_feet.toLocaleString()}`);
-
-      details.forEach((detail, index) => {
-        checkPageBreak(8);
-        doc.text(detail, margin + 5, yPosition);
-        yPosition += 8;
-      });
-
-      // Statistics
+      doc.setFont("helvetica", "normal");
       yPosition += 5;
-      checkPageBreak(20);
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("Statistics", margin, yPosition);
-      yPosition += 10;
+      doc.text(totalUnits?.toString() || "—", margin, yPosition);
+      doc.text(building.floors?.toString() || "—", margin + 30, yPosition);
+      doc.text(totalEvents?.toString() || "—", margin + 60, yPosition);
+      doc.text(totalDocuments?.toString() || "—", margin + 90, yPosition);
+      yPosition += 8;
 
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "normal");
-      
-      if (totalEvents !== null) {
-        checkPageBreak(8);
-        doc.text(`Total Events: ${totalEvents}`, margin + 5, yPosition);
-        yPosition += 8;
-      }
-      if (totalDocuments !== null) {
-        checkPageBreak(8);
-        doc.text(`Total Documents: ${totalDocuments}`, margin + 5, yPosition);
-        yPosition += 8;
-      }
-      if (totalContractors !== null) {
-        checkPageBreak(8);
-        doc.text(`Total Contractors: ${totalContractors}`, margin + 5, yPosition);
-        yPosition += 8;
-      }
-      if (propertyManagers && propertyManagers.length > 0) {
-        checkPageBreak(8);
-        doc.text(`Property Management Companies: ${propertyManagers.length}`, margin + 5, yPosition);
-        yPosition += 8;
-      }
-
-      // AOAO Organization
-      if (aoao && (aoao.organization_name || aoao.company_name || aoao.name)) {
-        yPosition += 5;
-        checkPageBreak(20);
-        doc.setFontSize(14);
+      // Recent Events (5) - Table format
+      if (events && events.length > 0) {
+        doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text("AOAO Organization", margin, yPosition);
-        yPosition += 10;
+        doc.text("Recent Events (5)", margin, yPosition);
+        yPosition += 6;
 
-        doc.setFontSize(11);
+        doc.setFontSize(7);
         doc.setFont("helvetica", "normal");
+        
+        events.slice(0, 5).forEach((event) => {
+          if (yPosition > pageHeight - 40) return; // Stop if we're running out of space
+          
+          const eventDate = event.occurred_at ? new Date(event.occurred_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }) : "—";
+          const eventType = event.event_type || "—";
+          const severity = event.severity || "—";
+          const status = event.status || "—";
+          
+          // Event title with bullet
+          doc.setFont("helvetica", "bold");
+          doc.text(`■ ${event.title || "Event"}`, margin, yPosition);
+          
+          // Type, Severity, Status
+          const details = [eventType, severity, status].filter(d => d !== "—").join(" · ");
+          doc.setFont("helvetica", "normal");
+          const detailsX = margin + 80;
+          doc.text(details, detailsX, yPosition);
+          
+          // Date on right
+          doc.text(eventDate, pageWidth - margin - 15, yPosition, { align: "right" });
+          
+          yPosition += 5;
+        });
+        yPosition += 3;
+      }
+
+      // AOAO Section
+      if (aoao && (aoao.organization_name || aoao.company_name || aoao.name)) {
+        if (yPosition > pageHeight - 50) return;
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
         const aoaoName = aoao.organization_name || aoao.company_name || aoao.name;
-        if (aoaoName) {
-          checkPageBreak(8);
-          doc.text(`Name: ${aoaoName}`, margin + 5, yPosition);
-          yPosition += 8;
+        const isVerified = aoao.subscription_tier === "paid";
+        doc.text(`AOAO${isVerified ? " (Verified)" : ""}`, margin, yPosition);
+        yPosition += 6;
+
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text(aoaoName, margin, yPosition);
+        if (isVerified) {
+          doc.text("★", margin + doc.getTextWidth(aoaoName) + 2, yPosition);
         }
+        yPosition += 5;
+
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        const contactParts = [];
+        if (aoao.contact_person) contactParts.push(aoao.contact_person);
         const aoaoPhone = aoao.contact_phone || aoao.phone;
         if (aoaoPhone) {
-          checkPageBreak(8);
-          doc.text(`Phone: ${aoaoPhone}`, margin + 5, yPosition);
-          yPosition += 8;
+          // Format phone with extension if available
+          let phoneText = aoaoPhone;
+          if (aoao.contact_phone_extension) {
+            phoneText += ` ext. ${aoao.contact_phone_extension}`;
+          }
+          contactParts.push(phoneText);
         }
         const aoaoEmail = aoao.contact_email || aoao.email;
-        if (aoaoEmail) {
-          checkPageBreak(8);
-          doc.text(`Email: ${aoaoEmail}`, margin + 5, yPosition);
-          yPosition += 8;
+        if (aoaoEmail) contactParts.push(aoaoEmail);
+        if (aoao.website) contactParts.push(aoao.website);
+        
+        if (contactParts.length > 0) {
+          doc.text(contactParts.join(" · "), margin, yPosition);
+          yPosition += 5;
         }
+        yPosition += 3;
       }
 
-      // Property Management (Top 5)
+      // Property Managers (Top 5) - Table format
       if (propertyManagers && propertyManagers.length > 0) {
-        yPosition += 5;
-        checkPageBreak(25);
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text("Top 5 Property Management Companies", margin, yPosition);
-        yPosition += 10;
-
+        if (yPosition > pageHeight - 50) return;
+        
         doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Property Managers (Top 5)", margin, yPosition);
+        yPosition += 6;
+
+        doc.setFontSize(7);
         doc.setFont("helvetica", "normal");
         
-        propertyManagers.slice(0, 5).forEach((pm, index) => {
-          checkPageBreak(15);
-          doc.setFont("helvetica", "bold");
-          doc.text(`${index + 1}. ${pm.company_name || pm.name || "Property Manager"}`, margin + 5, yPosition);
-          yPosition += 7;
+        propertyManagers.slice(0, 5).forEach((pm) => {
+          if (yPosition > pageHeight - 40) return;
           
+          const pmName = pm.company_name || pm.name || "Property Manager";
+          const isPaid = pm.subscription_tier === "paid";
+          const license = pm.license_number && pm.license_number !== "string" ? pm.license_number : "—";
+          const unitCount = pm.building_count > 0 ? "ALL" : (pm.unit_count > 0 ? `${pm.unit_count} Units` : "—");
+          
+          // Name with star if paid
+          doc.setFont("helvetica", "bold");
+          doc.text(pmName, margin, yPosition);
+          if (isPaid) {
+            doc.text("★", margin + doc.getTextWidth(pmName) + 2, yPosition);
+          }
+          
+          // License
           doc.setFont("helvetica", "normal");
-          if (pm.license_number && pm.license_number !== "string") {
-            doc.text(`   License: ${pm.license_number}`, margin + 5, yPosition);
-            yPosition += 6;
-          }
-          if (pm.phone) {
-            doc.text(`   Phone: ${pm.phone}`, margin + 5, yPosition);
-            yPosition += 6;
-          }
-          yPosition += 3;
+          doc.text(license, margin + 60, yPosition);
+          
+          // Unit count
+          doc.text(unitCount, pageWidth - margin - 30, yPosition, { align: "right" });
+          
+          yPosition += 5;
         });
+        yPosition += 3;
       }
 
-      // 5 Most Recent Events
-      if (events && events.length > 0) {
-        yPosition += 5;
-        checkPageBreak(25);
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text("5 Most Recent Events", margin, yPosition);
-        yPosition += 10;
-
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        
-        events.slice(0, 5).forEach((event, index) => {
-          // Check if we need a new page before starting this event
-          const estimatedEventHeight = 40; // Estimate space needed for an event
-          if (yPosition + estimatedEventHeight > pageHeight - margin - 50) {
-            doc.addPage();
-            yPosition = margin + 25;
-            addHeader(doc, pageWidth, margin);
-          }
-          
-          const eventDate = event.occurred_at ? new Date(event.occurred_at).toLocaleDateString() : "—";
-          doc.setFont("helvetica", "bold");
-          doc.text(`${index + 1}. ${event.title || "Event"}`, margin + 5, yPosition);
-          yPosition += 7;
-          
-          doc.setFont("helvetica", "normal");
-          doc.text(`   Date: ${eventDate}`, margin + 5, yPosition);
-          yPosition += 6;
-          if (event.event_type) {
-            if (yPosition + 6 > pageHeight - margin - 50) {
-              doc.addPage();
-              yPosition = margin + 25;
-              addHeader(doc, pageWidth, margin);
-            }
-            doc.text(`   Type: ${event.event_type}`, margin + 5, yPosition);
-            yPosition += 6;
-          }
-          if (event.subcategory) {
-            if (yPosition + 6 > pageHeight - margin - 50) {
-              doc.addPage();
-              yPosition = margin + 25;
-              addHeader(doc, pageWidth, margin);
-            }
-            doc.text(`   Subcategory: ${event.subcategory}`, margin + 5, yPosition);
-            yPosition += 6;
-          }
-          if (event.severity) {
-            if (yPosition + 6 > pageHeight - margin - 50) {
-              doc.addPage();
-              yPosition = margin + 25;
-              addHeader(doc, pageWidth, margin);
-            }
-            doc.text(`   Severity: ${event.severity}`, margin + 5, yPosition);
-            yPosition += 6;
-          }
-          if (event.body || event.description) {
-            const description = event.body || event.description;
-            // Split long descriptions into multiple lines
-            const maxWidth = pageWidth - margin * 2 - 10;
-            const lines = doc.splitTextToSize(`   Description: ${description}`, maxWidth);
-            // Check if description will fit
-            if (yPosition + (lines.length * 5) > pageHeight - margin - 50) {
-              doc.addPage();
-              yPosition = margin + 25;
-              addHeader(doc, pageWidth, margin);
-            }
-            doc.text(lines, margin + 5, yPosition);
-            yPosition += lines.length * 5;
-          }
-          yPosition += 3;
-        });
-      }
-
-      // 5 Most Recent Documents
+      // Recent Documents (5) - Table format
       if (documents && documents.length > 0) {
-        yPosition += 5;
-        checkPageBreak(25);
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text("5 Most Recent Documents", margin, yPosition);
-        yPosition += 10;
-
+        if (yPosition > pageHeight - 50) return;
+        
         doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Recent Documents (5)", margin, yPosition);
+        yPosition += 6;
+
+        doc.setFontSize(7);
         doc.setFont("helvetica", "normal");
         
-        documents.slice(0, 5).forEach((documentItem, index) => {
-          // Check if we need a new page before starting this document
-          const estimatedDocHeight = 35; // Estimate space needed for a document
-          if (yPosition + estimatedDocHeight > pageHeight - margin - 50) {
-            doc.addPage();
-            yPosition = margin + 25;
-            addHeader(doc, pageWidth, margin);
-          }
+        documents.slice(0, 5).forEach((documentItem) => {
+          if (yPosition > pageHeight - 40) return;
           
-          const docDate = documentItem.created_at ? new Date(documentItem.created_at).toLocaleDateString() : "—";
+          const docTitle = documentItem.title || documentItem.filename || "Document";
+          const category = documentItem.category || "—";
+          const subcategory = documentItem.subcategory || "";
+          const categoryText = subcategory ? `${category} / ${subcategory}` : category;
+          const source = documentItem.source || documentItem.uploaded_by_role || "—";
+          const docDate = documentItem.created_at ? new Date(documentItem.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }) : "—";
+          
+          // Title with bullet
           doc.setFont("helvetica", "bold");
-          doc.text(`${index + 1}. ${documentItem.title || documentItem.filename || "Document"}`, margin + 5, yPosition);
-          yPosition += 7;
+          doc.text(`■ ${docTitle}`, margin, yPosition);
           
+          // Category, source, and date
           doc.setFont("helvetica", "normal");
-          if (documentItem.category) {
-            if (yPosition + 6 > pageHeight - margin - 50) {
-              doc.addPage();
-              yPosition = margin + 25;
-              addHeader(doc, pageWidth, margin);
-            }
-            const categoryText = documentItem.subcategory 
-              ? `Category: ${documentItem.category} / ${documentItem.subcategory}`
-              : `Category: ${documentItem.category}`;
-            doc.text(`   ${categoryText}`, margin + 5, yPosition);
-            yPosition += 6;
-          }
-          if (documentItem.description) {
-            // Split long descriptions into multiple lines
-            const maxWidth = pageWidth - margin * 2 - 10;
-            const lines = doc.splitTextToSize(`   Description: ${documentItem.description}`, maxWidth);
-            // Check if description will fit
-            if (yPosition + (lines.length * 5) > pageHeight - margin - 50) {
-              doc.addPage();
-              yPosition = margin + 25;
-              addHeader(doc, pageWidth, margin);
-            }
-            doc.text(lines, margin + 5, yPosition);
-            yPosition += lines.length * 5;
-          }
-          if (yPosition + 6 > pageHeight - margin - 50) {
-            doc.addPage();
-            yPosition = margin + 25;
-            addHeader(doc, pageWidth, margin);
-          }
-          doc.text(`   Uploaded: ${docDate}`, margin + 5, yPosition);
-          yPosition += 6;
-          yPosition += 3;
+          const details = `${categoryText} · ${source} · ${docDate}`;
+          doc.text(details, margin + 75, yPosition);
+          
+          yPosition += 5;
         });
+        yPosition += 3;
       }
 
-      // Units Summary
-      if (units && units.length > 0) {
-        yPosition += 5;
-        checkPageBreak(20);
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "bold");
-        doc.text("Units", margin, yPosition);
-        yPosition += 10;
-
+      // Contractors/Vendors (Top 5) - Table format
+      if (contractors && contractors.length > 0) {
+        if (yPosition > pageHeight - 50) return;
+        
         doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Contractors / Vendors (Top 5)", margin, yPosition);
+        yPosition += 6;
+
+        doc.setFontSize(7);
         doc.setFont("helvetica", "normal");
         
-        // Create a table-like structure
-        units.forEach((unit, index) => {
-          // Check if we need a new page
-          if (yPosition + 10 > pageHeight - margin - 50) {
-            doc.addPage();
-            yPosition = margin + 25;
-            addHeader(doc, pageWidth, margin);
+        contractors.slice(0, 5).forEach((contractor) => {
+          if (yPosition > pageHeight - 40) return;
+          
+          const contractorName = contractor.company_name || contractor.name || "Contractor";
+          const isPaid = contractor.subscription_tier === "paid";
+          const role = contractor.roles && contractor.roles.length > 0 
+            ? contractor.roles[0].charAt(0).toUpperCase() + contractor.roles[0].slice(1)
+            : "—";
+          const eventCount = contractor.count || contractor.event_count || 0;
+          const eventText = eventCount === 1 ? "1 Event" : `${eventCount} Events`;
+          
+          // Name with star if paid
+          doc.setFont("helvetica", "bold");
+          doc.text(contractorName, margin, yPosition);
+          if (isPaid) {
+            doc.text("★", margin + doc.getTextWidth(contractorName) + 2, yPosition);
           }
           
-          const unitInfo = [
-            unit.unit_number || "—",
-            unit.floor ? `Floor ${unit.floor}` : "—",
-            unit.owner_name || "—"
-          ].filter(item => item !== "—").join(" • ");
-          
+          // Role
           doc.setFont("helvetica", "normal");
-          doc.text(`${index + 1}. ${unitInfo}`, margin + 5, yPosition);
-          yPosition += 7;
+          doc.text(role, margin + 60, yPosition);
+          
+          // Event count
+          doc.text(eventText, pageWidth - margin - 30, yPosition, { align: "right" });
+          
+          yPosition += 5;
+        });
+        yPosition += 3;
+      }
+
+      // Premium AinaReport Available section
+      if (yPosition > pageHeight - 30) {
+        // If we're too low, we can't fit this section
+      } else {
+        yPosition += 5;
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("Premium AinaReport Available", margin, yPosition);
+        yPosition += 5;
+
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        const premiumText = "Unlock full building and unit history, downloadable documents, contractor analytics, and AOAO transparency. This report reflects information recorded in Aina Protocol as of the generation date and may not include off-platform activity or historical records prior to onboarding. AinaReports.com";
+        const premiumLines = doc.splitTextToSize(premiumText, pageWidth - margin * 2);
+        premiumLines.forEach((line) => {
+          doc.text(line, margin, yPosition);
+          yPosition += 4;
         });
       }
 
-      // Add Call to Action on the last page after all content
-      // First, add a new page if current position is too low
-      if (yPosition + 50 > pageHeight - margin - 50) {
-        doc.addPage();
-        yPosition = margin + 25;
-        addHeader(doc, pageWidth, margin);
-      }
-      
-      // Add CTA box
-      const ctaY = yPosition + 10;
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(margin, ctaY, pageWidth - margin * 2, 25, 3, 3, 'S');
-      
-      // CTA text
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.text("Download the Full Premium Report", pageWidth / 2, ctaY + 10, { align: "center" });
-      
-      doc.setFontSize(9);
+      // Footer
+      doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(100, 100, 100);
-      doc.text("Visit AinaReports.com for complete event history, documents, and analytics", pageWidth / 2, ctaY + 18, { align: "center" });
-      
+      doc.setTextColor(128, 128, 128);
+      doc.text(
+        `Generated by AinaReports on ${new Date().toLocaleDateString()}`,
+        pageWidth / 2,
+        pageHeight - 8,
+        { align: "center" }
+      );
+      doc.text(
+        `Page 1 of 1`,
+        pageWidth / 2,
+        pageHeight - 4,
+        { align: "center" }
+      );
       doc.setTextColor(0, 0, 0);
-
-      // Footer and Call to Action
-      const totalPages = doc.internal.pages.length - 1;
-      for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        
-        // Footer text
-        doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(128, 128, 128);
-        doc.text(
-          `Generated by AinaReports on ${new Date().toLocaleDateString()}`,
-          pageWidth / 2,
-          pageHeight - 10,
-          { align: "center" }
-        );
-        doc.text(
-          `Page ${i} of ${totalPages}`,
-          pageWidth / 2,
-          pageHeight - 5,
-          { align: "center" }
-        );
-        doc.setTextColor(0, 0, 0);
-      }
 
       // Save the PDF
       const filename = `${building.name || "Building"}_Report_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -502,4 +394,3 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
     </div>
   );
 }
-
