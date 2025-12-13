@@ -757,6 +757,7 @@ export default async function BuildingPage({ params, searchParams }) {
                 documents={documents}
                 units={units}
                 aoao={aoao}
+                contractors={mostActiveContractors}
               />
 
               {/* MOST ACTIVE CONTRACTOR */}
