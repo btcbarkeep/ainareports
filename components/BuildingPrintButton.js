@@ -58,29 +58,29 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       const addHeader = (pdfDoc, width, marginLeft) => {
         const headerY = 5;
         if (logoImage) {
-          // Add logo (larger size for better branding)
-          const logoSize = 12;
+          // Add logo (smaller size to prevent overlap)
+          const logoSize = 10;
           pdfDoc.addImage(logoImage, 'PNG', marginLeft, headerY, logoSize, logoSize);
           
-          // Text branding next to logo (larger and with more spacing to prevent overlap)
+          // Text branding next to logo (with more spacing to prevent overlap)
           pdfDoc.setFontSize(14);
           pdfDoc.setFont("helvetica", "bold");
           pdfDoc.setTextColor(0, 0, 0);
           // Increased spacing to prevent overlap - more space between logo and text
-          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 20, headerY + 8);
+          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 25, headerY + 7);
         } else {
           // Fallback to text-only if image didn't load
           pdfDoc.setFontSize(14);
           pdfDoc.setFont("helvetica", "bold");
           pdfDoc.setTextColor(0, 0, 0);
-          pdfDoc.text("AINAREPORTS", marginLeft, headerY + 8);
+          pdfDoc.text("AINAREPORTS", marginLeft, headerY + 7);
         }
         
         // Generation date on right
         pdfDoc.setFontSize(8);
         pdfDoc.setFont("helvetica", "normal");
         const genDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        pdfDoc.text(`Generated ${genDate}`, width - marginLeft, headerY + 8, { align: "right" });
+        pdfDoc.text(`Generated ${genDate}`, width - marginLeft, headerY + 7, { align: "right" });
       };
 
       // Add header to first page
@@ -152,89 +152,7 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       doc.text(docsText, margin + 90, yPosition);
       yPosition += 8;
 
-      // Recent Events (5) - Table format
-      if (events && events.length > 0) {
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.text("Recent Events (5)", margin, yPosition);
-        yPosition += 6;
-        
-        // Store the starting Y position for the events box
-        const eventsStartY = yPosition;
-
-        doc.setFontSize(7);
-        doc.setFont("helvetica", "normal");
-        
-        events.slice(0, 5).forEach((event) => {
-          if (yPosition > pageHeight - 40) return; // Stop if we're running out of space
-          
-          const eventDate = event.occurred_at ? new Date(event.occurred_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }) : "—";
-          const eventType = event.event_type ? event.event_type.charAt(0).toUpperCase() + event.event_type.slice(1).toLowerCase() : "—";
-          const severity = event.severity ? event.severity.charAt(0).toUpperCase() + event.severity.slice(1).toLowerCase() : "—";
-          const status = event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1).toLowerCase() : "—";
-          
-          // Event title with bullet
-          doc.setFont("helvetica", "bold");
-          const eventTitle = `■ ${event.title || "Event"}`;
-          const titleWidth = doc.getTextWidth(eventTitle);
-          
-          // Color code by severity - use background tint instead of text color
-          let bgColor = null;
-          if (severity.toLowerCase() === "high" || severity.toLowerCase() === "critical") {
-            bgColor = [255, 200, 200]; // Light red background
-          } else if (severity.toLowerCase() === "medium") {
-            bgColor = [255, 235, 200]; // Light amber background
-          }
-          
-          // Draw colored background box if needed
-          if (bgColor) {
-            doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
-            // Draw a rounded rectangle behind the title and details
-            const boxWidth = pageWidth - margin * 2 - 5;
-            const boxHeight = 5;
-            doc.roundedRect(margin - 2, yPosition - 4, boxWidth, boxHeight, 1, 1, 'F');
-          }
-          
-          // Text stays black
-          doc.setTextColor(0, 0, 0);
-          doc.text(eventTitle, margin, yPosition);
-          
-          // Type, Severity, Status - on same line after title
-          const details = [eventType, severity, status].filter(d => d !== "—").join(" · ");
-          doc.setFont("helvetica", "normal");
-          doc.text(details, margin + 75, yPosition);
-          
-          // Date on right
-          doc.text(eventDate, pageWidth - margin - 10, yPosition, { align: "right" });
-          
-          // Add event body/description if available (compact)
-          if (event.body && event.body.trim()) {
-            yPosition += 4;
-            doc.setFontSize(6);
-            doc.setFont("helvetica", "italic");
-            const bodyLines = doc.splitTextToSize(event.body.trim(), pageWidth - margin * 2 - 20);
-            bodyLines.slice(0, 2).forEach((line) => { // Limit to 2 lines
-              if (yPosition > pageHeight - 40) return;
-              doc.text(line, margin + 5, yPosition);
-              yPosition += 3;
-            });
-            doc.setFontSize(7);
-            doc.setFont("helvetica", "normal");
-          }
-          
-          yPosition += 4; // Move to next event
-        });
-        
-        // Close the events box
-        const eventsBoxHeight = yPosition - eventsStartY + 2;
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.roundedRect(margin - 2, eventsStartY - 2, pageWidth - margin * 2 + 4, eventsBoxHeight, 2, 2, 'S');
-        
-        yPosition += 5;
-      }
-
-      // AOAO Section - in a box
+      // AOAO Section - in a box (moved before Events)
       if (aoao && (aoao.organization_name || aoao.company_name || aoao.name)) {
         if (yPosition > pageHeight - 50) return;
         
