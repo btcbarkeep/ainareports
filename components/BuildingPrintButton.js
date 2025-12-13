@@ -62,11 +62,12 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const logoSize = 12;
           pdfDoc.addImage(logoImage, 'PNG', marginLeft, headerY, logoSize, logoSize);
           
-          // Text branding next to logo (larger and with more spacing)
+          // Text branding next to logo (larger and with more spacing to prevent overlap)
           pdfDoc.setFontSize(14);
           pdfDoc.setFont("helvetica", "bold");
           pdfDoc.setTextColor(0, 0, 0);
-          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 10, headerY + 8);
+          // Increased spacing from logoSize + 10 to logoSize + 15 to prevent overlap
+          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 15, headerY + 8);
         } else {
           // Fallback to text-only if image didn't load
           pdfDoc.setFontSize(14);
@@ -123,7 +124,13 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       });
       yPosition += 4;
 
-      // Quick Stats Table
+      // Quick Stats Table - in a box
+      const statsBoxY = yPosition;
+      const statsBoxHeight = 12;
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(margin - 2, statsBoxY - 4, pageWidth - margin * 2 + 4, statsBoxHeight, 2, 2, 'S');
+      
       doc.setFontSize(8);
       doc.setFont("helvetica", "bold");
       const statsY = yPosition;
@@ -143,7 +150,7 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       doc.text(floorsText, margin + 30, yPosition);
       doc.text(eventsText, margin + 60, yPosition);
       doc.text(docsText, margin + 90, yPosition);
-      yPosition += 6;
+      yPosition += 8;
 
       // Recent Events (5) - Table format
       if (events && events.length > 0) {
@@ -163,26 +170,36 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const severity = event.severity ? event.severity.charAt(0).toUpperCase() + event.severity.slice(1).toLowerCase() : "—";
           const status = event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1).toLowerCase() : "—";
           
-          // Color code by severity
-          if (severity.toLowerCase() === "high" || severity.toLowerCase() === "critical") {
-            doc.setTextColor(220, 38, 38); // Red for high/critical
-          } else if (severity.toLowerCase() === "medium") {
-            doc.setTextColor(245, 158, 11); // Amber for medium
-          } else {
-            doc.setTextColor(0, 0, 0); // Black for low/normal
-          }
-          
           // Event title with bullet
           doc.setFont("helvetica", "bold");
-          doc.text(`■ ${event.title || "Event"}`, margin, yPosition);
+          const eventTitle = `■ ${event.title || "Event"}`;
+          const titleWidth = doc.getTextWidth(eventTitle);
+          
+          // Color code by severity - use background tint instead of text color
+          let bgColor = null;
+          if (severity.toLowerCase() === "high" || severity.toLowerCase() === "critical") {
+            bgColor = [255, 200, 200]; // Light red background
+          } else if (severity.toLowerCase() === "medium") {
+            bgColor = [255, 235, 200]; // Light amber background
+          }
+          
+          // Draw colored background box if needed
+          if (bgColor) {
+            doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+            // Draw a rounded rectangle behind the title and details
+            const boxWidth = pageWidth - margin * 2 - 5;
+            const boxHeight = 5;
+            doc.roundedRect(margin - 2, yPosition - 4, boxWidth, boxHeight, 1, 1, 'F');
+          }
+          
+          // Text stays black
+          doc.setTextColor(0, 0, 0);
+          doc.text(eventTitle, margin, yPosition);
           
           // Type, Severity, Status - on same line after title
           const details = [eventType, severity, status].filter(d => d !== "—").join(" · ");
           doc.setFont("helvetica", "normal");
           doc.text(details, margin + 75, yPosition);
-          
-          // Reset color
-          doc.setTextColor(0, 0, 0);
           
           // Date on right
           doc.text(eventDate, pageWidth - margin - 10, yPosition, { align: "right" });
@@ -204,13 +221,21 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           
           yPosition += 4; // Move to next event
         });
-        yPosition += 3;
+        
+        // Close the events box
+        const eventsBoxHeight = yPosition - eventsStartY + 2;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(margin - 2, eventsStartY - 2, pageWidth - margin * 2 + 4, eventsBoxHeight, 2, 2, 'S');
+        
+        yPosition += 5;
       }
 
-      // AOAO Section
+      // AOAO Section - in a box
       if (aoao && (aoao.organization_name || aoao.company_name || aoao.name)) {
         if (yPosition > pageHeight - 50) return;
         
+        const aoaoBoxY = yPosition;
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
         const aoaoName = aoao.organization_name || aoao.company_name || aoao.name;
@@ -220,11 +245,17 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
 
         doc.setFontSize(8);
         doc.setFont("helvetica", "bold");
-        // Use amber color for verified AOAO
-        if (isVerified) {
-          doc.setTextColor(245, 158, 11); // Amber color
-        }
         const aoaoNameWidth = doc.getTextWidth(aoaoName);
+        
+        // Use amber background tint for verified AOAO instead of colored text
+        if (isVerified) {
+          doc.setFillColor(255, 235, 200); // Light amber background
+          const boxWidth = aoaoNameWidth + (badgeImage ? 8 : 5);
+          doc.roundedRect(margin - 1, yPosition - 3, boxWidth, 5, 1, 1, 'F');
+        }
+        
+        // Text stays black
+        doc.setTextColor(0, 0, 0);
         doc.text(aoaoName, margin, yPosition);
         if (isVerified && badgeImage) {
           // Add verified badge image next to name (even smaller)
@@ -234,7 +265,6 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           // Fallback to star if badge image didn't load
           doc.text("★", margin + aoaoNameWidth + 2, yPosition);
         }
-        doc.setTextColor(0, 0, 0); // Reset to black
         yPosition += 5;
 
         doc.setFontSize(7);
@@ -261,10 +291,11 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         yPosition += 3;
       }
 
-      // Property Managers (Top 5) - Table format
+      // Property Managers (Top 5) - Table format in a box
       if (propertyManagers && propertyManagers.length > 0) {
         if (yPosition > pageHeight - 50) return;
         
+        const pmBoxY = yPosition;
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
         doc.text("Property Managers (Top 5)", margin, yPosition);
@@ -281,12 +312,18 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const license = pm.license_number && pm.license_number !== "string" ? pm.license_number : "—";
           const unitCount = pm.building_count > 0 ? "ALL" : (pm.unit_count > 0 ? `${pm.unit_count} Units` : "—");
           
-          // Name with badge if paid - use amber color for paid
+          // Name with badge if paid - use amber background tint instead of colored text
           doc.setFont("helvetica", "bold");
-          if (isPaid) {
-            doc.setTextColor(245, 158, 11); // Amber color for paid
-          }
           const pmNameWidth = doc.getTextWidth(pmName);
+          
+          if (isPaid) {
+            doc.setFillColor(255, 235, 200); // Light amber background
+            const boxWidth = pmNameWidth + (badgeImage ? 8 : 5);
+            doc.roundedRect(margin - 1, yPosition - 3, boxWidth, 5, 1, 1, 'F');
+          }
+          
+          // Text stays black
+          doc.setTextColor(0, 0, 0);
           doc.text(pmName, margin, yPosition);
           if (isPaid && badgeImage) {
             // Add verified badge image next to name (even smaller)
@@ -296,7 +333,6 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
             // Fallback to star if badge image didn't load
             doc.text("★", margin + pmNameWidth + 2, yPosition);
           }
-          doc.setTextColor(0, 0, 0); // Reset to black
           
           // License
           doc.setFont("helvetica", "normal");
@@ -307,13 +343,21 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           
           yPosition += 5;
         });
-        yPosition += 3;
+        
+        // Close the PM box
+        const pmBoxHeight = yPosition - pmBoxY + 2;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(margin - 2, pmBoxY - 2, pageWidth - margin * 2 + 4, pmBoxHeight, 2, 2, 'S');
+        
+        yPosition += 5;
       }
 
-      // Recent Documents (5) - Table format
+      // Recent Documents (5) - Table format in a box
       if (documents && documents.length > 0) {
         if (yPosition > pageHeight - 50) return;
         
+        const docsBoxY = yPosition;
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
         doc.text("Recent Documents (5)", margin, yPosition);
@@ -391,13 +435,21 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           
           yPosition += 4; // Move to next document
         });
-        yPosition += 3;
+        
+        // Close the documents box
+        const docsBoxHeight = yPosition - docsBoxY + 2;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(margin - 2, docsBoxY - 2, pageWidth - margin * 2 + 4, docsBoxHeight, 2, 2, 'S');
+        
+        yPosition += 5;
       }
 
-      // Contractors/Vendors (Top 5) - Table format
+      // Contractors/Vendors (Top 5) - Table format in a box
       if (contractors && contractors.length > 0) {
         if (yPosition > pageHeight - 50) return;
         
+        const contractorsBoxY = yPosition;
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
         doc.text("Contractors / Vendors (Top 5)", margin, yPosition);
@@ -417,12 +469,18 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const eventCount = contractor.count || contractor.event_count || 0;
           const eventText = eventCount === 1 ? "1 Event" : `${eventCount} Events`;
           
-          // Name with badge if paid - use amber color for paid
+          // Name with badge if paid - use amber background tint instead of colored text
           doc.setFont("helvetica", "bold");
-          if (isPaid) {
-            doc.setTextColor(245, 158, 11); // Amber color for paid
-          }
           const contractorNameWidth = doc.getTextWidth(contractorName);
+          
+          if (isPaid) {
+            doc.setFillColor(255, 235, 200); // Light amber background
+            const boxWidth = contractorNameWidth + (badgeImage ? 8 : 5);
+            doc.roundedRect(margin - 1, yPosition - 3, boxWidth, 5, 1, 1, 'F');
+          }
+          
+          // Text stays black
+          doc.setTextColor(0, 0, 0);
           doc.text(contractorName, margin, yPosition);
           if (isPaid && badgeImage) {
             // Add verified badge image next to name (even smaller)
@@ -432,7 +490,6 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
             // Fallback to star if badge image didn't load
             doc.text("★", margin + contractorNameWidth + 2, yPosition);
           }
-          doc.setTextColor(0, 0, 0); // Reset to black
           
           // Role
           doc.setFont("helvetica", "normal");
@@ -443,7 +500,14 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           
           yPosition += 5;
         });
-        yPosition += 3;
+        
+        // Close the contractors box
+        const contractorsBoxHeight = yPosition - contractorsBoxY + 2;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(margin - 2, contractorsBoxY - 2, pageWidth - margin * 2 + 4, contractorsBoxHeight, 2, 2, 'S');
+        
+        yPosition += 5;
       }
 
       // Premium AinaReport Available section
