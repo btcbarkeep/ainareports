@@ -189,6 +189,7 @@ async function fetchUnitWithRelations(buildingSlug, unitNumber) {
         website: c.website,
         notes: c.notes,
         unit_count: c.unit_count,
+        building_count: c.building_count,
         subscription_tier: c.subscription_tier,
         license_number: c.license_number || c.license,
         logo_url: c.logo_url,
