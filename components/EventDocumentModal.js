@@ -193,7 +193,7 @@ export default function EventDocumentModal({ event, isOpen, onClose, buildingSlu
                   href={downloadLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="inline-block w-full text-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
                 >
                   View Document
                 </a>
