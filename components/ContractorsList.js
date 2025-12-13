@@ -233,7 +233,7 @@ export default function ContractorsList({
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Phone</span>
                     <div className="text-gray-900 font-medium break-words">
                       {isPaid ? (
-                        <a href={`tel:${openContractor.phone.replace(/\D/g, '')}`} className="text-blue-600 hover:text-blue-800">
+                        <a href={`tel:${openContractor.phone.replace(/\D/g, '')}`} className="text-black hover:text-gray-700">
                           {formatPhone(openContractor.phone)}
                         </a>
                       ) : (
@@ -279,7 +279,7 @@ export default function ContractorsList({
                     href={openContractor.website.startsWith('http') ? openContractor.website : `https://${openContractor.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 font-medium break-all"
+                    className="text-black hover:text-gray-700 font-medium break-all"
                   >
                     {openContractor.website}
                   </a>
