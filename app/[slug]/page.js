@@ -580,7 +580,7 @@ export default async function BuildingPage({ params, searchParams }) {
                           </div>
                         )}
                         <div className="w-1/4 min-w-0 pr-4 overflow-hidden">
-                          <div className="font-medium text-blue-600 hover:text-blue-800 truncate flex items-center gap-1.5" title={u.unit_number}>
+                          <div className="font-medium text-black hover:text-gray-700 truncate flex items-center gap-1.5" title={u.unit_number}>
                             {u.hasPaidOwner && (
                               <VerifiedBadgeInline />
                             )}
