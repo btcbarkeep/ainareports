@@ -54,27 +54,14 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         console.log('Badge image could not be loaded, using star fallback');
       }
 
-      // Helper function to add header with logo and branding
+      // Helper function to add header with branding (no logo)
       const addHeader = (pdfDoc, width, marginLeft) => {
         const headerY = 5;
-        if (logoImage) {
-          // Add logo (smaller size to prevent overlap)
-          const logoSize = 10;
-          pdfDoc.addImage(logoImage, 'PNG', marginLeft, headerY, logoSize, logoSize);
-          
-          // Text branding next to logo (with more spacing to prevent overlap)
-          pdfDoc.setFontSize(14);
-          pdfDoc.setFont("helvetica", "bold");
-          pdfDoc.setTextColor(0, 0, 0);
-          // Increased spacing to prevent overlap - more space between logo and text
-          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 25, headerY + 7);
-        } else {
-          // Fallback to text-only if image didn't load
-          pdfDoc.setFontSize(14);
-          pdfDoc.setFont("helvetica", "bold");
-          pdfDoc.setTextColor(0, 0, 0);
-          pdfDoc.text("AINAREPORTS", marginLeft, headerY + 7);
-        }
+        // Text branding only (no logo)
+        pdfDoc.setFontSize(14);
+        pdfDoc.setFont("helvetica", "bold");
+        pdfDoc.setTextColor(0, 0, 0);
+        pdfDoc.text("AINAREPORTS.COM", marginLeft, headerY + 7);
         
         // Generation date on right
         pdfDoc.setFontSize(8);
@@ -82,10 +69,39 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         const genDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         pdfDoc.text(`Generated ${genDate}`, width - marginLeft, headerY + 7, { align: "right" });
       };
+      
+      // Helper function to add watermark logo
+      const addWatermark = (pdfDoc, width, height) => {
+        if (logoImage) {
+          try {
+            // Add watermark logo in the center, large
+            const watermarkSize = Math.min(width * 0.5, height * 0.5); // 50% of page size
+            const watermarkX = (width - watermarkSize) / 2;
+            const watermarkY = (height - watermarkSize) / 2;
+            
+            // Create a canvas to apply opacity to the image
+            const canvas = document.createElement('canvas');
+            canvas.width = logoImage.width || 100;
+            canvas.height = logoImage.height || 100;
+            const ctx = canvas.getContext('2d');
+            ctx.globalAlpha = 0.08; // 8% opacity for watermark
+            ctx.drawImage(logoImage, 0, 0, canvas.width, canvas.height);
+            
+            // Convert canvas to data URL and add to PDF
+            const watermarkDataUrl = canvas.toDataURL('image/png');
+            pdfDoc.addImage(watermarkDataUrl, 'PNG', watermarkX, watermarkY, watermarkSize, watermarkSize);
+          } catch (error) {
+            // If watermark fails, just continue without it
+            console.log('Watermark could not be added:', error);
+          }
+        }
+      };
 
       // Add header to first page
       addHeader(doc, pageWidth, margin);
-      yPosition = 20; // Start below header (logo is 12px + spacing)
+      // Add watermark logo to the page
+      addWatermark(doc, pageWidth, pageHeight);
+      yPosition = 20; // Start below header
 
       // Building Name
       doc.setFontSize(18);
@@ -242,12 +258,14 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
             doc.text("★", margin + pmNameWidth + 2, yPosition);
           }
           
-          // License
+          // License - aligned to column
           doc.setFont("helvetica", "normal");
-          doc.text(license, margin + 55, yPosition);
+          const licenseX = margin + 60; // Fixed position for License column
+          doc.text(license, licenseX, yPosition);
           
-          // Unit count
-          doc.text(unitCount, pageWidth - margin - 25, yPosition, { align: "right" });
+          // Unit count - aligned to column
+          const unitCountX = pageWidth - margin - 30; // Fixed position for Unit count column
+          doc.text(unitCount, unitCountX, yPosition, { align: "right" });
           
           yPosition += 5;
         });
@@ -257,6 +275,96 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         doc.setDrawColor(200, 200, 200);
         doc.setLineWidth(0.5);
         doc.roundedRect(margin - 2, pmBoxY - 2, pageWidth - margin * 2 + 4, pmBoxHeight, 2, 2, 'S');
+        
+        yPosition += 5;
+      }
+
+      // Recent Events (5) - Table format in a box (right above Documents)
+      if (events && events.length > 0) {
+        if (yPosition > pageHeight - 50) return;
+        
+        const eventsBoxY = yPosition;
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Recent Events (5)", margin, yPosition);
+        yPosition += 6;
+        
+        // Store the starting Y position for the events box
+        const eventsStartY = yPosition;
+
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        
+        events.slice(0, 5).forEach((event) => {
+          if (yPosition > pageHeight - 40) return; // Stop if we're running out of space
+          
+          const eventDate = event.occurred_at ? new Date(event.occurred_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }) : "—";
+          const eventType = event.event_type ? event.event_type.charAt(0).toUpperCase() + event.event_type.slice(1).toLowerCase() : "—";
+          const severity = event.severity ? event.severity.charAt(0).toUpperCase() + event.severity.slice(1).toLowerCase() : "—";
+          const status = event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1).toLowerCase() : "—";
+          
+          // Event title with bullet
+          doc.setFont("helvetica", "bold");
+          const eventTitle = `■ ${event.title || "Event"}`;
+          const titleWidth = doc.getTextWidth(eventTitle);
+          
+          // Color code by severity - use background tint instead of text color
+          let bgColor = null;
+          if (severity.toLowerCase() === "high" || severity.toLowerCase() === "critical") {
+            bgColor = [255, 200, 200]; // Light red background
+          } else if (severity.toLowerCase() === "medium") {
+            bgColor = [255, 235, 200]; // Light amber background
+          } else if (severity.toLowerCase() === "low") {
+            bgColor = [200, 255, 200]; // Light green background
+          }
+          
+          // Draw colored background box if needed
+          if (bgColor) {
+            doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+            // Draw a rounded rectangle behind the title and details
+            const boxWidth = pageWidth - margin * 2 - 5;
+            const boxHeight = 5;
+            doc.roundedRect(margin - 2, yPosition - 4, boxWidth, boxHeight, 1, 1, 'F');
+          }
+          
+          // Text stays black
+          doc.setTextColor(0, 0, 0);
+          // Title - aligned to column
+          doc.text(eventTitle, margin, yPosition);
+          
+          // Type, Severity, Status - aligned to column
+          const details = [eventType, severity, status].filter(d => d !== "—").join(" · ");
+          doc.setFont("helvetica", "normal");
+          const detailsX = margin + 75; // Fixed position for details column
+          doc.text(details, detailsX, yPosition);
+          
+          // Date on right - aligned to column
+          const dateX = pageWidth - margin - 10; // Fixed position for date column
+          doc.text(eventDate, dateX, yPosition, { align: "right" });
+          
+          // Add event body/description if available (compact)
+          if (event.body && event.body.trim()) {
+            yPosition += 4;
+            doc.setFontSize(6);
+            doc.setFont("helvetica", "italic");
+            const bodyLines = doc.splitTextToSize(event.body.trim(), pageWidth - margin * 2 - 20);
+            bodyLines.slice(0, 2).forEach((line) => { // Limit to 2 lines
+              if (yPosition > pageHeight - 40) return;
+              doc.text(line, margin + 5, yPosition);
+              yPosition += 3;
+            });
+            doc.setFontSize(7);
+            doc.setFont("helvetica", "normal");
+          }
+          
+          yPosition += 4; // Move to next event
+        });
+        
+        // Close the events box
+        const eventsBoxHeight = yPosition - eventsStartY + 2;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(margin - 2, eventsStartY - 2, pageWidth - margin * 2 + 4, eventsBoxHeight, 2, 2, 'S');
         
         yPosition += 5;
       }
@@ -288,16 +396,17 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           doc.setFont("helvetica", "bold");
           doc.text(`■ ${docTitle}`, margin, yPosition);
           
-          // Category, source, and date - on same line after title (lowercase category/subcategory)
+          // Category, source, and date - aligned to column
           doc.setFont("helvetica", "normal");
           const categoryLower = categoryText.toLowerCase();
           const sourceLower = source.toLowerCase();
           const details = `${categoryLower} · ${sourceLower} · ${docDate}`;
-          doc.text(details, margin + 75, yPosition);
+          const detailsX = margin + 75; // Fixed position for details column
+          doc.text(details, detailsX, yPosition);
           
-          // "View" link on right - make it clickable
+          // "View" link on right - aligned to column
           const viewText = "View";
-          const viewX = pageWidth - margin - 10;
+          const viewX = pageWidth - margin - 10; // Fixed position for View column
           
           // Add clickable link if document has download URL
           if (documentItem.id) {
@@ -392,12 +501,14 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
             doc.text("★", margin + contractorNameWidth + 2, yPosition);
           }
           
-          // Role
+          // Role - aligned to column
           doc.setFont("helvetica", "normal");
-          doc.text(role, margin + 60, yPosition);
+          const roleX = margin + 60; // Fixed position for Role column
+          doc.text(role, roleX, yPosition);
           
-          // Event count
-          doc.text(eventText, pageWidth - margin - 30, yPosition, { align: "right" });
+          // Event count - aligned to column
+          const eventCountX = pageWidth - margin - 30; // Fixed position for Event count column
+          doc.text(eventText, eventCountX, yPosition, { align: "right" });
           
           yPosition += 5;
         });
