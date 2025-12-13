@@ -136,7 +136,7 @@ export default function ContractorEventsModal({ contractor, events = [], isOpen,
                       onClick={() => toggleEvent(event.id)}
                     >
                       <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
-                        <div className="font-medium text-blue-600 truncate" title={eventTitle}>
+                        <div className="font-medium text-black truncate" title={eventTitle}>
                           {eventTitle}
                         </div>
                       </div>
