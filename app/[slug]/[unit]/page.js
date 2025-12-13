@@ -553,25 +553,23 @@ export default async function UnitPage({ params, searchParams }) {
 
           {/* ---------------- RIGHT SIDEBAR ---------------- */}
           <div>
-            {/* PDF CTA - TODO: Implement PDF download API route */}
-            <div className="border rounded-md p-4 bg-gray-50 text-sm mb-8 text-center">
-              <h3 className="font-semibold mb-1">Premium Building Report (PDF)</h3>
-              <p className="text-gray-700 text-xs mb-3">
-                Download a full report with complete event history, all documents,
-                contractor activity, and unit details for{" "}
-                <span className="font-medium">{building.name}</span>.
-              </p>
-              <button
-                disabled
-                className="block w-full text-center border border-gray-400 rounded-md py-2 text-xs font-medium text-gray-500 cursor-not-allowed"
-                title="PDF download coming soon"
-              >
-                Download Full Report (PDF) - Coming Soon
-              </button>
-            </div>
+            {/* UNIT REPORT */}
+            <UnitPrintButton
+              building={building}
+              unit={unit}
+              totalEvents={totalEventsCount}
+              totalDocuments={totalDocumentsCount}
+              totalContractors={totalContractorsCount}
+              buildingContractors={buildingContractors}
+              unitContractors={unitContractors}
+              events={events}
+              documents={documents}
+            />
 
             {/* MOST ACTIVE CONTRACTOR */}
-            <h2 className="font-semibold mb-3 text-center">Most Active Contractor</h2>
+            <h2 className="font-semibold mb-3 text-center mt-8">
+              Most Active Contractor
+            </h2>
 
             <MostActiveContractorBox
               contractor={mostActiveContractor}
@@ -608,19 +606,6 @@ export default async function UnitPage({ params, searchParams }) {
           .
         </div>
       </div>
-
-      {/* PRINT BUTTON */}
-      <UnitPrintButton
-        building={building}
-        unit={unit}
-        totalEvents={totalEventsCount}
-        totalDocuments={totalDocumentsCount}
-        totalContractors={totalContractorsCount}
-        buildingContractors={buildingContractors}
-        unitContractors={unitContractors}
-        events={events}
-        documents={documents}
-      />
     </main>
   );
 }
