@@ -125,7 +125,7 @@ export default function PropertyManagementList({
         <div className="flex-1 text-xs min-w-0 pl-4 overflow-hidden flex items-center justify-center flex-shrink-0">
           <div className="truncate overflow-hidden" title={
             isUnitPage
-              ? (totalUnits !== null && totalUnits !== undefined && pm.unit_count !== null && pm.unit_count !== undefined && Number(pm.unit_count) === Number(totalUnits) ? "Building" : "Unit")
+              ? (pm.building_count !== null && pm.building_count !== undefined && Number(pm.building_count) > 0 ? "Building" : "Unit")
               : (totalUnits !== null && pm.unit_count === totalUnits 
                   ? "ALL" 
                   : pm.unit_count !== undefined 
@@ -133,7 +133,7 @@ export default function PropertyManagementList({
                     : "—")
           }>
             {isUnitPage
-              ? (totalUnits !== null && totalUnits !== undefined && pm.unit_count !== null && pm.unit_count !== undefined && Number(pm.unit_count) === Number(totalUnits) ? "Building" : "Unit")
+              ? (pm.building_count !== null && pm.building_count !== undefined && Number(pm.building_count) > 0 ? "Building" : "Unit")
               : (totalUnits !== null && pm.unit_count === totalUnits 
                   ? "ALL" 
                   : pm.unit_count !== undefined 
