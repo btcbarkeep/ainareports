@@ -43,33 +43,33 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       // Helper function to add header with logo and branding
       const addHeader = (pdfDoc, width, marginLeft) => {
         if (logoImage) {
-          // Add logo (small size)
+          // Add logo (small size) at top
           const logoSize = 10;
-          pdfDoc.addImage(logoImage, 'PNG', marginLeft, yPosition, logoSize, logoSize);
+          pdfDoc.addImage(logoImage, 'PNG', marginLeft, 5, logoSize, logoSize);
           
           // Text branding next to logo
           pdfDoc.setFontSize(9);
           pdfDoc.setFont("helvetica", "bold");
           pdfDoc.setTextColor(0, 0, 0);
-          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 5, yPosition + 7);
+          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 5, 12);
         } else {
           // Fallback to text-only if image didn't load
           pdfDoc.setFontSize(9);
           pdfDoc.setFont("helvetica", "bold");
           pdfDoc.setTextColor(0, 0, 0);
-          pdfDoc.text("AINAREPORTS", marginLeft, yPosition + 7);
+          pdfDoc.text("AINAREPORTS", marginLeft, 12);
         }
         
         // Generation date on right
         pdfDoc.setFontSize(8);
         pdfDoc.setFont("helvetica", "normal");
         const genDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        pdfDoc.text(`Generated ${genDate}`, width - marginLeft, yPosition + 7, { align: "right" });
+        pdfDoc.text(`Generated ${genDate}`, width - marginLeft, 12, { align: "right" });
       };
 
       // Add header to first page
       addHeader(doc, pageWidth, margin);
-      yPosition += 12;
+      yPosition = 18; // Start below header
 
       // Building Name
       doc.setFontSize(18);
@@ -139,24 +139,23 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           if (yPosition > pageHeight - 40) return; // Stop if we're running out of space
           
           const eventDate = event.occurred_at ? new Date(event.occurred_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }) : "—";
-          const eventType = event.event_type || "—";
-          const severity = event.severity || "—";
-          const status = event.status || "—";
+          const eventType = event.event_type ? event.event_type.charAt(0).toUpperCase() + event.event_type.slice(1).toLowerCase() : "—";
+          const severity = event.severity ? event.severity.charAt(0).toUpperCase() + event.severity.slice(1).toLowerCase() : "—";
+          const status = event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1).toLowerCase() : "—";
           
           // Event title with bullet
           doc.setFont("helvetica", "bold");
           doc.text(`■ ${event.title || "Event"}`, margin, yPosition);
           
-          // Type, Severity, Status
+          // Type, Severity, Status - on same line after title
           const details = [eventType, severity, status].filter(d => d !== "—").join(" · ");
           doc.setFont("helvetica", "normal");
-          const detailsX = margin + 80;
-          doc.text(details, detailsX, yPosition);
+          doc.text(details, margin + 75, yPosition);
           
           // Date on right
-          doc.text(eventDate, pageWidth - margin - 15, yPosition, { align: "right" });
+          doc.text(eventDate, pageWidth - margin - 10, yPosition, { align: "right" });
           
-          yPosition += 5;
+          yPosition += 5; // Move to next event
         });
         yPosition += 3;
       }
@@ -174,10 +173,15 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
 
         doc.setFontSize(8);
         doc.setFont("helvetica", "bold");
+        // Use amber color for verified AOAO
+        if (isVerified) {
+          doc.setTextColor(245, 158, 11); // Amber color
+        }
         doc.text(aoaoName, margin, yPosition);
         if (isVerified) {
           doc.text("★", margin + doc.getTextWidth(aoaoName) + 2, yPosition);
         }
+        doc.setTextColor(0, 0, 0); // Reset to black
         yPosition += 5;
 
         doc.setFontSize(7);
@@ -224,19 +228,23 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const license = pm.license_number && pm.license_number !== "string" ? pm.license_number : "—";
           const unitCount = pm.building_count > 0 ? "ALL" : (pm.unit_count > 0 ? `${pm.unit_count} Units` : "—");
           
-          // Name with star if paid
+          // Name with star if paid - use amber color for paid
           doc.setFont("helvetica", "bold");
+          if (isPaid) {
+            doc.setTextColor(245, 158, 11); // Amber color for paid
+          }
           doc.text(pmName, margin, yPosition);
           if (isPaid) {
             doc.text("★", margin + doc.getTextWidth(pmName) + 2, yPosition);
           }
+          doc.setTextColor(0, 0, 0); // Reset to black
           
           // License
           doc.setFont("helvetica", "normal");
-          doc.text(license, margin + 60, yPosition);
+          doc.text(license, margin + 55, yPosition);
           
           // Unit count
-          doc.text(unitCount, pageWidth - margin - 30, yPosition, { align: "right" });
+          doc.text(unitCount, pageWidth - margin - 25, yPosition, { align: "right" });
           
           yPosition += 5;
         });
@@ -269,12 +277,17 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           doc.setFont("helvetica", "bold");
           doc.text(`■ ${docTitle}`, margin, yPosition);
           
-          // Category, source, and date
+          // Category, source, and date - on same line after title (lowercase category/subcategory)
           doc.setFont("helvetica", "normal");
-          const details = `${categoryText} · ${source} · ${docDate}`;
+          const categoryLower = categoryText.toLowerCase();
+          const sourceLower = source.toLowerCase();
+          const details = `${categoryLower} · ${sourceLower} · ${docDate}`;
           doc.text(details, margin + 75, yPosition);
           
-          yPosition += 5;
+          // "View" on right (as placeholder, matching example)
+          doc.text("View", pageWidth - margin - 10, yPosition, { align: "right" });
+          
+          yPosition += 5; // Move to next document
         });
         yPosition += 3;
       }
@@ -297,17 +310,21 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const contractorName = contractor.company_name || contractor.name || "Contractor";
           const isPaid = contractor.subscription_tier === "paid";
           const role = contractor.roles && contractor.roles.length > 0 
-            ? contractor.roles[0].charAt(0).toUpperCase() + contractor.roles[0].slice(1)
+            ? contractor.roles[0].charAt(0).toUpperCase() + contractor.roles[0].slice(1).toLowerCase()
             : "—";
           const eventCount = contractor.count || contractor.event_count || 0;
           const eventText = eventCount === 1 ? "1 Event" : `${eventCount} Events`;
           
-          // Name with star if paid
+          // Name with star if paid - use amber color for paid
           doc.setFont("helvetica", "bold");
+          if (isPaid) {
+            doc.setTextColor(245, 158, 11); // Amber color for paid
+          }
           doc.text(contractorName, margin, yPosition);
           if (isPaid) {
             doc.text("★", margin + doc.getTextWidth(contractorName) + 2, yPosition);
           }
+          doc.setTextColor(0, 0, 0); // Reset to black
           
           // Role
           doc.setFont("helvetica", "normal");
