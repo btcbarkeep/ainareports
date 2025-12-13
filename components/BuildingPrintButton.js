@@ -107,176 +107,243 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
 
       // Intro paragraph
       yPosition += 5;
-      doc.setFontSize(9);
+      checkPageBreak(30);
+      doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       const introText = "This is a FREE Building Report brought to you by AinaReports.com. This report includes the 5 most recent Documents and Events, along with the top 5 Property Managers and Contractors for this property. For complete historical data, detailed analytics, and unlimited access to all events and documents, upgrade to our Premium Report at AinaReports.com.";
       const maxWidth = pageWidth - margin * 2;
       const introLines = doc.splitTextToSize(introText, maxWidth);
       introLines.forEach((line) => {
         doc.text(line, margin, yPosition);
-        yPosition += 4;
+        yPosition += 5;
       });
       yPosition += 5;
 
-      // Building Details - Compact layout
-      doc.setFontSize(12);
+      // Building Details
+      yPosition += 5;
+      doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
       doc.text("Building Details", margin, yPosition);
-      yPosition += 8;
+      yPosition += 10;
 
-      doc.setFontSize(9);
+      doc.setFontSize(11);
       doc.setFont("helvetica", "normal");
       
-      // Two column layout for building details
-      const leftCol = margin + 5;
-      const rightCol = pageWidth / 2 + 10;
-      let detailY = yPosition;
-      
-      if (totalUnits) {
-        doc.text(`Total Units: ${totalUnits}`, leftCol, detailY);
-        detailY += 6;
-      }
-      if (building.floors) {
-        doc.text(`Floors: ${building.floors}`, leftCol, detailY);
-        detailY += 6;
-      }
-      if (building.zoning) {
-        doc.text(`Zoning: ${building.zoning}`, leftCol, detailY);
-        detailY += 6;
-      }
-      
-      let detailYRight = yPosition;
-      if (building.bedrooms) {
-        doc.text(`Bedrooms: ${building.bedrooms}`, rightCol, detailYRight);
-        detailYRight += 6;
-      }
-      if (building.bathrooms) {
-        doc.text(`Bathrooms: ${building.bathrooms}`, rightCol, detailYRight);
-        detailYRight += 6;
-      }
-      if (building.square_feet) {
-        doc.text(`Square Feet: ${building.square_feet.toLocaleString()}`, rightCol, detailYRight);
-        detailYRight += 6;
-      }
-      
-      yPosition = Math.max(detailY, detailYRight) + 3;
+      const details = [];
+      if (totalUnits) details.push(`Total Units: ${totalUnits}`);
+      if (building.floors) details.push(`Floors: ${building.floors}`);
+      if (building.zoning) details.push(`Zoning: ${building.zoning}`);
+      if (building.bedrooms) details.push(`Bedrooms: ${building.bedrooms}`);
+      if (building.bathrooms) details.push(`Bathrooms: ${building.bathrooms}`);
+      if (building.square_feet) details.push(`Square Feet: ${building.square_feet.toLocaleString()}`);
 
-      // AOAO Organization - Compact
+      details.forEach((detail, index) => {
+        checkPageBreak(8);
+        doc.text(detail, margin + 5, yPosition);
+        yPosition += 8;
+      });
+
+      // Statistics
+      yPosition += 5;
+      checkPageBreak(20);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Statistics", margin, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      
+      if (totalEvents !== null) {
+        checkPageBreak(8);
+        doc.text(`Total Events: ${totalEvents}`, margin + 5, yPosition);
+        yPosition += 8;
+      }
+      if (totalDocuments !== null) {
+        checkPageBreak(8);
+        doc.text(`Total Documents: ${totalDocuments}`, margin + 5, yPosition);
+        yPosition += 8;
+      }
+      if (totalContractors !== null) {
+        checkPageBreak(8);
+        doc.text(`Total Contractors: ${totalContractors}`, margin + 5, yPosition);
+        yPosition += 8;
+      }
+      if (propertyManagers && propertyManagers.length > 0) {
+        checkPageBreak(8);
+        doc.text(`Property Management Companies: ${propertyManagers.length}`, margin + 5, yPosition);
+        yPosition += 8;
+      }
+
+      // AOAO Organization
       if (aoao) {
-        yPosition += 3;
-        doc.setFontSize(12);
+        yPosition += 5;
+        checkPageBreak(20);
+        doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.text("AOAO Organization", margin, yPosition);
-        yPosition += 8;
+        yPosition += 10;
 
-        doc.setFontSize(9);
+        doc.setFontSize(11);
         doc.setFont("helvetica", "normal");
         if (aoao.company_name || aoao.name) {
+          checkPageBreak(8);
           doc.text(`Name: ${aoao.company_name || aoao.name}`, margin + 5, yPosition);
-          yPosition += 6;
+          yPosition += 8;
         }
         if (aoao.phone) {
+          checkPageBreak(8);
           doc.text(`Phone: ${aoao.phone}`, margin + 5, yPosition);
-          yPosition += 6;
+          yPosition += 8;
         }
         if (aoao.email) {
+          checkPageBreak(8);
           doc.text(`Email: ${aoao.email}`, margin + 5, yPosition);
-          yPosition += 6;
+          yPosition += 8;
         }
       }
 
-      // Property Management (Top 5) - Compact
+      // Property Management (Top 5)
       if (propertyManagers && propertyManagers.length > 0) {
         yPosition += 5;
-        doc.setFontSize(12);
+        checkPageBreak(25);
+        doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.text("Top 5 Property Management Companies", margin, yPosition);
-        yPosition += 8;
+        yPosition += 10;
 
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         
         propertyManagers.slice(0, 5).forEach((pm, index) => {
+          checkPageBreak(15);
           doc.setFont("helvetica", "bold");
           doc.text(`${index + 1}. ${pm.company_name || pm.name || "Property Manager"}`, margin + 5, yPosition);
-          yPosition += 5;
+          yPosition += 7;
           
           doc.setFont("helvetica", "normal");
           if (pm.license_number && pm.license_number !== "string") {
             doc.text(`   License: ${pm.license_number}`, margin + 5, yPosition);
-            yPosition += 5;
+            yPosition += 6;
           }
           if (pm.phone) {
             doc.text(`   Phone: ${pm.phone}`, margin + 5, yPosition);
-            yPosition += 5;
+            yPosition += 6;
           }
+          yPosition += 3;
         });
       }
 
-      // 5 Most Recent Events - Compact
+      // 5 Most Recent Events
       if (events && events.length > 0) {
         yPosition += 5;
-        doc.setFontSize(12);
+        checkPageBreak(25);
+        doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.text("5 Most Recent Events", margin, yPosition);
-        yPosition += 8;
+        yPosition += 10;
 
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         
         events.slice(0, 5).forEach((event, index) => {
+          checkPageBreak(25);
           const eventDate = event.occurred_at ? new Date(event.occurred_at).toLocaleDateString() : "—";
           doc.setFont("helvetica", "bold");
           doc.text(`${index + 1}. ${event.title || "Event"}`, margin + 5, yPosition);
-          yPosition += 5;
+          yPosition += 7;
           
           doc.setFont("helvetica", "normal");
           doc.text(`   Date: ${eventDate}`, margin + 5, yPosition);
-          yPosition += 5;
+          yPosition += 6;
           if (event.event_type) {
             doc.text(`   Type: ${event.event_type}`, margin + 5, yPosition);
-            yPosition += 5;
+            yPosition += 6;
+          }
+          if (event.subcategory) {
+            doc.text(`   Subcategory: ${event.subcategory}`, margin + 5, yPosition);
+            yPosition += 6;
+          }
+          if (event.severity) {
+            doc.text(`   Severity: ${event.severity}`, margin + 5, yPosition);
+            yPosition += 6;
           }
           if (event.body || event.description) {
             const description = event.body || event.description;
-            // Truncate long descriptions
+            // Split long descriptions into multiple lines
             const maxWidth = pageWidth - margin * 2 - 10;
-            const maxLength = 80;
-            const truncatedDesc = description.length > maxLength ? description.substring(0, maxLength) + "..." : description;
-            const lines = doc.splitTextToSize(`   ${truncatedDesc}`, maxWidth);
+            const lines = doc.splitTextToSize(`   Description: ${description}`, maxWidth);
             doc.text(lines, margin + 5, yPosition);
-            yPosition += lines.length * 4;
+            yPosition += lines.length * 5;
           }
+          yPosition += 3;
         });
       }
 
-      // 5 Most Recent Documents - Compact
+      // 5 Most Recent Documents
       if (documents && documents.length > 0) {
         yPosition += 5;
-        doc.setFontSize(12);
+        checkPageBreak(25);
+        doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
         doc.text("5 Most Recent Documents", margin, yPosition);
-        yPosition += 8;
+        yPosition += 10;
 
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         
         documents.slice(0, 5).forEach((documentItem, index) => {
+          checkPageBreak(20);
           const docDate = documentItem.created_at ? new Date(documentItem.created_at).toLocaleDateString() : "—";
           doc.setFont("helvetica", "bold");
           doc.text(`${index + 1}. ${documentItem.title || documentItem.filename || "Document"}`, margin + 5, yPosition);
-          yPosition += 5;
+          yPosition += 7;
           
           doc.setFont("helvetica", "normal");
           if (documentItem.category) {
             const categoryText = documentItem.subcategory 
-              ? `${documentItem.category} / ${documentItem.subcategory}`
-              : documentItem.category;
-            doc.text(`   Category: ${categoryText}`, margin + 5, yPosition);
-            yPosition += 5;
+              ? `Category: ${documentItem.category} / ${documentItem.subcategory}`
+              : `Category: ${documentItem.category}`;
+            doc.text(`   ${categoryText}`, margin + 5, yPosition);
+            yPosition += 6;
+          }
+          if (documentItem.description) {
+            // Split long descriptions into multiple lines
+            const maxWidth = pageWidth - margin * 2 - 10;
+            const lines = doc.splitTextToSize(`   Description: ${documentItem.description}`, maxWidth);
+            doc.text(lines, margin + 5, yPosition);
+            yPosition += lines.length * 5;
           }
           doc.text(`   Uploaded: ${docDate}`, margin + 5, yPosition);
-          yPosition += 5;
+          yPosition += 6;
+          yPosition += 3;
+        });
+      }
+
+      // Units Summary
+      if (units && units.length > 0) {
+        yPosition += 5;
+        checkPageBreak(20);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("Units", margin, yPosition);
+        yPosition += 10;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        
+        // Create a table-like structure
+        units.forEach((unit, index) => {
+          checkPageBreak(10);
+          const unitInfo = [
+            unit.unit_number || "—",
+            unit.floor ? `Floor ${unit.floor}` : "—",
+            unit.owner_name || "—"
+          ].filter(item => item !== "—").join(" • ");
+          
+          doc.setFont("helvetica", "normal");
+          doc.text(`${index + 1}. ${unitInfo}`, margin + 5, yPosition);
+          yPosition += 7;
         });
       }
 
