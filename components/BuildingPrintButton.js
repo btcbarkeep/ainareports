@@ -58,33 +58,33 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       const addHeader = (pdfDoc, width, marginLeft) => {
         const headerY = 5;
         if (logoImage) {
-          // Add logo (smaller size) at top
-          const logoSize = 6;
+          // Add logo (larger size for better branding)
+          const logoSize = 12;
           pdfDoc.addImage(logoImage, 'PNG', marginLeft, headerY, logoSize, logoSize);
           
-          // Text branding next to logo (with more spacing to prevent overlap)
-          pdfDoc.setFontSize(9);
+          // Text branding next to logo (larger and with more spacing)
+          pdfDoc.setFontSize(14);
           pdfDoc.setFont("helvetica", "bold");
           pdfDoc.setTextColor(0, 0, 0);
-          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 12, headerY + 4);
+          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 10, headerY + 8);
         } else {
           // Fallback to text-only if image didn't load
-          pdfDoc.setFontSize(9);
+          pdfDoc.setFontSize(14);
           pdfDoc.setFont("helvetica", "bold");
           pdfDoc.setTextColor(0, 0, 0);
-          pdfDoc.text("AINAREPORTS", marginLeft, headerY + 4);
+          pdfDoc.text("AINAREPORTS", marginLeft, headerY + 8);
         }
         
         // Generation date on right
         pdfDoc.setFontSize(8);
         pdfDoc.setFont("helvetica", "normal");
         const genDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        pdfDoc.text(`Generated ${genDate}`, width - marginLeft, headerY + 4, { align: "right" });
+        pdfDoc.text(`Generated ${genDate}`, width - marginLeft, headerY + 8, { align: "right" });
       };
 
       // Add header to first page
       addHeader(doc, pageWidth, margin);
-      yPosition = 16; // Start below header (logo is 8px + spacing)
+      yPosition = 20; // Start below header (logo is 12px + spacing)
 
       // Building Name
       doc.setFontSize(18);
@@ -134,11 +134,16 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       
       doc.setFont("helvetica", "normal");
       yPosition += 5;
-      doc.text(totalUnits?.toString() || "—", margin, yPosition);
-      doc.text(building.floors?.toString() || "—", margin + 30, yPosition);
-      doc.text(totalEvents?.toString() || "—", margin + 60, yPosition);
-      doc.text(totalDocuments?.toString() || "—", margin + 90, yPosition);
-      yPosition += 8;
+      // Ensure numbers are displayed correctly (no % symbol)
+      const unitsText = totalUnits?.toString() || "—";
+      const floorsText = building.floors?.toString() || "—";
+      const eventsText = totalEvents?.toString() || "—";
+      const docsText = totalDocuments?.toString() || "—";
+      doc.text(unitsText, margin, yPosition);
+      doc.text(floorsText, margin + 30, yPosition);
+      doc.text(eventsText, margin + 60, yPosition);
+      doc.text(docsText, margin + 90, yPosition);
+      yPosition += 6;
 
       // Recent Events (5) - Table format
       if (events && events.length > 0) {
@@ -182,7 +187,22 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           // Date on right
           doc.text(eventDate, pageWidth - margin - 10, yPosition, { align: "right" });
           
-          yPosition += 5; // Move to next event
+          // Add event body/description if available (compact)
+          if (event.body && event.body.trim()) {
+            yPosition += 4;
+            doc.setFontSize(6);
+            doc.setFont("helvetica", "italic");
+            const bodyLines = doc.splitTextToSize(event.body.trim(), pageWidth - margin * 2 - 20);
+            bodyLines.slice(0, 2).forEach((line) => { // Limit to 2 lines
+              if (yPosition > pageHeight - 40) return;
+              doc.text(line, margin + 5, yPosition);
+              yPosition += 3;
+            });
+            doc.setFontSize(7);
+            doc.setFont("helvetica", "normal");
+          }
+          
+          yPosition += 4; // Move to next event
         });
         yPosition += 3;
       }
@@ -207,9 +227,9 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         const aoaoNameWidth = doc.getTextWidth(aoaoName);
         doc.text(aoaoName, margin, yPosition);
         if (isVerified && badgeImage) {
-          // Add verified badge image next to name (smaller size)
-          const badgeSize = 4;
-          doc.addImage(badgeImage, 'PNG', margin + aoaoNameWidth + 3, yPosition - 3, badgeSize, badgeSize);
+          // Add verified badge image next to name (even smaller)
+          const badgeSize = 3;
+          doc.addImage(badgeImage, 'PNG', margin + aoaoNameWidth + 2, yPosition - 2, badgeSize, badgeSize);
         } else if (isVerified) {
           // Fallback to star if badge image didn't load
           doc.text("★", margin + aoaoNameWidth + 2, yPosition);
@@ -269,9 +289,9 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const pmNameWidth = doc.getTextWidth(pmName);
           doc.text(pmName, margin, yPosition);
           if (isPaid && badgeImage) {
-            // Add verified badge image next to name (smaller size)
-            const badgeSize = 4;
-            doc.addImage(badgeImage, 'PNG', margin + pmNameWidth + 3, yPosition - 3, badgeSize, badgeSize);
+            // Add verified badge image next to name (even smaller)
+            const badgeSize = 3;
+            doc.addImage(badgeImage, 'PNG', margin + pmNameWidth + 2, yPosition - 2, badgeSize, badgeSize);
           } else if (isPaid) {
             // Fallback to star if badge image didn't load
             doc.text("★", margin + pmNameWidth + 2, yPosition);
@@ -326,7 +346,6 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           // "View" link on right - make it clickable
           const viewText = "View";
           const viewX = pageWidth - margin - 10;
-          const viewWidth = doc.getTextWidth(viewText);
           
           // Add clickable link if document has download URL
           if (documentItem.id) {
@@ -355,7 +374,22 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
             doc.text(viewText, viewX, yPosition, { align: "right" });
           }
           
-          yPosition += 5; // Move to next document
+          // Add document description if available (compact)
+          if (documentItem.description && documentItem.description.trim()) {
+            yPosition += 4;
+            doc.setFontSize(6);
+            doc.setFont("helvetica", "italic");
+            const descLines = doc.splitTextToSize(documentItem.description.trim(), pageWidth - margin * 2 - 20);
+            descLines.slice(0, 1).forEach((line) => { // Limit to 1 line
+              if (yPosition > pageHeight - 40) return;
+              doc.text(line, margin + 5, yPosition);
+              yPosition += 3;
+            });
+            doc.setFontSize(7);
+            doc.setFont("helvetica", "normal");
+          }
+          
+          yPosition += 4; // Move to next document
         });
         yPosition += 3;
       }
@@ -391,9 +425,9 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           const contractorNameWidth = doc.getTextWidth(contractorName);
           doc.text(contractorName, margin, yPosition);
           if (isPaid && badgeImage) {
-            // Add verified badge image next to name (smaller size)
-            const badgeSize = 4;
-            doc.addImage(badgeImage, 'PNG', margin + contractorNameWidth + 3, yPosition - 3, badgeSize, badgeSize);
+            // Add verified badge image next to name (even smaller)
+            const badgeSize = 3;
+            doc.addImage(badgeImage, 'PNG', margin + contractorNameWidth + 2, yPosition - 2, badgeSize, badgeSize);
           } else if (isPaid) {
             // Fallback to star if badge image didn't load
             doc.text("★", margin + contractorNameWidth + 2, yPosition);
@@ -428,25 +462,6 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         doc.text(line, margin, yPosition);
         yPosition += 4;
       });
-      
-      // Disclaimer section
-      yPosition += 5;
-      doc.setFontSize(6);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(0, 0, 0);
-      doc.text("Disclaimer:", margin, yPosition);
-      yPosition += 4;
-      
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(100, 100, 100);
-      const disclaimerText = "The information contained in any report and on our website is not necessarily 100% accurate, complete or up to date, nor a substitute for your own due diligence, especially concerning such sensitive items as criminal history, relatives, mortgages and liens. Our data comes from a wide variety of sources, but some municipalities and jurisdictions are slow to report and digitize their data, so we cannot guarantee or warrant full accuracy of ALL search results.";
-      const disclaimerLines = doc.splitTextToSize(disclaimerText, pageWidth - margin * 2);
-      disclaimerLines.forEach((line) => {
-        if (yPosition > pageHeight - 15) return;
-        doc.text(line, margin, yPosition);
-        yPosition += 3.5;
-      });
-      doc.setTextColor(0, 0, 0);
 
       // Footer
       doc.setFontSize(7);
