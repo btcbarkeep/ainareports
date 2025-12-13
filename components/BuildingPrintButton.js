@@ -279,18 +279,28 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
   };
 
   return (
-    <div className="border rounded-md p-4 bg-gray-50 text-sm mt-8 text-center">
-      <h3 className="font-semibold mb-1">Print Basic Report</h3>
-      <p className="text-gray-700 text-xs mb-3">
-        Generate a PDF with all building level data organized and clean.
+    <div className="border rounded-md p-4 bg-gray-50 text-sm mt-8">
+      <h3 className="font-semibold mb-1 text-center">Building Report</h3>
+      <p className="text-gray-700 text-xs mb-4 text-center">
+        Download a comprehensive report with building data, events, documents, contractor activity, and unit details for {building.name}.
       </p>
-      <button
-        onClick={generatePDF}
-        className="block w-full text-center border border-gray-800 rounded-md py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 transition-colors"
-        aria-label="Print Building Report"
-      >
-        Print Report
-      </button>
+      <div className="space-y-2">
+        <button
+          onClick={generatePDF}
+          className="block w-full text-center border border-gray-800 rounded-md py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 transition-colors"
+          aria-label="Print Free Basic Report"
+        >
+          Free Basic Report
+        </button>
+        <button
+          disabled
+          className="block w-full text-center border border-gray-400 rounded-md py-2 text-sm font-medium text-gray-500 cursor-not-allowed"
+          title="Full Premium Report coming soon"
+          aria-label="Full Premium Report"
+        >
+          Full Premium Report - Coming Soon
+        </button>
+      </div>
     </div>
   );
 }
