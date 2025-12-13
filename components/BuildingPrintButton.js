@@ -158,6 +158,9 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         doc.setFont("helvetica", "bold");
         doc.text("Recent Events (5)", margin, yPosition);
         yPosition += 6;
+        
+        // Store the starting Y position for the events box
+        const eventsStartY = yPosition;
 
         doc.setFontSize(7);
         doc.setFont("helvetica", "normal");
