@@ -3,13 +3,23 @@
 export default function BuildingPrintButton({ building, totalUnits, totalEvents, totalDocuments, totalContractors, propertyManagers, events, documents, units, aoao }) {
   const generatePDF = async () => {
     try {
-      // Dynamic import for jsPDF - it uses default export in v3
+      // Dynamic import for jsPDF - handle both default and named exports
       const jsPDFModule = await import("jspdf");
-      const jsPDF = jsPDFModule.default;
-      if (!jsPDF) {
-        throw new Error("jsPDF default export not found");
+      // jsPDF v3: try default export first, then named export
+      let JsPDF;
+      if (jsPDFModule.default) {
+        JsPDF = jsPDFModule.default;
+      } else if (jsPDFModule.jsPDF) {
+        JsPDF = jsPDFModule.jsPDF;
+      } else {
+        JsPDF = jsPDFModule;
       }
-      const doc = new jsPDF();
+      
+      if (typeof JsPDF !== 'function') {
+        throw new Error(`jsPDF constructor not found. Module keys: ${Object.keys(jsPDFModule).join(', ')}`);
+      }
+      
+      const doc = new JsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 20;
@@ -206,16 +216,16 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         
-        documents.slice(0, 15).forEach((doc, index) => {
+        documents.slice(0, 15).forEach((documentItem, index) => {
           checkPageBreak(15);
-          const docDate = doc.created_at ? new Date(doc.created_at).toLocaleDateString() : "—";
+          const docDate = documentItem.created_at ? new Date(documentItem.created_at).toLocaleDateString() : "—";
           doc.setFont("helvetica", "bold");
-          doc.text(`${index + 1}. ${doc.title || doc.filename || "Document"}`, margin + 5, yPosition);
+          doc.text(`${index + 1}. ${documentItem.title || documentItem.filename || "Document"}`, margin + 5, yPosition);
           yPosition += 7;
           
           doc.setFont("helvetica", "normal");
-          if (doc.category) {
-            doc.text(`   Category: ${doc.category}`, margin + 5, yPosition);
+          if (documentItem.category) {
+            doc.text(`   Category: ${documentItem.category}`, margin + 5, yPosition);
             yPosition += 6;
           }
           doc.text(`   Uploaded: ${docDate}`, margin + 5, yPosition);
