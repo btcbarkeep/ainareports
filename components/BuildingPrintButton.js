@@ -408,10 +408,9 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
               linkUrl = `${baseUrl}/api/documents/${documentItem.id}/download`;
             }
             
-            // Use text with link option (jsPDF v3 syntax)
-            doc.setTextColor(0, 0, 255); // Blue color for link
+            // Use text with link option (jsPDF v3 syntax) - keep text black
+            doc.setTextColor(0, 0, 0); // Black text for link
             doc.text(viewText, viewX, yPosition, { align: "right", link: linkUrl });
-            doc.setTextColor(0, 0, 0); // Reset to black
           } else {
             // No link available, just show text
             doc.setTextColor(0, 0, 0);
