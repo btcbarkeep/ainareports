@@ -86,7 +86,7 @@ export default function EventsList({ events, userDisplayNames, buildingSlug }) {
             >
               <div className="w-2/5 min-w-0 pr-4 overflow-hidden">
                 <div
-                  className="font-medium text-blue-600 truncate"
+                  className="font-medium text-black truncate"
                   title={eventTitle}
                 >
                   {eventTitle}
