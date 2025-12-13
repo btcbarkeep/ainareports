@@ -24,6 +24,42 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 20;
       let yPosition = margin;
+      
+      // Load logo image once at the start
+      let logoImage = null;
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = '/aina-logo-dark.png';
+        logoImage = await new Promise((resolve, reject) => {
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          setTimeout(() => reject(new Error('Image load timeout')), 1000);
+        });
+      } catch (error) {
+        console.log('Logo image could not be loaded, using text-only fallback');
+      }
+
+      // Helper function to add header with logo and branding
+      const addHeader = (pdfDoc, width, marginLeft) => {
+        if (logoImage) {
+          // Add logo (small size)
+          const logoSize = 12;
+          pdfDoc.addImage(logoImage, 'PNG', marginLeft + 5, 4, logoSize, logoSize);
+          
+          // Text branding next to logo
+          pdfDoc.setFontSize(10);
+          pdfDoc.setFont("helvetica", "bold");
+          pdfDoc.setTextColor(0, 0, 0);
+          pdfDoc.text("AINAREPORTS", marginLeft + logoSize + 10, 12);
+        } else {
+          // Fallback to text-only if image didn't load
+          pdfDoc.setFontSize(10);
+          pdfDoc.setFont("helvetica", "bold");
+          pdfDoc.setTextColor(0, 0, 0);
+          pdfDoc.text("AINAREPORTS", marginLeft + 5, 12);
+        }
+      };
 
       // Helper function to add a new page if needed
       const checkPageBreak = (requiredSpace) => {
@@ -36,22 +72,6 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         return false;
       };
 
-      // Helper function to add header with logo and branding
-      const addHeader = (pdfDoc, width, marginLeft) => {
-        // Aina brand color (amber/gold) - using RGB: 245, 158, 11 (amber-500)
-        pdfDoc.setFillColor(245, 158, 11);
-        pdfDoc.rect(0, 0, width, 20, 'F');
-        
-        // Logo text/branding
-        pdfDoc.setTextColor(255, 255, 255);
-        pdfDoc.setFontSize(16);
-        pdfDoc.setFont("helvetica", "bold");
-        pdfDoc.text("AINA REPORTS", marginLeft + 5, 13);
-        
-        // Reset text color
-        pdfDoc.setTextColor(0, 0, 0);
-      };
-
       // Add header to first page
       addHeader(doc, pageWidth, margin);
       yPosition = margin + 25;
@@ -59,10 +79,8 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       // Title
       doc.setFontSize(24);
       doc.setFont("helvetica", "bold");
-      // Use amber color for title
-      doc.setTextColor(245, 158, 11);
-      doc.text(building.name || "Building Report", pageWidth / 2, yPosition, { align: "center" });
       doc.setTextColor(0, 0, 0);
+      doc.text(building.name || "Building Report", pageWidth / 2, yPosition, { align: "center" });
       yPosition += 15;
 
       // Building Address
@@ -314,18 +332,20 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         // Call to Action box on last page
         if (i === totalPages) {
           const ctaY = pageHeight - 40;
-          // Amber background box
-          doc.setFillColor(245, 158, 11);
-          doc.roundedRect(margin, ctaY, pageWidth - margin * 2, 25, 3, 3, 'F');
+          // Gray border box (like home page styling)
+          doc.setDrawColor(200, 200, 200);
+          doc.setLineWidth(0.5);
+          doc.roundedRect(margin, ctaY, pageWidth - margin * 2, 25, 3, 3, 'S');
           
           // CTA text
-          doc.setTextColor(255, 255, 255);
+          doc.setTextColor(0, 0, 0);
           doc.setFontSize(12);
           doc.setFont("helvetica", "bold");
           doc.text("Download the Full Premium Report", pageWidth / 2, ctaY + 10, { align: "center" });
           
           doc.setFontSize(9);
           doc.setFont("helvetica", "normal");
+          doc.setTextColor(100, 100, 100);
           doc.text("Visit AinaReports.com for complete event history, documents, and analytics", pageWidth / 2, ctaY + 18, { align: "center" });
           
           doc.setTextColor(0, 0, 0);
