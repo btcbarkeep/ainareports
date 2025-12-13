@@ -71,6 +71,15 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         }
         return false;
       };
+      
+      // Helper function to ensure we have space, add page if needed
+      const ensureSpace = (requiredSpace) => {
+        if (yPosition + requiredSpace > pageHeight - margin - 50) {
+          doc.addPage();
+          yPosition = margin + 25;
+          addHeader(doc, pageWidth, margin);
+        }
+      };
 
       // Add header to first page
       addHeader(doc, pageWidth, margin);
@@ -176,7 +185,7 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
       }
 
       // AOAO Organization
-      if (aoao) {
+      if (aoao && (aoao.organization_name || aoao.company_name || aoao.name)) {
         yPosition += 5;
         checkPageBreak(20);
         doc.setFontSize(14);
@@ -186,19 +195,22 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
 
         doc.setFontSize(11);
         doc.setFont("helvetica", "normal");
-        if (aoao.company_name || aoao.name) {
+        const aoaoName = aoao.organization_name || aoao.company_name || aoao.name;
+        if (aoaoName) {
           checkPageBreak(8);
-          doc.text(`Name: ${aoao.company_name || aoao.name}`, margin + 5, yPosition);
+          doc.text(`Name: ${aoaoName}`, margin + 5, yPosition);
           yPosition += 8;
         }
-        if (aoao.phone) {
+        const aoaoPhone = aoao.contact_phone || aoao.phone;
+        if (aoaoPhone) {
           checkPageBreak(8);
-          doc.text(`Phone: ${aoao.phone}`, margin + 5, yPosition);
+          doc.text(`Phone: ${aoaoPhone}`, margin + 5, yPosition);
           yPosition += 8;
         }
-        if (aoao.email) {
+        const aoaoEmail = aoao.contact_email || aoao.email;
+        if (aoaoEmail) {
           checkPageBreak(8);
-          doc.text(`Email: ${aoao.email}`, margin + 5, yPosition);
+          doc.text(`Email: ${aoaoEmail}`, margin + 5, yPosition);
           yPosition += 8;
         }
       }
@@ -247,7 +259,14 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         doc.setFont("helvetica", "normal");
         
         events.slice(0, 5).forEach((event, index) => {
-          checkPageBreak(25);
+          // Check if we need a new page before starting this event
+          const estimatedEventHeight = 40; // Estimate space needed for an event
+          if (yPosition + estimatedEventHeight > pageHeight - margin - 50) {
+            doc.addPage();
+            yPosition = margin + 25;
+            addHeader(doc, pageWidth, margin);
+          }
+          
           const eventDate = event.occurred_at ? new Date(event.occurred_at).toLocaleDateString() : "—";
           doc.setFont("helvetica", "bold");
           doc.text(`${index + 1}. ${event.title || "Event"}`, margin + 5, yPosition);
@@ -257,14 +276,29 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           doc.text(`   Date: ${eventDate}`, margin + 5, yPosition);
           yPosition += 6;
           if (event.event_type) {
+            if (yPosition + 6 > pageHeight - margin - 50) {
+              doc.addPage();
+              yPosition = margin + 25;
+              addHeader(doc, pageWidth, margin);
+            }
             doc.text(`   Type: ${event.event_type}`, margin + 5, yPosition);
             yPosition += 6;
           }
           if (event.subcategory) {
+            if (yPosition + 6 > pageHeight - margin - 50) {
+              doc.addPage();
+              yPosition = margin + 25;
+              addHeader(doc, pageWidth, margin);
+            }
             doc.text(`   Subcategory: ${event.subcategory}`, margin + 5, yPosition);
             yPosition += 6;
           }
           if (event.severity) {
+            if (yPosition + 6 > pageHeight - margin - 50) {
+              doc.addPage();
+              yPosition = margin + 25;
+              addHeader(doc, pageWidth, margin);
+            }
             doc.text(`   Severity: ${event.severity}`, margin + 5, yPosition);
             yPosition += 6;
           }
@@ -273,6 +307,12 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
             // Split long descriptions into multiple lines
             const maxWidth = pageWidth - margin * 2 - 10;
             const lines = doc.splitTextToSize(`   Description: ${description}`, maxWidth);
+            // Check if description will fit
+            if (yPosition + (lines.length * 5) > pageHeight - margin - 50) {
+              doc.addPage();
+              yPosition = margin + 25;
+              addHeader(doc, pageWidth, margin);
+            }
             doc.text(lines, margin + 5, yPosition);
             yPosition += lines.length * 5;
           }
@@ -293,7 +333,14 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         doc.setFont("helvetica", "normal");
         
         documents.slice(0, 5).forEach((documentItem, index) => {
-          checkPageBreak(20);
+          // Check if we need a new page before starting this document
+          const estimatedDocHeight = 35; // Estimate space needed for a document
+          if (yPosition + estimatedDocHeight > pageHeight - margin - 50) {
+            doc.addPage();
+            yPosition = margin + 25;
+            addHeader(doc, pageWidth, margin);
+          }
+          
           const docDate = documentItem.created_at ? new Date(documentItem.created_at).toLocaleDateString() : "—";
           doc.setFont("helvetica", "bold");
           doc.text(`${index + 1}. ${documentItem.title || documentItem.filename || "Document"}`, margin + 5, yPosition);
@@ -301,6 +348,11 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
           
           doc.setFont("helvetica", "normal");
           if (documentItem.category) {
+            if (yPosition + 6 > pageHeight - margin - 50) {
+              doc.addPage();
+              yPosition = margin + 25;
+              addHeader(doc, pageWidth, margin);
+            }
             const categoryText = documentItem.subcategory 
               ? `Category: ${documentItem.category} / ${documentItem.subcategory}`
               : `Category: ${documentItem.category}`;
@@ -311,8 +363,19 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
             // Split long descriptions into multiple lines
             const maxWidth = pageWidth - margin * 2 - 10;
             const lines = doc.splitTextToSize(`   Description: ${documentItem.description}`, maxWidth);
+            // Check if description will fit
+            if (yPosition + (lines.length * 5) > pageHeight - margin - 50) {
+              doc.addPage();
+              yPosition = margin + 25;
+              addHeader(doc, pageWidth, margin);
+            }
             doc.text(lines, margin + 5, yPosition);
             yPosition += lines.length * 5;
+          }
+          if (yPosition + 6 > pageHeight - margin - 50) {
+            doc.addPage();
+            yPosition = margin + 25;
+            addHeader(doc, pageWidth, margin);
           }
           doc.text(`   Uploaded: ${docDate}`, margin + 5, yPosition);
           yPosition += 6;
@@ -334,7 +397,13 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         
         // Create a table-like structure
         units.forEach((unit, index) => {
-          checkPageBreak(10);
+          // Check if we need a new page
+          if (yPosition + 10 > pageHeight - margin - 50) {
+            doc.addPage();
+            yPosition = margin + 25;
+            addHeader(doc, pageWidth, margin);
+          }
+          
           const unitInfo = [
             unit.unit_number || "—",
             unit.floor ? `Floor ${unit.floor}` : "—",
@@ -347,32 +416,37 @@ export default function BuildingPrintButton({ building, totalUnits, totalEvents,
         });
       }
 
+      // Add Call to Action on the last page after all content
+      // First, add a new page if current position is too low
+      if (yPosition + 50 > pageHeight - margin - 50) {
+        doc.addPage();
+        yPosition = margin + 25;
+        addHeader(doc, pageWidth, margin);
+      }
+      
+      // Add CTA box
+      const ctaY = yPosition + 10;
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(margin, ctaY, pageWidth - margin * 2, 25, 3, 3, 'S');
+      
+      // CTA text
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Download the Full Premium Report", pageWidth / 2, ctaY + 10, { align: "center" });
+      
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text("Visit AinaReports.com for complete event history, documents, and analytics", pageWidth / 2, ctaY + 18, { align: "center" });
+      
+      doc.setTextColor(0, 0, 0);
+
       // Footer and Call to Action
       const totalPages = doc.internal.pages.length - 1;
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
-        
-        // Call to Action box on last page
-        if (i === totalPages) {
-          const ctaY = pageHeight - 40;
-          // Gray border box (like home page styling)
-          doc.setDrawColor(200, 200, 200);
-          doc.setLineWidth(0.5);
-          doc.roundedRect(margin, ctaY, pageWidth - margin * 2, 25, 3, 3, 'S');
-          
-          // CTA text
-          doc.setTextColor(0, 0, 0);
-          doc.setFontSize(12);
-          doc.setFont("helvetica", "bold");
-          doc.text("Download the Full Premium Report", pageWidth / 2, ctaY + 10, { align: "center" });
-          
-          doc.setFontSize(9);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(100, 100, 100);
-          doc.text("Visit AinaReports.com for complete event history, documents, and analytics", pageWidth / 2, ctaY + 18, { align: "center" });
-          
-          doc.setTextColor(0, 0, 0);
-        }
         
         // Footer text
         doc.setFontSize(8);
