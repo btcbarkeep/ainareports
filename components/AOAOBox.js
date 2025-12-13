@@ -115,7 +115,7 @@ export default function AOAOBox({ aoao }) {
                         href={aoao.website.startsWith('http') ? aoao.website : `https://${aoao.website}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 font-medium break-all"
+                        className="text-black hover:text-gray-700 font-medium break-all"
                       >
                         {aoao.website}
                       </a>
@@ -146,7 +146,7 @@ export default function AOAOBox({ aoao }) {
                       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Contact Email</span>
                       <a
                         href={`mailto:${aoao.contact_email}`}
-                        className="text-blue-600 hover:text-blue-800 font-medium break-all"
+                        className="text-black hover:text-gray-700 font-medium break-all"
                       >
                         {aoao.contact_email}
                       </a>
