@@ -416,27 +416,29 @@ export default function UnitPrintButton({ building, unit, totalEvents, totalDocu
   };
 
   return (
-    <button
-      onClick={generatePDF}
-      className="fixed bottom-6 right-6 bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-full shadow-lg font-semibold text-sm transition-colors z-50 flex items-center gap-2"
-      aria-label="Print Unit Report"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-        />
-      </svg>
-      Print Report
-    </button>
+    <div className="border rounded-md p-4 bg-gray-50 text-sm">
+      <h3 className="font-semibold mb-1 text-center">Unit Report</h3>
+      <p className="text-gray-700 text-xs mb-4 text-center">
+        Download a comprehensive report with unit and building data, events, documents, and contractor activity for {building.name} - Unit {unit.unit_number}.
+      </p>
+      <div className="space-y-2">
+        <button
+          onClick={generatePDF}
+          className="block w-full text-center border border-gray-800 rounded-md py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 transition-colors"
+          aria-label="Print Free Basic Report"
+        >
+          Free Basic Report
+        </button>
+        <button
+          disabled
+          className="block w-full text-center border border-gray-400 rounded-md py-2 text-sm font-medium text-gray-500 cursor-not-allowed"
+          title="Full Premium Report coming soon"
+          aria-label="Full Premium Report"
+        >
+          Full Premium Report - Coming Soon
+        </button>
+      </div>
+    </div>
   );
 }
 
