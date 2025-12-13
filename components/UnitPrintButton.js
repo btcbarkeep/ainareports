@@ -19,26 +19,50 @@ export default function UnitPrintButton({ building, unit, totalEvents, totalDocu
       }
       
       const doc = new JsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
-    let yPosition = margin;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      let yPosition = margin;
 
-    // Helper function to add a new page if needed
-    const checkPageBreak = (requiredSpace) => {
-      if (yPosition + requiredSpace > pageHeight - margin) {
-        doc.addPage();
-        yPosition = margin;
-        return true;
-      }
-      return false;
-    };
+      // Helper function to add a new page if needed
+      const checkPageBreak = (requiredSpace) => {
+        if (yPosition + requiredSpace > pageHeight - margin - 50) { // Leave space for footer and CTA
+          doc.addPage();
+          yPosition = margin + 25; // Leave space for header
+          addHeader(doc, pageWidth, margin);
+          return true;
+        }
+        return false;
+      };
 
-    // Title
-    doc.setFontSize(24);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Unit ${unit.unit_number || "Report"}`, pageWidth / 2, yPosition, { align: "center" });
-    yPosition += 10;
+      // Helper function to add header with logo and branding
+      const addHeader = (pdfDoc, width, marginLeft) => {
+        // Aina brand color (amber/gold) - using RGB: 245, 158, 11 (amber-500)
+        pdfDoc.setFillColor(245, 158, 11);
+        pdfDoc.rect(0, 0, width, 20, 'F');
+        
+        // Logo text/branding
+        pdfDoc.setTextColor(255, 255, 255);
+        pdfDoc.setFontSize(16);
+        pdfDoc.setFont("helvetica", "bold");
+        pdfDoc.text("AINA REPORTS", marginLeft + 5, 13);
+        
+        // Reset text color
+        pdfDoc.setTextColor(0, 0, 0);
+      };
+
+      // Add header to first page
+      addHeader(doc, pageWidth, margin);
+      yPosition = margin + 25;
+
+      // Title
+      doc.setFontSize(24);
+      doc.setFont("helvetica", "bold");
+      // Use amber color for title
+      doc.setTextColor(245, 158, 11);
+      doc.text(`Unit ${unit.unit_number || "Report"}`, pageWidth / 2, yPosition, { align: "center" });
+      doc.setTextColor(0, 0, 0);
+      yPosition += 10;
 
     // Building Name
     if (building.name) {
@@ -271,6 +295,10 @@ export default function UnitPrintButton({ building, unit, totalEvents, totalDocu
           doc.text(`   Type: ${event.event_type}`, margin + 5, yPosition);
           yPosition += 6;
         }
+        if (event.subcategory) {
+          doc.text(`   Subcategory: ${event.subcategory}`, margin + 5, yPosition);
+          yPosition += 6;
+        }
         if (event.severity) {
           doc.text(`   Severity: ${event.severity}`, margin + 5, yPosition);
           yPosition += 6;
@@ -279,13 +307,12 @@ export default function UnitPrintButton({ building, unit, totalEvents, totalDocu
           doc.text(`   Status: ${event.status}`, margin + 5, yPosition);
           yPosition += 6;
         }
-        if (event.body) {
-          const bodyLines = doc.splitTextToSize(`   ${event.body}`, pageWidth - margin * 2 - 10);
-          bodyLines.forEach((line) => {
-            checkPageBreak(6);
-            doc.text(line, margin + 5, yPosition);
-            yPosition += 6;
-          });
+        if (event.body || event.description) {
+          const description = event.body || event.description;
+          const maxWidth = pageWidth - margin * 2 - 10;
+          const lines = doc.splitTextToSize(`   Description: ${description}`, maxWidth);
+          doc.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 5;
         }
         yPosition += 3;
       });
@@ -312,12 +339,22 @@ export default function UnitPrintButton({ building, unit, totalEvents, totalDocu
         
         doc.setFont("helvetica", "normal");
         if (documentItem.category) {
-          doc.text(`   Category: ${documentItem.category}`, margin + 5, yPosition);
+          const categoryText = documentItem.subcategory 
+            ? `Category: ${documentItem.category} / ${documentItem.subcategory}`
+            : `Category: ${documentItem.category}`;
+          doc.text(`   ${categoryText}`, margin + 5, yPosition);
           yPosition += 6;
         }
         if (documentItem.document_type) {
           doc.text(`   Type: ${documentItem.document_type}`, margin + 5, yPosition);
           yPosition += 6;
+        }
+        if (documentItem.description) {
+          // Split long descriptions into multiple lines
+          const maxWidth = pageWidth - margin * 2 - 10;
+          const lines = doc.splitTextToSize(`   Description: ${documentItem.description}`, maxWidth);
+          doc.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 5;
         }
         doc.text(`   Uploaded: ${docDate}`, margin + 5, yPosition);
         yPosition += 6;
@@ -325,12 +362,35 @@ export default function UnitPrintButton({ building, unit, totalEvents, totalDocu
       });
     }
 
-    // Footer
+    // Footer and Call to Action
     const totalPages = doc.internal.pages.length - 1;
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
+      
+      // Call to Action box on last page
+      if (i === totalPages) {
+        const ctaY = pageHeight - 40;
+        // Amber background box
+        doc.setFillColor(245, 158, 11);
+        doc.roundedRect(margin, ctaY, pageWidth - margin * 2, 25, 3, 3, 'F');
+        
+        // CTA text
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Download the Full Premium Report", pageWidth / 2, ctaY + 10, { align: "center" });
+        
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text("Visit AinaReports.com for complete event history, documents, and analytics", pageWidth / 2, ctaY + 18, { align: "center" });
+        
+        doc.setTextColor(0, 0, 0);
+      }
+      
+      // Footer text
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
+      doc.setTextColor(128, 128, 128);
       doc.text(
         `Generated by AinaReports on ${new Date().toLocaleDateString()}`,
         pageWidth / 2,
@@ -343,11 +403,12 @@ export default function UnitPrintButton({ building, unit, totalEvents, totalDocu
         pageHeight - 5,
         { align: "center" }
       );
+      doc.setTextColor(0, 0, 0);
     }
 
-      // Save the PDF
-      const filename = `${building.name || "Building"}_Unit_${unit.unit_number || "Report"}_${new Date().toISOString().split('T')[0]}.pdf`;
-      doc.save(filename);
+    // Save the PDF
+    const filename = `${building.name || "Building"}_Unit_${unit.unit_number || "Report"}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(filename);
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert(`Error generating PDF: ${error.message || error.toString()}. Please check the console for details.`);
